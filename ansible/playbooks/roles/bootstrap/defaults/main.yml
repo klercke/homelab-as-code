@@ -1,5 +1,6 @@
 ansible_user: root
 ssh_key_path: "{{ role_path }}/files/authorized_keys"
 firewall_allowed_ports:
-  - ssh
+  - port: 22
+    protocol: tcp
 

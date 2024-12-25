@@ -125,19 +125,12 @@
     enabled: true
     state: started
 
-- name: Open SSH port in the firewall
+- name: Open ports in the firewall
   ansible.builtin.firewalld:
-    service: ssh
+    port: "{{ item.port }}/{{ item.protocol }}"
     permanent: true
     state: enabled
-  notify:
-    - Reload firewalld
-
-- name: Open additional ports
-  ansible.builtin.firewalld:
-    port: 8080/tcp
-    permanent: true
-    state: enabled
+  with_items: "{{ firewall_allowed_ports }}"
   notify:
     - Reload firewalld
 
