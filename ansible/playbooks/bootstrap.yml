@@ -1,0 +1,7 @@
+---
+- name: Bootstrap Rocky Linux server
+  hosts: all
+  become: true
+  roles:
+    - bootstrap
+

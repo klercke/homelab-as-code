@@ -1,0 +1,9 @@
+[DEFAULT]
+bantime = {{ fail2ban_bantime | default(600) }}
+findtime = {{ fail2ban_findtime | default(600) }}
+maxretry = {{ fail2ban_maxretry | default(3) }}
+ignoreip = 127.0.0.1/8 ::1 {{ dynamic_ip }}
+
+[sshd]
+enabled = {{ sshd_enabled | default(true) }}
+

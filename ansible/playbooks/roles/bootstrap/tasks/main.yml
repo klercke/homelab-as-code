@@ -1,0 +1,138 @@
+---
+# Main tasks for the bootstrap role
+
+# Update packages
+- name: Update all packages
+  ansible.builtin.yum:
+    name: "*"
+    state: latest
+
+# Install EPEL repository
+- name: Ensure EPEL repository is installed
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+
+# Create the Ansible user
+- name: Create the ansible user
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    shell: /bin/bash
+    state: present
+    groups: wheel
+
+- name: Create .ssh directory for ansible user
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/.ssh"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0700"
+
+- name: Add authorized SSH key for ansible user
+  ansible.builtin.copy:
+    src: "{{ ssh_key_path }}"
+    dest: "/home/{{ ansible_user }}/.ssh/authorized_keys"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+
+# Harden SSH configuration
+- name: Disable root login
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+    state: present
+
+- name: Allow only ansible user to SSH
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?AllowUsers'
+    line: 'AllowUsers ansible'
+    state: present
+
+- name: Disable password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+
+- name: Enable SSH protocol 2
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?Protocol'
+    line: 'Protocol 2'
+    state: present
+
+- name: Disable X11 forwarding
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?X11Forwarding'
+    line: 'X11Forwarding no'
+    state: present
+
+# Enable automatic updates
+- name: Install dnf-automatic
+  ansible.builtin.yum:
+    name: dnf-automatic
+    state: present
+
+- name: Enable and start automatic updates
+  ansible.builtin.systemd:
+    name: dnf-automatic.timer
+    enabled: true
+    state: started
+
+# Install and configure fail2ban
+- name: Resolve IP address from hostname
+  ansible.builtin.set_fact:
+    dynamic_ip: "{{ lookup('dig', 'ptxe.duckdns.org') }}"
+
+- name: Deploy Fail2Ban configuration with dynamic IP
+  ansible.builtin.template:
+    src: fail2ban.local.j2
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Restart fail2ban
+
+- name: Ensure fail2ban service is enabled and started
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started
+  notify:
+    - Restart fail2ban
+
+# Configure the firewall
+- name: Ensure firewalld is installed
+  ansible.builtin.yum:
+    name: firewalld
+    state: present
+
+- name: Ensure firewalld is enabled and running
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: true
+    state: started
+
+- name: Open SSH port in the firewall
+  ansible.builtin.firewalld:
+    service: ssh
+    permanent: true
+    state: enabled
+  notify:
+    - Reload firewalld
+
+- name: Open additional ports
+  ansible.builtin.firewalld:
+    port: 8080/tcp
+    permanent: true
+    state: enabled
+  notify:
+    - Reload firewalld
+
