@@ -1,0 +1,25 @@
+---
+- name: Install Docker GPG key
+  ansible.builtin.rpm_key:
+    key: https://download.docker.com/linux/rhel/gpg
+    state: present
+
+- name: Remove Docker repository file
+  ansible.builtin.yum_repository:
+    name: docker
+    description: Docker RHEL repo
+    state: absent
+
+- name: Add Docker CE repository
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/rhel/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install docker-ce
+  ansible.builtin.dnf:
+    name: docker-ce
+    state: latest
+    update_cache: true

@@ -49,12 +49,14 @@ No inputs.
 | Name | Description |
 |------|-------------|
 | bootstrap | Applies the bootstrap role |
+| docker | Applies the bootstrap role and the docker role |
 
 ### Roles
 
 | Name | Description |
 |------|-------------|
 | bootstrap | Performs basic first-time configuration of a server. Targets Rocky Linux 9, but may work on other distros |
+| docker | Adds the docker repo to a Rocky 9 server, installs docker-ce, and starts the docker service |
 
 ### Inventories
 
