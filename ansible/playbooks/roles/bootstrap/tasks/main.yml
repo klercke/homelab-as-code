@@ -16,26 +16,34 @@
 # Create the Ansible user
 - name: Create the ansible user
   ansible.builtin.user:
-    name: "{{ ansible_user }}"
+    name: "ansible"
     shell: /bin/bash
     state: present
     groups: wheel
 
 - name: Create .ssh directory for ansible user
   ansible.builtin.file:
-    path: "/home/{{ ansible_user }}/.ssh"
+    path: "/home/ansible/.ssh"
     state: directory
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "ansible"
+    group: "ansible"
     mode: "0700"
 
 - name: Add authorized SSH key for ansible user
   ansible.builtin.copy:
     src: "{{ ssh_key_path }}"
-    dest: "/home/{{ ansible_user }}/.ssh/authorized_keys"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    dest: "/home/ansible/.ssh/authorized_keys"
+    owner: "ansible"
+    group: "ansible"
     mode: "0600"
+
+- name: Allow ansible user to sudo with no password
+  ansible.builtin.copy:
+    src: "{{ role_path }}/files/sudoers_ansible"
+    dest: "/etc/sudoers.d"
+    owner: "root"
+    group: "root"
+    mode: "0440"
 
 # Harden SSH configuration
 - name: Disable root login
