@@ -11,3 +11,9 @@ resource "linode_instance" "authentik" {
   ]
 }
 
+resource "njalla_record_a" "auth" {
+  domain  = "ptxe.dev"
+  name    = "auth"
+  ttl     = 900
+  content = linode_instance.authentik.ip_address
+}
