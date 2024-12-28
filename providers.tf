@@ -6,6 +6,10 @@ terraform {
       source  = "linode/linode"
       version = "~> 2.31.1"
     }
+    njalla = {
+      source  = "Sighery/njalla"
+      version = "~> 0.10.0"
+    }
   }
 }
 
