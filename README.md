@@ -74,9 +74,9 @@ export NJALLA_API_TOKEN=<Njalla API Token>
 ### Token Permissions
 
 - **LINODE_TOKEN** requires the following permissions:
- - Untested, I gave it full read/write (oops)
+    - Untested, I gave it full read/write (oops)
 - **NJALLA_API_TOKEN** requires the following permissions on the domain you want to manage:
- - list-records
- - add-record
- - edit-record
- - remove-record
+    - list-records
+    - add-record
+    - edit-record
+    - remove-record
