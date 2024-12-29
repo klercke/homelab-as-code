@@ -3,7 +3,7 @@ resource "linode_instance" "authentik" {
   image           = "linode/rocky9"
   region          = "us-east"
   type            = "g6-standard-1"
-  tags            = ["hlac", "tofu"]
+  tags            = ["prod", "hlac", "tofu"]
   backups_enabled = true
 
   authorized_keys = [
