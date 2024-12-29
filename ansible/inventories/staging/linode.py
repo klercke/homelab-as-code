@@ -4,7 +4,7 @@ import subprocess
 import os
 import sys
 
-ENVIRONMENT_TAG = "prod"
+ENVIRONMENT_TAG = "staging"
 
 # Gross
 wrapper_dir = os.path.dirname(os.path.abspath(__file__))
