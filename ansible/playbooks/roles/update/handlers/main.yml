@@ -1,0 +1,4 @@
+---
+- name: Warn about reboot
+  ansible.builtin.debug:
+    msg: "A reboot is required on {{ ansible_hostname }} to finish applying updates."

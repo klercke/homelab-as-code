@@ -1,0 +1,28 @@
+---
+# Have dnf update itself first. Also refresh the dnf cache
+- name: Update dnf and cache
+  ansible.builtin.dnf:
+    name: dnf
+    state: latest
+    update_cache: true
+
+# Update the rest of the packages
+- name: Update all packages
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+
+# Autoremove unused packages that were installed as dependencies
+- name: Clean up unusued packages
+  ansible.builtin.dnf:
+    autoremove: yes
+
+# Check to see if a reboot is necessary
+- name: Check for pending reboot
+  ansible.builtin.shell: "needs-restarting -r"
+  register: reboot_check
+  changed_when: reboot_check.rc == 1
+  failed_when: reboot_check.rc == 127 # fails if the command isn't found
+  notify: Warn about reboot
+
+

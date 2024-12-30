@@ -13,6 +13,11 @@
     name: "*"
     state: latest
 
+- name: Install important packages
+  ansible.builtin.dnf:
+    name: "dnf-utils"
+    state: present
+
 # Install EPEL repository
 - name: Ensure EPEL repository is installed
   ansible.builtin.dnf:

@@ -1,0 +1,6 @@
+---
+- name: Update Rocky Linux server
+  hosts: all
+  become: true
+  roles:
+    - update
