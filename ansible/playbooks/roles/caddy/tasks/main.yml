@@ -1,0 +1,51 @@
+---
+- name: Ensure the Docker Compose directory exists
+  ansible.builtin.file:
+    path: /srv/docker/caddy
+    state: directory
+    mode: '0755'
+
+- name: Copy Caddy Docker Compose file
+  ansible.builtin.copy:
+    src: files/docker-compose.yml
+    dest: /srv/docker/caddy/docker-compose.yml
+    mode: '0644'
+
+- name: Ensure the Caddy configuration directory exists
+  ansible.builtin.file:
+    path: /srv/docker/caddy/conf
+    state: directory
+    mode: '0755'
+
+- name: Copy Caddyfile
+  ansible.builtin.template:
+    src: templates/caddyfile.j2
+    dest: /srv/docker/caddy/conf/Caddyfile
+    mode: '0644'
+  vars:
+    fqdn: "{{ hostvars[inventory_hostname]['fqdn'] }}"
+  notify:
+    - Reload caddy
+
+- name: Deploy Caddy with Docker Compose
+  community.docker.docker_compose_v2:
+    project_src: /srv/docker/caddy
+    state: present
+
+- name: Allow HTTP through firewalld
+  ansible.builtin.firewalld:
+    service: "http"
+    state: enabled
+    permanent: true
+  notify:
+    - Reload firewalld
+
+- name: Allow HTTPS through firewalld
+  ansible.builtin.firewalld:
+    service: "https"
+    state: enabled
+    permanent: true
+  notify:
+    - Reload firewalld
+
+

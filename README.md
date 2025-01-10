@@ -11,6 +11,7 @@ OpenTofu/Ansible/Shell scripts to build, configure, and manage my homelab.
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.6.2 |
 | <a name="requirement_linode"></a> [linode](#requirement\_linode) | ~> 2.31.1 |
+| <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.5.2 |
 | <a name="requirement_njalla"></a> [njalla](#requirement\_njalla) | ~> 0.10.0 |
 
 ### Providers
@@ -18,6 +19,7 @@ OpenTofu/Ansible/Shell scripts to build, configure, and manage my homelab.
 | Name | Version |
 |------|---------|
 | <a name="provider_linode"></a> [linode](#provider\_linode) | 2.31.1 |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.5.2 |
 | <a name="provider_njalla"></a> [njalla](#provider\_njalla) | 0.10.0 |
 
 ### Modules
@@ -29,7 +31,10 @@ No modules.
 | Name | Type |
 |------|------|
 | [linode_instance.authentik](https://registry.terraform.io/providers/linode/linode/latest/docs/resources/instance) | resource |
+| [linode_instance.monitoring](https://registry.terraform.io/providers/linode/linode/latest/docs/resources/instance) | resource |
+| [local_file.mon_hostvars](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [njalla_record_a.auth](https://registry.terraform.io/providers/Sighery/njalla/latest/docs/resources/record_a) | resource |
+| [njalla_record_a.mon](https://registry.terraform.io/providers/Sighery/njalla/latest/docs/resources/record_a) | resource |
 
 ### Inputs
 
@@ -50,6 +55,8 @@ No inputs.
 |------|-------------|
 | bootstrap | Applies the bootstrap role |
 | docker | Applies the bootstrap role and the docker role |
+| update | Applies the update role |
+| caddy | Applies the bootstrap, docker, and caddy roles |
 
 ### Roles
 
@@ -57,12 +64,14 @@ No inputs.
 |------|-------------|
 | bootstrap | Performs basic first-time configuration of a server. Targets Rocky Linux 9, but may work on other distros |
 | docker | Adds the docker repo to a Rocky 9 server, installs docker-ce, and starts the docker service |
+| update | Updates all packages on the host |
+| caddy | Installs Caddy server and creates a simple landing page with TLS |
 
 ### Inventories
 
 | Name | Description |
 |------|-------------|
-| linode | Script that automatically generates an inventory from Linode |
+| {production,staging}/linode | Script that automatically generates an inventory from Linode based on tags |
 
 ## Environment
 
