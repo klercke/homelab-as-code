@@ -1,0 +1,8 @@
+---
+- name: Install Caddy on Rocky Linux server
+  hosts: all
+  become: true
+  roles:
+    - bootstrap
+    - docker
+    - caddy
