@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Managed by Ansible.
+#
+# Dumps rotate on weekday name, so seven days are retained with no cleanup
+# logic. Each dump is written to a temp name and moved on success: mv within a
+# filesystem is atomic, so a .dump file is always either last week's or this
+# week's, never a partial left behind by a failed run.
+#
+# Deliberately not set -e: a failure dumping one database should not skip the
+# others. Failures are collected and reported via exit status.
+set -uo pipefail
+
+day=$(date +%a)
+dir={{ postgres_backup_dir }}
+rc=0
+
+for db in {{ postgres_databases | map(attribute='name') | join(' ') }}; do
+  if /usr/pgsql-{{ postgres_version }}/bin/pg_dump -Fc "$db" -f "$dir/.$db-$day.tmp"; then
+    mv "$dir/.$db-$day.tmp" "$dir/$db-$day.dump"
+  else
+    echo "pg_dump failed for database: $db" >&2
+    rm -f "$dir/.$db-$day.tmp"
+    rc=1
+  fi
+done
+
+exit "$rc"

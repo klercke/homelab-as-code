@@ -1,0 +1,26 @@
+- name: PowerDNS Authoritative
+  hosts: tag_role_pdns
+  pre_tasks:
+    - name: Load platform secrets
+      community.sops.load_vars:
+        file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
+      no_log: true
+
+    - name: Load VLAN registry
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../../registries/vlans.yaml"
+
+    - name: Build recursor DNS allow-list from inventory
+      ansible.builtin.set_fact:
+        pdns_dns_allowed: >-
+          {{ groups['tag_role_recursor'] | default([])
+             | map('extract', hostvars, 'ansible_host')
+             | map('regex_replace', '$', '/32')
+             | list }}
+
+    - name: Build API allow-list from management VLAN plus static admin hosts
+      ansible.builtin.set_fact:
+        pdns_api_allowed: >-
+          {{ [vlans.management.prefix] + pdns_api_static_allowed }}
+  roles:
+    - powerdns

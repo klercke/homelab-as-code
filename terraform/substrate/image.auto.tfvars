@@ -1,0 +1,2 @@
+rocky9_image_url    = "https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud-Base-9.8-20260525.0.x86_64.qcow2"
+rocky9_image_sha256 = "92c206cc6f790c61583247eefe87890f8828420662c17cacf247cec78ab4eec8"

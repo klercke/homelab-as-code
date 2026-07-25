@@ -1,0 +1,122 @@
+- name: Install PowerDNS auth vendor repo
+  ansible.builtin.get_url:
+    url: "https://repo.powerdns.com/repo-files/el-auth-{{ pdns_repo_track }}.repo"
+    dest: "/etc/yum.repos.d/powerdns-auth-{{ pdns_repo_track }}.repo"
+    mode: "0644"
+
+- name: Install PowerDNS and PostgreSQL backend
+  ansible.builtin.dnf:
+    name:
+      - pdns
+      - pdns-backend-postgresql
+    state: present
+
+- name: Install PowerDNS and PostgreSQL backend
+  ansible.builtin.dnf:
+    name:
+      - pdns
+      - pdns-backend-postgresql
+    state: present
+    allowerasing: true
+  # The pgsql backend's post-install starts pdns, which fails with no schema.
+  # That failure is expected and must not fail the play.
+  register: _pdns_install
+  failed_when:
+    - _pdns_install.failed
+    - "'Failed to start' not in (_pdns_install.msg | default(''))"
+
+- name: Check whether schema is loaded
+  community.postgresql.postgresql_query:
+    login_host: "{{ pdns_db_host }}"
+    login_user: "{{ pdns_db_user }}"
+    login_password: "{{ postgres_pdns_password }}"
+    login_db: "{{ pdns_db_name }}"
+    query: "SELECT to_regclass('public.domains') IS NOT NULL AS present"
+  register: _schema_check
+  delegate_to: "{{ groups['tag_role_postgres'][0] }}"
+  run_once: true
+  no_log: true
+
+- name: Read schema file from pdns host
+  ansible.builtin.slurp:
+    src: /usr/share/doc/pdns/schema.pgsql.sql
+  register: _pdns_schema
+  when: not _schema_check.query_result[0].present
+  run_once: true
+
+- name: Load gpgsql schema via postgres host
+  ansible.builtin.shell:
+    cmd: >-
+      psql "postgresql://{{ pdns_db_user }}:{{ postgres_pdns_password }}@{{ pdns_db_host }}/{{ pdns_db_name }}"
+      -v ON_ERROR_STOP=1
+    stdin: "{{ _pdns_schema.content | b64decode }}"
+  delegate_to: "{{ groups['tag_role_postgres'][0] }}"
+  when: not _schema_check.query_result[0].present
+  run_once: true
+  no_log: true
+
+- name: Write pdns.conf
+  ansible.builtin.template:
+    src: pdns.conf.j2
+    dest: /etc/pdns/pdns.conf
+    owner: root
+    group: pdns
+    mode: "0640"
+  no_log: true
+  notify: Restart pdns
+
+- name: Validate pdns config
+  ansible.builtin.command:
+    cmd: pdns_server --config-dir=/etc/pdns --config=check
+  changed_when: false
+
+- name: Open DNS ports
+  ansible.posix.firewalld:
+    rich_rule: "rule family=ipv4 source address={{ item.0 }} port port=53 protocol={{ item.1 }} accept"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ pdns_dns_allowed | product(['tcp', 'udp']) | list }}"
+
+- name: Open API port
+  ansible.posix.firewalld:
+    rich_rule: "rule family=ipv4 source address={{ item }} port port=8081 protocol=tcp accept"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ pdns_api_allowed }}"
+
+- name: Enable pdns at boot
+  ansible.builtin.systemd_service:
+    name: pdns
+    enabled: true
+
+- name: Install PowerDNS auto-update units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - pdns-update.service
+    - pdns-update.timer
+  notify: Reload systemd
+
+- name: Enable PowerDNS update timer
+  ansible.builtin.systemd_service:
+    name: pdns-update.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Create systemd drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/pdns.service.d
+    state: directory
+    mode: "0755"
+
+- name: Install restart limit drop-in
+  ansible.builtin.template:
+    src: restart-limits.conf.j2
+    dest: /etc/systemd/system/pdns.service.d/10-restart-limits.conf
+    mode: "0644"
+  notify: Reload systemd

@@ -1,0 +1,7 @@
+# Managed by Ansible. Local changes will be overwritten.
+local   all   postgres                       peer
+host    all   postgres   127.0.0.1/32        scram-sha-256
+{% for db in postgres_databases %}
+host    {{ db.name }}   {{ db.owner }}   {{ postgres_allowed_cidr }}   scram-sha-256
+{% endfor %}
+host    postgres   postgres_exporter   127.0.0.1/32   scram-sha-256

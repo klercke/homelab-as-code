@@ -1,0 +1,4 @@
+- name: Base configuration
+  hosts: tag_hlac
+  roles:
+    - base

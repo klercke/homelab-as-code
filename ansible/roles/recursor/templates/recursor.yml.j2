@@ -1,0 +1,38 @@
+# Managed by Ansible.
+incoming:
+  listen:
+    - {{ ansible_host }}
+  port: 53
+  allow_from:
+    - {{ recursor_allow_from }}
+
+recursor:
+  forward_zones:
+    - zone: protonet.internal
+      forwarders:
+{% for ip in recursor_auth_targets %}
+        - {{ ip }}
+{% endfor %}
+{% for zone in recursor_reverse_zones %}
+    - zone: {{ zone }}
+      forwarders:
+{% for ip in recursor_auth_targets %}
+        - {{ ip }}
+{% endfor %}
+{% endfor %}
+
+dnssec:
+  validation: validate
+  negative_trustanchors:
+    - name: protonet.internal
+      reason: "internal unsigned zone"
+{% for zone in recursor_reverse_zones %}
+    - name: {{ zone }}
+      reason: "internal unsigned reverse zone"
+{% endfor %}
+
+webservice:
+  webserver: false
+
+logging:
+  loglevel: 4

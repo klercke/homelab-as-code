@@ -1,0 +1,74 @@
+- name: Install PowerDNS recursor vendor repo
+  ansible.builtin.get_url:
+    url: "https://repo.powerdns.com/repo-files/el-rec-{{ recursor_repo_track }}.repo"
+    dest: "/etc/yum.repos.d/powerdns-rec-{{ recursor_repo_track }}.repo"
+    mode: "0644"
+
+- name: Install pdns-recursor
+  ansible.builtin.dnf:
+    name: pdns-recursor
+    state: present
+
+# Ensures no legacy configurations are used. This is deprecated as of 5.2
+- name: Remove legacy recursor.conf
+  ansible.builtin.file:
+    path: "{{ recursor_config_dir }}/recursor.conf"
+    state: absent
+  notify: Restart recursor
+
+- name: Write recursor.yml
+  ansible.builtin.template:
+    src: recursor.yml.j2
+    dest: "{{ recursor_config_dir }}/recursor.yml"
+    owner: root
+    group: pdns-recursor
+    mode: "0640"
+  notify: Restart recursor
+
+- name: Validate recursor config
+  ansible.builtin.command:
+    cmd: pdns_recursor --config-dir={{ recursor_config_dir }} --config=check
+  changed_when: false
+
+- name: Open DNS to site
+  ansible.posix.firewalld:
+    rich_rule: "rule family=ipv4 source address=10.0.0.0/16 port port=53 protocol={{ item }} accept"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: [tcp, udp]
+
+- name: Enable recursor
+  ansible.builtin.systemd_service:
+    name: pdns-recursor
+    enabled: true
+
+- name: Install Recursor auto-update units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - recursor-update.service
+    - recursor-update.timer
+  notify: Reload systemd
+
+- name: Enable Recursor update timer
+  ansible.builtin.systemd_service:
+    name: recursor-update.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Create systemd drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/pdns-recursor.service.d
+    state: directory
+    mode: "0755"
+
+- name: Install restart limit drop-in
+  ansible.builtin.template:
+    src: restart-limits.conf.j2
+    dest: /etc/systemd/system/pdns-recursor.service.d/10-restart-limits.conf
+    mode: "0644"
+  notify: Reload systemd

@@ -1,0 +1,49 @@
+- name: ISC Kea DHCP
+  hosts: tag_role_kea
+  pre_tasks:
+    - name: Load platform secrets
+      community.sops.load_vars:
+        file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
+      no_log: true
+
+    - name: Load VLAN registry
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../../registries/vlans.yaml"
+
+    # Clients get the recursors as option 6
+    - name: Build resolver list from inventory
+      ansible.builtin.set_fact:
+        kea_resolvers: >-
+          {{ groups['tag_role_recursor'] | default([])
+             | map('extract', hostvars, 'ansible_host') | list }}
+
+    # First host alphabetically is primary, second is standby
+    - name: Build HA peer list from inventory
+      ansible.builtin.set_fact:
+        kea_ha_peers: >-
+          {{ kea_ha_peers | default([]) + [{
+               'name': item,
+               'ip': hostvars[item].ansible_host,
+               'role': (['primary', 'standby'])[idx]
+             }] }}
+      loop: "{{ groups['tag_role_kea'] | sort }}"
+      loop_control:
+        index_var: idx
+        label: "{{ item }}"
+
+    - name: Verify exactly two Kea hosts for hot-standby HA
+      ansible.builtin.assert:
+        that: kea_ha_peers | length == 2
+        fail_msg: >-
+          hot-standby HA expects exactly two peers, found
+          {{ kea_ha_peers | length }}. Adjust the HA config before continuing.
+
+    - name: Verify resolvers were discovered
+      ansible.builtin.assert:
+        that: kea_resolvers | length > 0
+        fail_msg: >-
+          No recursors found in inventory. Clients would receive no
+          domain-name-servers option.
+
+  roles:
+    - kea

@@ -1,0 +1,12 @@
+# Managed by Ansible
+bind {{ valkey_bind_address }}
+port {{ valkey_port }}
+protected-mode yes
+requirepass {{ valkey_password }}
+
+maxmemory {{ valkey_maxmemory }}
+maxmemory-policy {{ valkey_maxmemory_policy }}
+
+save 900 1
+save 300 10
+appendonly no

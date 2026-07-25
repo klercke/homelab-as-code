@@ -1,0 +1,31 @@
+# Managed by Ansible.
+setuid=pdns
+setgid=pdns
+
+launch=gpgsql
+gpgsql-host={{ pdns_db_host }}
+gpgsql-dbname={{ pdns_db_name }}
+gpgsql-user={{ pdns_db_user }}
+gpgsql-password={{ postgres_pdns_password }}
+gpgsql-dnssec=no
+
+# Both instances are Native against a shared DB; No primary/secondary
+primary=no
+secondary=no
+
+# Listen on the VLAN address for queries.
+local-address={{ ansible_host }}
+local-port=53
+
+query-cache-ttl={{ pdns_query_cache_ttl }}
+cache-ttl={{ pdns_cache_ttl }}
+
+# HTTP API enabled on both for DR; only pdns01 is targeted by Terraform.
+api=yes
+api-key={{ PDNS_API_KEY }}
+webserver=yes
+webserver-address={{ ansible_host }}
+webserver-port=8081
+webserver-allow-from={{ pdns_api_allowed | join(',') }}
+
+version-string=anonymous

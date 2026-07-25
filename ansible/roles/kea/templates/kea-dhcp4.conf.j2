@@ -1,0 +1,123 @@
+// Managed by Ansible.
+{
+  "Dhcp4": {
+    "interfaces-config": {
+      "interfaces": [ "{{ kea_interface }}" ]
+    },
+
+    "control-sockets": [
+      {
+        "socket-type": "unix",
+        "socket-name": "/var/run/kea/kea4-ctrl-socket"
+      },
+      {
+        "socket-type": "http",
+        "socket-address": "{{ ansible_host }}",
+        "socket-port": {{ kea_api_port }},
+        "authentication": {
+          "type": "basic",
+          "directory": "/etc/kea",
+          "clients": [
+            {
+              "password-file": "{{ kea_api_secret_file }}"
+            }
+          ]
+        }
+      }
+    ],
+
+    "lease-database": {
+      "type": "postgresql",
+      "host": "{{ kea_db_host }}",
+      "name": "{{ kea_db_name }}",
+      "user": "{{ kea_db_user }}",
+      "password": "{{ postgres_kea_password }}"
+    },
+
+    "hosts-database": {
+      "type": "postgresql",
+      "host": "{{ kea_db_host }}",
+      "name": "{{ kea_db_name }}",
+      "user": "{{ kea_db_user }}",
+      "password": "{{ postgres_kea_password }}"
+    },
+
+    "hooks-libraries": [
+      {
+        "library": "/usr/lib64/kea/hooks/libdhcp_pgsql.so"
+      },
+      {
+        "library": "/usr/lib64/kea/hooks/libdhcp_host_cmds.so"
+      },
+      {
+        "library": "/usr/lib64/kea/hooks/libdhcp_ha.so",
+        "parameters": {
+          "high-availability": [
+            {
+              "this-server-name": "{{ inventory_hostname }}",
+              "mode": "hot-standby",
+              "send-lease-updates": false,
+              "sync-leases": false,
+              "heartbeat-delay": 10000,
+              "max-response-delay": 60000,
+              "max-ack-delay": 5000,
+              "max-unacked-clients": 5,
+              "peers": [
+{% for p in kea_ha_peers %}
+                {
+                  "name": "{{ p.name }}",
+                  "url": "http://{{ p.ip }}:{{ kea_ha_port }}/",
+                  "role": "{{ p.role }}",
+                  "auto-failover": true,
+                  "basic-auth-user": "{{ kea_api_user }}",
+                  "basic-auth-password": "{{ kea_api_password }}"
+                }{{ "," if not loop.last }}
+{% endfor %}
+              ]
+            }
+          ]
+        }
+      }
+    ],
+
+    // Subnet id is the VLAN id, so it is registry-derived and stable. Lease and
+    // host rows key off subnet id; renumbering these would orphan every lease.
+    "subnet4": [
+{% for name, v in vlans.items() if v.dhcp.enabled %}
+      {
+        "id": {{ v.id }},
+        "subnet": "{{ v.prefix }}",
+        "pools": [
+          { "pool": "{{ v.dhcp.dynamic_start }} - {{ v.dhcp.dynamic_end }}" }
+        ],
+{% if name == kea_local_vlan %}
+        // Kea sits on this VLAN: clients broadcast directly, matched by interface.
+        "interface": "{{ kea_interface }}",
+{% else %}
+        // Reached via the OPNsense relay: matched on giaddr.
+        "relay": { "ip-addresses": [ "{{ v.gateway }}" ] },
+{% endif %}
+        "option-data": [
+          { "name": "routers", "data": "{{ v.gateway }}" },
+          { "name": "domain-name-servers", "data": "{{ kea_resolvers | join(', ') }}" },
+          { "name": "domain-name", "data": "{{ kea_search_domain }}" }
+        ]
+      }{{ "," if not loop.last }}
+{% endfor %}
+    ],
+
+    "valid-lifetime": {{ kea_valid_lifetime }},
+    "renew-timer": {{ kea_renew_timer }},
+    "rebind-timer": {{ kea_rebind_timer }},
+
+    "loggers": [
+      {
+        "name": "kea-dhcp4",
+        "output_options": [
+          { "output": "stdout" }
+        ],
+        "severity": "INFO"
+      }
+    ]
+  }
+}

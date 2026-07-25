@@ -1,0 +1,12 @@
+keys:
+  - &d0c age18gneeee4cevwasjldx8v6erl5l4yg9wmfujg0p7uyft9vrwr4s5snhhwq0
+  - &ci  age162vmm2ns2a2kxwx7cce2rzhwghtvypvkn0a54ny6yfx6xzmuqpfsvlgte0
+  - &bg  age1rvh92vtwfjhp6ce5yy0dslfxlp8hyw9utp4ewrhatg4ge748ts7snuwt89
+
+creation_rules:
+  - path_regex: secrets/substrate\.sops\.yaml$
+    key_groups:
+      - age: [*d0c, *ci, *bg]
+  - path_regex: secrets/platform\.sops\.yaml$
+    key_groups:
+      - age: [*d0c, *ci, *bg]

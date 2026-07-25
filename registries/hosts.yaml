@@ -1,0 +1,123 @@
+---
+# ProtoNet managed host registry.
+#
+# This is the source for the substrate OpenTofu module, Ansible host vars, and NetBox device records.
+# Address, VMID, MAC, and tags are all derived rather than stored.
+#
+# crit levels:
+#   1  critical infrastructure
+#   2  infrastructure, non-critical
+#   3  end-user (family/friend) impact
+#   4  no impact
+#
+# All string values are quoted deliberately: see README.md.
+
+hosts:
+  postgres01:
+    vlan: "servers"
+    host_octet: 10
+    layer: "l1"
+    role: "postgres"
+    crit: 1
+    node: "pve01"
+    cores: 4
+    memory: 8192
+    disk: 32
+    data_disk: 64
+    description: "PostgreSQL 18. Backing store for NetBox, PowerDNS, and Kea."
+
+  netbox01:
+    vlan: "servers"
+    host_octet: 11
+    layer: "l1"
+    role: "netbox"
+    crit: 2
+    node: "pve01"
+    cores: 2
+    memory: 4096
+    disk: 32
+    description: "NetBox. Source of truth for IPAM and DCIM."
+
+  pdns01:
+    vlan: "servers"
+    host_octet: 12
+    layer: "l1"
+    role: "pdns"
+    crit: 1
+    node: "pve01"
+    cores: 1
+    memory: 2048
+    disk: 16
+    description: "PowerDNS Authoritative, gpgsql backend."
+
+  pdns02:
+    vlan: "servers"
+    host_octet: 13
+    layer: "l1"
+    role: "pdns"
+    crit: 1
+    node: "pve01"
+    cores: 1
+    memory: 2048
+    disk: 16
+    description: "PowerDNS Authoritative, gpgsql backend."
+
+  kea01:
+    vlan: "servers"
+    host_octet: 14
+    layer: "l1"
+    role: "kea"
+    crit: 1
+    node: "pve01"
+    cores: 1
+    memory: 2048
+    disk: 16
+    description: "ISC Kea DHCPv4 with HA hook and PostgreSQL backend."
+
+  kea02:
+    vlan: "servers"
+    host_octet: 15
+    layer: "l1"
+    role: "kea"
+    crit: 1
+    node: "pve01"
+    cores: 1
+    memory: 2048
+    disk: 16
+    description: "ISC Kea DHCPv4 with HA hook and PostgreSQL backend."
+
+  recursor01:
+    vlan: "servers"
+    host_octet: 16
+    layer: "l1"
+    role: "recursor"
+    crit: 1
+    node: "pve01"
+    cores: 2
+    memory: 2048
+    disk: 16
+    description: "PowerDNS Recursor. Forwards internal zones to pdns01/02."
+
+  recursor02:
+    vlan: "servers"
+    host_octet: 17
+    layer: "l1"
+    role: "recursor"
+    crit: 1
+    node: "pve01"
+    cores: 2
+    memory: 2048
+    disk: 16
+    description: "PowerDNS Recursor. Forwards internal zones to pdns01/02."
+
+  valkey01:
+    vlan: "servers"
+    host_octet: 18
+    layer: "l1"
+    role: "valkey"
+    crit: 2
+    node: "pve01"
+    cores: 2
+    memory: 2048
+    disk: 16
+    description: "Valkey. Cache and RQ task queue for NetBox."

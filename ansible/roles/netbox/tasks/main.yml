@@ -1,0 +1,179 @@
+- name: Install dependencies
+  ansible.builtin.dnf:
+    name:
+      - python3.12
+      - python3.12-devel
+      - gcc
+      - libpq-devel
+      - libxml2-devel
+      - libxslt-devel
+      - libffi-devel
+      - openssl-devel
+      - redhat-rpm-config
+      - nginx
+      - git
+    state: present
+
+- name: Verify Python version
+  ansible.builtin.command: "{{ netbox_python }} -V"
+  register: _py
+  changed_when: false
+  failed_when: _py.stdout is not search('3\.(1[2-9]|[2-9][0-9])')
+
+- name: Create netbox user
+  ansible.builtin.user:
+    name: "{{ netbox_user }}"
+    system: true
+    shell: /sbin/nologin
+    home: "{{ netbox_root }}"
+    create_home: false
+
+- name: Create release directory
+  ansible.builtin.file:
+    path: "/opt/netbox-{{ netbox_version }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download NetBox
+  ansible.builtin.get_url:
+    url: "https://github.com/netbox-community/netbox/archive/refs/tags/v{{ netbox_version }}.tar.gz"
+    dest: "/var/cache/netbox-{{ netbox_version }}.tar.gz"
+    mode: "0644"
+
+- name: Extract NetBox
+  ansible.builtin.unarchive:
+    src: "/var/cache/netbox-{{ netbox_version }}.tar.gz"
+    dest: "/opt/netbox-{{ netbox_version }}"
+    remote_src: true
+    extra_opts: [--strip-components=1]
+    creates: "/opt/netbox-{{ netbox_version }}/netbox/manage.py"
+
+- name: Link current release
+  ansible.builtin.file:
+    src: "/opt/netbox-{{ netbox_version }}"
+    dest: "{{ netbox_root }}"
+    state: link
+  notify:
+    - Restart netbox
+    - Restart netbox-rq
+
+- name: Own runtime directories
+  ansible.builtin.file:
+    path: "/opt/netbox-{{ netbox_version }}/netbox/{{ item }}"
+    state: directory
+    owner: "{{ netbox_user }}"
+    group: "{{ netbox_user }}"
+    mode: "0755"
+  loop: [media, reports, scripts]
+
+- name: Write configuration.py
+  ansible.builtin.template:
+    src: configuration.py.j2
+    dest: "{{ netbox_root }}/netbox/netbox/configuration.py"
+    owner: root
+    group: "{{ netbox_user }}"
+    mode: "0640"
+  no_log: true
+  notify:
+    - Restart netbox
+    - Restart netbox-rq
+
+- name: Install gunicorn config
+  ansible.builtin.copy:
+    src: "{{ netbox_root }}/contrib/gunicorn.py"
+    dest: "{{ netbox_root }}/gunicorn.py"
+    remote_src: true
+    force: false
+    mode: "0644"
+
+- name: Run upgrade.sh
+  ansible.builtin.command:
+    cmd: "{{ netbox_root }}/upgrade.sh"
+  environment:
+    PYTHON: "{{ netbox_python }}"
+  args:
+    creates: "/opt/netbox-{{ netbox_version }}/venv/bin/python"
+  notify:
+    - Restart netbox
+    - Restart netbox-rq
+
+- name: Install systemd units
+  ansible.builtin.copy:
+    src: "{{ netbox_root }}/contrib/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    remote_src: true
+    mode: "0644"
+  loop: [netbox.service, netbox-rq.service]
+  notify: Reload systemd
+
+- name: Allow nginx to reach gunicorn
+  ansible.posix.seboolean:
+    name: httpd_can_network_connect
+    state: true
+    persistent: true
+
+- name: Configure nginx
+  ansible.builtin.template:
+    src: nginx-netbox.conf.j2
+    dest: /etc/nginx/conf.d/netbox.conf
+    mode: "0644"
+  notify: Restart nginx
+
+- name: Open HTTP
+  ansible.posix.firewalld:
+    service: http
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Enable services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: [netbox, netbox-rq, nginx]
+
+- name: Bootstrap superuser and API token
+  vars:
+    ansible_remote_tmp: /tmp
+    _key: "{{ NETBOX_API_TOKEN.split('.')[0] | replace('nbt_', '') }}"
+    _plaintext: "{{ NETBOX_API_TOKEN.split('.')[1] }}"
+    _script: |
+      from django.contrib.auth import get_user_model
+      from users.models import Token
+      User = get_user_model()
+
+      u, _ = User.objects.get_or_create(
+          username='admin',
+          defaults={'is_superuser': True},
+      )
+      u.is_superuser = True
+      u.set_password('{{ netbox_admin_password }}')
+      u.save()
+
+      if Token.objects.filter(key='{{ _key }}', user=u).exists():
+          print('OK')
+      else:
+          Token.objects.filter(user=u, description='hlac').delete()
+          t = Token(
+              user=u,
+              key='{{ _key }}',
+              token='{{ _plaintext }}',
+              description='hlac',
+              write_enabled=True,
+          )
+          t.full_clean()
+          t.save()
+          print('CHANGED')
+  ansible.builtin.command:
+    cmd: "{{ netbox_root }}/venv/bin/python manage.py shell -c {{ _script | quote }}"
+  args:
+    chdir: "{{ netbox_root }}/netbox"
+  become: true
+  become_user: "{{ netbox_user }}"
+  register: _nb_bootstrap
+  changed_when: "'CHANGED' in _nb_bootstrap.stdout"
+  no_log: true

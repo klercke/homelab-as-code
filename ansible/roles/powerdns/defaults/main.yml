@@ -1,0 +1,12 @@
+pdns_db_host: 10.0.20.10
+pdns_db_name: pdns
+pdns_db_user: pdns
+pdns_repo_track: "50"
+
+# Short but reasonable cache so that Terraform applies don't result in stale data for too long
+pdns_cache_ttl: 30
+pdns_query_cache_ttl: 30
+
+# Allow my desktop to write to the API (for Terraform)
+pdns_api_static_allowed:
+  - 10.0.10.100/32

@@ -1,0 +1,19 @@
+base_packages:
+  - qemu-guest-agent
+  - chrony
+  - policycoreutils-python-utils
+  - python3-libselinux
+  - firewalld
+  - dnf-automatic
+  - vim-enhanced
+  - bind-utils
+  - tcpdump
+
+base_timezone: America/New_York
+
+# Host firewall. See note below before changing.
+base_firewalld_enabled: true
+
+# Applied by service roles, not here.
+base_firewall_services:
+  - ssh
