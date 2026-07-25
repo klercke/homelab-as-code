@@ -13,4 +13,3 @@ for HOST in $HOSTS; do
 done
 
 echo "All host keys have been added to ~/.ssh/known_hosts."
-

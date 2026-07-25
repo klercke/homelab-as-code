@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://protonet.internal/schemas/vlans.json",
+  "title": "ProtoNet VLAN and prefix registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["vlans"],
+
+  "$defs": {
+    "ipv4": {
+      "type": "string",
+      "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
+    },
+    "ipv4_cidr": {
+      "type": "string",
+      "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])/(?:[0-9]|[1-2][0-9]|3[0-2])$"
+    }
+  },
+
+  "properties": {
+    "vlans": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9-]{1,30}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "site", "fns", "name", "prefix", "gateway", "status", "dhcp"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4094,
+            "description": "802.1Q VLAN ID."
+          },
+          "site": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,30}$",
+            "description": "Key into sites.yaml."
+          },
+          "fns": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,30}$",
+            "description": "Functional network segment name."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "prefix": { "$ref": "#/$defs/ipv4_cidr" },
+          "gateway": { "$ref": "#/$defs/ipv4" },
+          "prefix6": {
+            "type": "string",
+            "description": "Optional IPv6 prefix delegated from the site /48."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "status": {
+            "enum": ["active", "reserved", "deprecated", "planned"]
+          },
+          "dhcp": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["enabled"],
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "dynamic_start": { "$ref": "#/$defs/ipv4" },
+              "dynamic_end": { "$ref": "#/$defs/ipv4" },
+              "reservation_start": { "$ref": "#/$defs/ipv4" },
+              "reservation_end": { "$ref": "#/$defs/ipv4" }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": { "enabled": { "const": true } },
+                  "required": ["enabled"]
+                },
+                "then": {
+                  "required": [
+                    "dynamic_start",
+                    "dynamic_end",
+                    "reservation_start",
+                    "reservation_end"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": { "enabled": { "const": false } },
+                  "required": ["enabled"]
+                },
+                "then": {
+                  "not": {
+                    "anyOf": [
+                      { "required": ["dynamic_start"] },
+                      { "required": ["dynamic_end"] },
+                      { "required": ["reservation_start"] },
+                      { "required": ["reservation_end"] }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

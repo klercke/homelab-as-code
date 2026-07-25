@@ -1,0 +1,13 @@
+---
+# ProtoNet site registry.
+# Each site owns one /16 out of 10.0.0.0/8, indexed by site_index.
+# All string values are quoted deliberately: see README.md.
+
+sites:
+  home:
+    site_index: 0
+    name: "Home"
+    slug: "hme"
+    prefix: "10.0.0.0/16"
+    description: "Primary residence"
+    status: "active"

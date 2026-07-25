@@ -1,0 +1,95 @@
+- name: Check available memory
+  ansible.builtin.assert:
+    that: ansible_memtotal_mb >= 1500 # 2048 - (kernel-reserved memory + padding). 1 GB host will fail, 2 GB should be fine
+    fail_msg: "{{ inventory_hostname }} has {{ ansible_memtotal_mb }}MB. dnf transactions need ~2GB."
+
+- name: Enable EPEL
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+
+- name: Install base packages
+  ansible.builtin.dnf:
+    name: "{{ base_packages }}"
+    state: present
+
+- name: Confirm SELinux is enforcing
+  ansible.builtin.assert:
+    that: ansible_selinux.status == 'enabled' and ansible_selinux.mode == 'enforcing'
+    fail_msg: "SELinux is not enforcing. Investigate before continuing."
+
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ base_timezone }}"
+
+- name: Enable and start core services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - chronyd
+
+- name: Enable qemu-guest-agent
+  ansible.builtin.systemd_service:
+    name: qemu-guest-agent
+    enabled: true
+
+- name: Harden sshd
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-protonet.conf
+    mode: "0600"
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      KexAlgorithms sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org
+  notify: restart sshd
+
+- name: Configure automatic security updates
+  ansible.builtin.copy:
+    dest: /etc/dnf/automatic.conf
+    mode: "0644"
+    content: |
+      [commands]
+      upgrade_type = security
+      apply_updates = yes
+      reboot = never
+      [emitters]
+      emit_via = motd
+  notify: restart dnf-automatic timer
+
+- name: Enable automatic updates
+  ansible.builtin.systemd_service:
+    name: dnf-automatic.timer
+    enabled: true
+    state: started
+
+- name: Configure firewalld
+  when: base_firewalld_enabled
+  block:
+    - name: Enable firewalld
+      ansible.builtin.systemd_service:
+        name: firewalld
+        enabled: true
+        state: started
+
+    - name: Allow base services
+      ansible.posix.firewalld:
+        service: "{{ item }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      loop: "{{ base_firewall_services }}"
+
+- name: Remove firewalld
+  when: not base_firewalld_enabled
+  ansible.builtin.dnf:
+    name: firewalld
+    state: absent
+
+- name: Ensure self resolves before DNS exists
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: "^{{ ansible_host }}\\s"
+    line: "{{ ansible_host }} {{ inventory_hostname }}.protonet.internal {{ inventory_hostname }}"

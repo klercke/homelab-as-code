@@ -1,0 +1,9 @@
+- name: NetBox
+  hosts: tag_role_netbox
+  pre_tasks:
+    - name: Load platform secrets
+      community.sops.load_vars:
+        file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
+      no_log: true
+  roles:
+    - netbox

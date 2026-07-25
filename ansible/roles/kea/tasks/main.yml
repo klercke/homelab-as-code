@@ -1,0 +1,121 @@
+- name: Import ISC GPG key
+  ansible.builtin.rpm_key:
+    key: "https://dl.cloudsmith.io/public/isc/kea-{{ kea_repo_track }}/gpg.720DD962343B440F.key"
+    state: present
+
+- name: Install ISC Kea vendor repo
+  ansible.builtin.get_url:
+    url: "https://dl.cloudsmith.io/public/isc/kea-{{ kea_repo_track }}/cfg/setup/config.rpm.txt?distro=el&codename=9"
+    dest: "/etc/yum.repos.d/isc-kea-{{ kea_repo_track }}.repo"
+    mode: "0644"
+
+- name: Install Kea
+  ansible.builtin.dnf:
+    name:
+      - isc-kea-dhcp4
+      - isc-kea-dhcp6
+      - isc-kea-dhcp-ddns
+      - isc-kea-admin
+      - isc-kea-hooks
+      - isc-kea-pgsql
+    state: present
+
+# kea-admin shells out to psql for the pgsql backend
+- name: Install PostgreSQL client for kea-admin
+  ansible.builtin.dnf:
+    name: postgresql
+    state: present
+
+- name: Check Kea schema version
+  ansible.builtin.command:
+    cmd: >-
+      kea-admin db-version pgsql
+      -u {{ kea_db_user }} -p {{ postgres_kea_password }}
+      -n {{ kea_db_name }} -h {{ kea_db_host }}
+  register: _kea_schema
+  changed_when: false
+  failed_when: false
+  no_log: true
+  run_once: true
+
+- name: Initialize Kea schema
+  ansible.builtin.command:
+    cmd: >-
+      kea-admin db-init pgsql
+      -u {{ kea_db_user }} -p {{ postgres_kea_password }}
+      -n {{ kea_db_name }} -h {{ kea_db_host }}
+  when: _kea_schema.rc != 0
+  no_log: true
+  run_once: true
+
+- name: Write kea-dhcp4.conf
+  ansible.builtin.template:
+    src: kea-dhcp4.conf.j2
+    dest: /etc/kea/kea-dhcp4.conf
+    owner: root
+    group: kea
+    mode: "0640"
+  no_log: true
+  notify: Restart kea-dhcp4
+
+- name: Write API auth secret file
+  ansible.builtin.copy:
+    content: "{{ kea_api_user }}:{{ kea_api_password }}\n"
+    dest: "/etc/kea/{{ kea_api_secret_file }}"
+    owner: root
+    group: kea
+    mode: "0640"
+  no_log: true
+  notify: Restart kea-dhcp4
+
+- name: Validate kea-dhcp4.conf
+  ansible.builtin.command:
+    cmd: kea-dhcp4 -t /etc/kea/kea-dhcp4.conf
+  changed_when: false
+
+- name: Open DHCP server port
+  ansible.posix.firewalld:
+    service: dhcp
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Allow HA peer communication
+  ansible.posix.firewalld:
+    rich_rule: >-
+      rule family=ipv4 source address={{ item.ip }}/32
+      port port={{ kea_ha_port }} protocol=tcp accept
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ kea_ha_peers }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Allow API access
+  ansible.posix.firewalld:
+    rich_rule: >-
+      rule family=ipv4 source address={{ item }}
+      port port={{ kea_api_port }} protocol=tcp accept
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ [vlans.management.prefix] + kea_api_static_allowed }}"
+
+- name: Create systemd drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/kea-dhcp4.service.d
+    state: directory
+    mode: "0755"
+
+- name: Install restart limit drop-in
+  ansible.builtin.template:
+    src: restart-limits.conf.j2
+    dest: /etc/systemd/system/kea-dhcp4.service.d/10-restart-limits.conf
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Enable kea-dhcp4 at boot
+  ansible.builtin.systemd_service:
+    name: kea-dhcp4
+    enabled: true

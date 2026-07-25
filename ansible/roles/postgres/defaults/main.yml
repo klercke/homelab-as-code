@@ -1,0 +1,16 @@
+postgres_version: 18
+postgres_data_device: /dev/sdb
+postgres_data_label: pgdata
+postgres_allowed_cidr: 10.0.20.0/24
+
+postgres_exporter_version: "0.20.1"
+postgres_exporter_sha256: "89d4f7e7920cad48fdc3133f789556ef5253c330a9f5fdace3bdb6344c0a8b5a"
+postgres_exporter_port: 9187
+postgres_exporter_allowed_cidr: 10.0.20.0/24
+
+postgres_backup_dir: /var/lib/pgsql/backup
+
+postgres_databases:
+  - { name: netbox, owner: netbox, password_key: postgres_netbox_password }
+  - { name: pdns,   owner: pdns,   password_key: postgres_pdns_password }
+  - { name: kea,    owner: kea,    password_key: postgres_kea_password }

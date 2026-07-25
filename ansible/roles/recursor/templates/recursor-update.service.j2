@@ -1,0 +1,9 @@
+[Unit]
+Description=Apply pdns-recursor patch updates within the pinned track
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/dnf -y update pdns-recursor
+ExecStartPost=/usr/bin/systemctl try-restart pdns-recursor

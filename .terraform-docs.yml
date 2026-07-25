@@ -1,0 +1,11 @@
+formatter: "markdown table"
+sort:
+  enabled: true
+output:
+  file: README.md
+  mode: inject
+settings:
+  indent: 3
+recursive:
+  enabled: true
+  path: terraform

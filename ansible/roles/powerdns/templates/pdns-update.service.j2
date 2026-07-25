@@ -1,0 +1,13 @@
+[Unit]
+Description=Apply PowerDNS patch updates within the pinned track
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Track is pinned by the el-auth-{{ pdns_repo_track }} repo, so this can only
+# pull 5.0.x patches, never a minor version jump. includepkg=pdns* in the repo
+# scopes it further. No errata metadata on the vendor repo, so the global
+# security-only dnf-automatic never touches these; this fills that gap.
+ExecStart=/usr/bin/dnf -y --setopt=install_weak_deps=False update pdns pdns-backend-postgresql
+ExecStartPost=/usr/bin/systemctl try-restart pdns

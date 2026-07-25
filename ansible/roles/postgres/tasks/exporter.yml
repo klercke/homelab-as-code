@@ -1,0 +1,106 @@
+- name: Create exporter system user
+  ansible.builtin.user:
+    name: postgres_exporter
+    system: true
+    shell: /sbin/nologin
+    home: /var/lib/postgres_exporter
+    create_home: false
+
+- name: Download exporter archive
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus-community/postgres_exporter/releases/download/v{{ postgres_exporter_version }}/postgres_exporter-{{ postgres_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/var/cache/postgres_exporter-{{ postgres_exporter_version }}.tar.gz"
+    checksum: "sha256:{{ postgres_exporter_sha256 }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install exporter binary
+  ansible.builtin.unarchive:
+    src: "/var/cache/postgres_exporter-{{ postgres_exporter_version }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+      - --wildcards
+      - "*/postgres_exporter"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart postgres_exporter
+
+- name: Restore SELinux context on binary
+  ansible.builtin.command:
+    cmd: restorecon -v /usr/local/bin/postgres_exporter
+  register: _exp_con
+  changed_when: _exp_con.stdout | length > 0
+
+- name: Create exporter database role
+  community.postgresql.postgresql_user:
+    name: postgres_exporter
+    password: "{{ postgres_exporter_password }}"
+    role_attr_flags: LOGIN,NOSUPERUSER,NOCREATEDB,NOCREATEROLE
+  become: true
+  become_user: postgres
+  no_log: true
+
+- name: Grant pg_monitor
+  community.postgresql.postgresql_membership:
+    group: pg_monitor
+    target_roles: postgres_exporter
+    state: present
+  become: true
+  become_user: postgres
+
+- name: Write exporter environment file
+  ansible.builtin.template:
+    src: postgres_exporter.env.j2
+    dest: /etc/sysconfig/postgres_exporter
+    owner: root
+    group: postgres_exporter
+    mode: "0640"
+  no_log: true
+  notify: Restart postgres_exporter
+
+- name: Install exporter unit
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/postgres_exporter.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Prometheus PostgreSQL exporter
+      After=postgresql-{{ postgres_version }}.service
+      Wants=postgresql-{{ postgres_version }}.service
+
+      [Service]
+      Type=simple
+      User=postgres_exporter
+      Group=postgres_exporter
+      EnvironmentFile=/etc/sysconfig/postgres_exporter
+      ExecStart=/usr/local/bin/postgres_exporter --web.listen-address={{ ansible_host }}:{{ postgres_exporter_port }}
+      Restart=on-failure
+      RestartSec=5
+      NoNewPrivileges=true
+      ProtectSystem=strict
+      ProtectHome=true
+      PrivateTmp=true
+
+      [Install]
+      WantedBy=multi-user.target
+  notify:
+    - Reload systemd
+    - Restart postgres_exporter
+
+- name: Open exporter port
+  ansible.posix.firewalld:
+    rich_rule: "rule family=ipv4 source address={{ postgres_exporter_allowed_cidr }} port port={{ postgres_exporter_port }} protocol=tcp accept"
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Enable exporter
+  ansible.builtin.systemd_service:
+    name: postgres_exporter
+    enabled: true
+    state: started
+    daemon_reload: true

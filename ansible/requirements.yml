@@ -1,0 +1,4 @@
+collections:
+  - name: community.proxmox
+  - name: community.sops
+  - name: ansible.posix

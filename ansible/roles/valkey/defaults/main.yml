@@ -1,0 +1,7 @@
+valkey_bind_address: "{{ ansible_host }}"
+valkey_port: 6379
+valkey_allowed_hosts:
+  - 10.0.20.11 # netbox01
+
+valkey_maxmemory: 1gb
+valkey_maxmemory_policy: noeviction

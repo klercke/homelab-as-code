@@ -74,4 +74,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(json.dumps({"_meta": {"hostvars": {}}}, indent=2))
         print(f"Error: {e}")
-

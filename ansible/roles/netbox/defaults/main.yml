@@ -1,0 +1,15 @@
+netbox_version: "4.6.5"
+netbox_python: /usr/bin/python3.12
+netbox_root: /opt/netbox
+netbox_user: netbox
+
+netbox_db_host: 10.0.20.10
+netbox_db_name: netbox
+netbox_db_user: netbox
+
+netbox_redis_host: 10.0.20.18
+netbox_redis_port: 6379
+
+netbox_allowed_hosts:
+  - netbox01.protonet.internal
+  - 10.0.20.11
