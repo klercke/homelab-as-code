@@ -5,13 +5,49 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["sites"],
+
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,49}$"
+    }
+  },
+
   "properties": {
+    "regions": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "depth"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "parent": { "$ref": "#/$defs/slug" },
+          "depth": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2,
+            "description": "Nesting level. Capped at 2 to match the region resources in Terraform."
+          }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "depth": { "const": 0 } }, "required": ["depth"] },
+            "then": { "not": { "required": ["parent"] } }
+          },
+          {
+            "if": { "properties": { "depth": { "minimum": 1 } }, "required": ["depth"] },
+            "then": { "required": ["parent"] }
+          }
+        ]
+      }
+    },
+
     "sites": {
       "type": "object",
       "minProperties": 1,
-      "propertyNames": {
-        "pattern": "^[a-z][a-z0-9-]{1,30}$"
-      },
+      "propertyNames": { "$ref": "#/$defs/slug" },
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
@@ -23,23 +59,15 @@
             "maximum": 255,
             "description": "Second octet of the site's /16 within 10.0.0.0/8."
           },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100
-          },
-          "slug": {
-            "type": "string",
-            "pattern": "^[a-z][a-z0-9-]{1,49}$"
-          },
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "slug": { "$ref": "#/$defs/slug" },
+          "region": { "$ref": "#/$defs/slug" },
           "prefix": {
             "type": "string",
             "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])/(?:[0-9]|[1-2][0-9]|3[0-2])$"
           },
-          "description": {
-            "type": "string",
-            "maxLength": 200
-          },
+          "timezone": { "type": "string" },
+          "description": { "type": "string", "maxLength": 200 },
           "status": {
             "enum": ["active", "planned", "staging", "decommissioning", "retired"]
           }

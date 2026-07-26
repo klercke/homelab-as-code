@@ -3,11 +3,26 @@
 # Each site owns one /16 out of 10.0.0.0/8, indexed by site_index.
 # All string values are quoted deliberately: see README.md.
 
+regions:
+  usa:
+    name: "United States"
+    depth: 0
+  new-york:
+    name: "New York"
+    parent: "usa"
+    depth: 1
+  rochester:
+    name: "Rochester"
+    parent: "new-york"
+    depth: 2
+
 sites:
   home:
     site_index: 0
     name: "Home"
     slug: "hme"
+    region: "rochester"
+    timezone: "America/New_York"
     prefix: "10.0.0.0/16"
     description: "Primary residence"
     status: "active"

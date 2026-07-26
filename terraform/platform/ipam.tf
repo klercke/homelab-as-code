@@ -1,24 +1,23 @@
-resource "netbox_site" "this" {
-  for_each = local.sites
-  name     = each.value.name
-  slug     = each.value.slug
-  status   = each.value.status
-}
-
 resource "netbox_vlan" "this" {
   for_each = local.vlans
   name     = each.value.name
   vid      = each.value.id
-  site_id  = netbox_site.this[each.value.site].id
-  status   = each.value.status == "active" ? "active" : "reserved"
+  group_id = netbox_vlan_group.site[each.value.site].id
+  status   = each.value.status
+  role_id  = netbox_ipam_role.fns[each.value.fns].id
+
+  lifecycle {
+    ignore_changes = [site_id] # Inherited from VLAN Group
+  }
 }
 
 resource "netbox_prefix" "this" {
   for_each = local.vlans
   prefix   = each.value.prefix
-  status   = "active"
+  status   = each.value.status
   vlan_id  = netbox_vlan.this[each.key].id
   site_id  = netbox_site.this[each.value.site].id
+  role_id  = netbox_ipam_role.fns[each.value.fns].id
 }
 
 resource "netbox_tag" "hlac" {
@@ -151,10 +150,8 @@ resource "netbox_vlan_group" "site" {
   scope_type = "dcim.site"
   scope_id   = netbox_site.this[each.key].id
 
-  vid_ranges = [[
-    min([for _, v in module.registry.vlans : v.id if v.site == each.key]...),
-    max([for _, v in module.registry.vlans : v.id if v.site == each.key]...),
-  ]]
+  # Allow use of the full 802.1Q range
+  vid_ranges = [[1, 4094]]
 }
 
 resource "netbox_service" "this" {
@@ -175,7 +172,7 @@ resource "netbox_virtual_disk" "this" {
 }
 
 resource "netbox_ipam_role" "fns" {
-  for_each = toset([for _, v in module.registry.vlans : v.fns])
-  name     = each.value
-  slug     = each.value
+  for_each = local.vlans
+  name     = each.value.name
+  slug     = each.value.fns
 }

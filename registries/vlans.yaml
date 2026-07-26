@@ -25,7 +25,20 @@
 #
 # All string values are quoted deliberately: see README.md.
 
+
 vlans:
+  legacy:
+    id: 1
+    site: "home"
+    fns: "legacy"
+    name: "Legacy LAN"
+    prefix: "10.10.10.0/24"
+    gateway: "10.10.10.1"
+    description: "Untagged. Decommissioning; DHCP still served by OPNsense and therefore out of scope."
+    status: "deprecated"
+    dhcp:
+      enabled: false
+
   clients:
     id: 110
     site: "home"

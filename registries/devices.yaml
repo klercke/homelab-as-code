@@ -1,0 +1,243 @@
+---
+# ProtoNet physical device registry.
+#
+# Device types marked `library: true` exist in netbox-community/devicetype-library
+#
+# All string values are quoted deliberately: see README.md.
+
+locations:
+  basement:
+    site: "home"
+    name: "Basement"
+
+racks:
+  rack01:
+    site: "home"
+    location: "basement"
+    name: "Rack 01"
+    u_height: 32
+    form_factor: "4-post-frame"
+    desc_units: false
+
+device_roles:
+  firewall:
+    name: "Firewall"
+    color: "f44336"  # #f44336
+  switch:
+    name: "Switch"
+    color: "2196f3"  # #2196f3
+  hypervisor:
+    name: "Hypervisor"
+    color: "9c27b0"  # #9c27b0
+  storage:
+    name: "Storage"
+    color: "ff9800"  # #ff9800
+  ups:
+    name: "UPS"
+    color: "4caf50"  # #4caf50
+  access-point:
+    name: "Access Point"
+    color: "00bcd4"  # #00bcd4
+  patch-panel:
+    name: "Patch Panel"
+    color: "9e9e9e"  # #9e9e9e
+  passive:
+    name: "Passive"
+    color: "607d8b"  # #607db8
+  shelf:
+    name: "Shelf"
+    color: "795548"  # #795548
+  sbc:
+    name: "Single Board Computer"
+    color: "e91e63"  # #e91e63
+
+device_types:
+  protectli-fw4b:
+    manufacturer: "Protectli"
+    model: "FW4B"
+    u_height: 1
+    full_depth: false
+    library: false
+
+  mikrotik-crs354:
+    manufacturer: "MikroTik"
+    model: "CRS354-48G-4S+2Q+RM"
+    u_height: 1
+    full_depth: false
+    library: true
+
+  generic-patch-panel-24:
+    manufacturer: "Generic"
+    model: "24-port Copper Patch Panel"
+    u_height: 1
+    full_depth: false
+    library: true
+
+  datto-dsw100-24p-4x:
+    manufacturer: "Datto"
+    model: "DSW100-24P-4X"
+    u_height: 1
+    full_depth: false
+    library: true
+
+  pi-shelf-4bay:
+    manufacturer: "Generic"
+    model: "4-Bay SBC Shelf"
+    u_height: 1
+    full_depth: false
+    library: false
+    subdevice_role: "parent"
+    bays: 4
+
+  raspberry-pi-4b:
+    manufacturer: "Raspberry Pi"
+    model: "Raspberry Pi 4 Model B"
+    u_height: 0
+    full_depth: false
+    library: true
+    subdevice_role: "child"
+
+  generic-storage-drawer-4u:
+    manufacturer: "Generic"
+    model: "Storage Drawer 4U"
+    u_height: 4
+    full_depth: true
+    library: true
+
+  rosewill-rsv-r4100u:
+    manufacturer: "Rosewill"
+    model: "RSV-R4100U"
+    u_height: 4
+    full_depth: true
+    library: false
+
+  hyve-zeus:
+    manufacturer: "Hyve Solutions"
+    model: "Zeus"
+    u_height: 1
+    full_depth: true
+    library: false
+
+  datto-siris-s4p10:
+    manufacturer: "Datto"
+    model: "Siris S4P10"
+    u_height: 1
+    full_depth: true
+    library: false
+
+  liebert-gxt4-1000rt120:
+    manufacturer: "Vertiv"
+    model: "Liebert GXT4-1000RT120"
+    # Nominally 2U, but mounts poorly and blocks the unit above it
+    u_height: 3
+    full_depth: true
+    library: false
+
+  datto-ap840e:
+    manufacturer: "Datto"
+    model: "AP840E"
+    u_height: 0
+    full_depth: false
+    library: true
+
+devices:
+  opnsense01:
+    device_type: "protectli-fw4b"
+    role: "firewall"
+    site: "home"
+    rack: "rack01"
+    position: 32
+    mgmt_ip: "10.10.10.1"
+    description: "OPNsense firewall and router. Sits on a 1U shelf."
+
+  sw01:
+    device_type: "mikrotik-crs354"
+    role: "switch"
+    site: "home"
+    rack: "rack01"
+    position: 31
+    mgmt_ip: "10.0.60.11"
+    description: "Core switch."
+
+  patch01:
+    device_type: "generic-patch-panel-24"
+    role: "patch-panel"
+    site: "home"
+    rack: "rack01"
+    position: 30
+    description: "24-port copper patch panel."
+
+  sw02:
+    device_type: "datto-dsw100-24p-4x"
+    role: "switch"
+    site: "home"
+    rack: "rack01"
+    position: 29
+    status: "decommissioning"
+    description: "Legacy Datto E24 switch. Being decommissioned."
+
+  shelf01:
+    device_type: "pi-shelf-4bay"
+    role: "shelf"
+    site: "home"
+    rack: "rack01"
+    position: 28
+    description: "Four-bay Pi shelf."
+
+  drawer01:
+    device_type: "generic-storage-drawer-4u"
+    role: "passive"
+    site: "home"
+    rack: "rack01"
+    position: 16
+    description: "Storage drawer."
+
+  pve01:
+    device_type: "rosewill-rsv-r4100u"
+    role: "hypervisor"
+    site: "home"
+    rack: "rack01"
+    position: 6
+    mgmt_ip: "10.0.60.20"
+    description: "Primary Proxmox VE host. Custom build."
+
+  jotunheim:
+    device_type: "hyve-zeus"
+    role: "hypervisor"
+    site: "home"
+    rack: "rack01"
+    position: 5
+    mgmt_ip: "10.10.10.58"
+    description: "Secondary Proxmox VE host, runs PBS and PDM."
+
+  nas01:
+    device_type: "datto-siris-s4p10"
+    role: "storage"
+    site: "home"
+    rack: "rack01"
+    position: 4
+    mgmt_ip: "10.0.20.50"
+    description: "Recycled Siris running TrueNAS Core."
+
+  ups01:
+    device_type: "liebert-gxt4-1000rt120"
+    role: "ups"
+    site: "home"
+    rack: "rack01"
+    position: 1
+    description: "Emerson Liebert GXT4 1000VA. Nominally 2U, mounted horribly."
+
+  ap01:
+    device_type: "datto-ap840e"
+    role: "access-point"
+    site: "home"
+    description: "Primary AP."
+
+  pi01:
+    device_type: "raspberry-pi-4b"
+    role: "sbc"
+    site: "home"
+    status: "planned"
+    parent: "shelf01"
+    bay: 1
+    description: "PoE hat, YubiKey, and TRNG. Intended as an offline CA. Not yet configured or networked."

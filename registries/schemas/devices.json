@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://protonet.internal/schemas/devices.json",
+  "title": "ProtoNet physical device registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["racks", "device_roles", "device_types", "devices"],
+
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,49}$"
+    },
+    "ipv4": {
+      "type": "string",
+      "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{6}$"
+    }
+  },
+
+  "properties": {
+    "racks": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["site", "name", "u_height"],
+        "properties": {
+          "site": { "$ref": "#/$defs/slug" },
+          "name": { "type": "string", "minLength": 1 },
+          "u_height": { "type": "integer", "minimum": 1, "maximum": 100 },
+          "location": { "$ref": "#/$defs/slug" },
+          "form_factor": {
+            "enum": [
+              "2-post-frame", "4-post-frame", "4-post-cabinet",
+              "wall-frame", "wall-cabinet"
+            ]
+          },
+          "desc_units": {
+            "type": "boolean",
+            "description": "True if U1 is at the top."
+          }
+        }
+      }
+    },
+
+    "locations": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["site", "name"],
+        "properties": {
+          "site": { "$ref": "#/$defs/slug" },
+          "name": { "type": "string", "minLength": 1 },
+          "parent": { "$ref": "#/$defs/slug" }
+        }
+      }
+    },
+
+    "device_roles": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "color"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "color": { "$ref": "#/$defs/color" }
+        }
+      }
+    },
+
+    "device_types": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["manufacturer", "model", "u_height", "full_depth"],
+        "properties": {
+          "manufacturer": { "type": "string", "minLength": 1 },
+          "model": { "type": "string", "minLength": 1 },
+          "u_height": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 50,
+            "description": "Units actually occupied, which may exceed the nominal spec."
+          },
+          "full_depth": { "type": "boolean" },
+          "library": {
+            "type": "boolean",
+            "description": "Present in netbox-community/devicetype-library, so an image could be attached."
+          },
+          "subdevice_role": {
+            "enum": ["parent", "child"],
+            "description": "Parent types host device bays; child types install into them."
+          },
+          "bays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64,
+            "description": "Number of device bays. Only valid on parent types."
+          }
+        },
+        "allOf": [
+          {
+            "if": { "required": ["bays"] },
+            "then": {
+              "properties": { "subdevice_role": { "const": "parent" } },
+              "required": ["subdevice_role"]
+            }
+          },
+          {
+            "if": {
+              "properties": { "subdevice_role": { "const": "child" } },
+              "required": ["subdevice_role"]
+            },
+            "then": { "properties": { "u_height": { "const": 0 } } }
+          }
+        ]
+      }
+    },
+
+    "devices": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["device_type", "role", "site"],
+        "properties": {
+          "device_type": { "$ref": "#/$defs/slug" },
+          "role": { "$ref": "#/$defs/slug" },
+          "site": { "$ref": "#/$defs/slug" },
+          "rack": { "$ref": "#/$defs/slug" },
+          "position": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Lowest U occupied."
+          },
+          "face": { "enum": ["front", "rear"] },
+          "status": {
+            "enum": ["offline", "active", "planned", "staged", "failed", "inventory", "decommissioning"]
+          },
+          "mgmt_ip": { "$ref": "#/$defs/ipv4" },
+          "serial": { "type": "string" },
+          "parent": {
+            "$ref": "#/$defs/slug",
+            "description": "Parent device, for children installed in a bay."
+          },
+          "bay": { "type": "integer", "minimum": 1, "maximum": 64 },
+          "description": { "type": "string", "maxLength": 200 }
+        },
+        "allOf": [
+          {
+            "comment": "A racked device needs a position; a bay-installed device must not have one.",
+            "if": { "required": ["rack"] },
+            "then": { "required": ["position"] }
+          },
+          {
+            "if": { "required": ["parent"] },
+            "then": {
+              "required": ["bay"],
+              "not": { "anyOf": [{ "required": ["rack"] }, { "required": ["position"] }] }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
