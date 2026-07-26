@@ -47,3 +47,15 @@ output "host_records" {
   description = "Hostname -> { fqdn, ipv4, ptr_name, rev_zone } for DNS and documentation."
   value       = local.host_records
 }
+
+output "racks" { value = local.racks }
+output "locations" { value = local.locations }
+output "regions" { value = local.regions }
+output "device_roles" { value = local.device_roles }
+output "device_types" { value = local.device_types }
+output "devices" { value = local.devices }
+
+output "device_mgmt_cidr" {
+  description = "Device name -> management IP with prefix length, resolved against the VLAN registry."
+  value       = local.device_mgmt_cidr
+}

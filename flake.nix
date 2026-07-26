@@ -67,6 +67,24 @@
             fi
           '';
         };
+
+        validateRegistries = pkgs.writeShellApplication {
+          name = "validate-registries";
+          runtimeInputs = [pkgs.check-jsonschema];
+          text = ''
+            fail=0
+            for f in "$@"; do
+              schema="registries/schemas/$(basename "$f" .yaml).json"
+              if [ ! -f "$schema" ]; then
+                echo "no schema for $f (expected $schema)" >&2
+                fail=1
+                continue
+              fi
+              check-jsonschema --schemafile "$schema" "$f" || fail=1
+            done
+            exit "$fail"
+          '';
+        };
       in {
         pre-commit-check = inputs.git-hooks.lib.${system}.run {
           package = nixpkgs.legacyPackages.${system}.prek;
@@ -115,6 +133,15 @@
               enable = true;
               files = "^registries/.*\\.ya?ml$";
             };
+
+            validate-registries = {
+              enable = true;
+              name = "validate registries against schemas";
+              entry = pkgs.lib.getExe validateRegistries;
+              language = "system";
+              files = "^registries/[^/]+\\.ya?ml$";
+              pass_filenames = true;
+            };
           };
           rawConfig = {
             repos = [
@@ -126,17 +153,6 @@
                     "id" = "terraform_docs";
                     "name" = "Terraform docs";
                     "require_serial" = true;
-                  }
-                ];
-              }
-              {
-                "repo" = "https://github.com/python-jsonschema/check-jsonschema";
-                "rev" = "0.33.0";
-                "hooks" = [
-                  {
-                    "id" = "check-jsonschema";
-                    "files" = "^registries/vlans\.yaml$";
-                    "args" = ["--schemafile" "registries/schemas/vlans.json"];
                   }
                 ];
               }
@@ -163,6 +179,7 @@
               pkgs.age
               pkgs.openssl
               pkgs.ansible
+              pkgs.check-jsonschema
             ]
             ++ enabledPackages;
         };

@@ -3,8 +3,6 @@ locals {
   domain      = "protonet.internal."
   nameservers = ["ns1.${local.domain}", "ns2.${local.domain}"]
 
-  env = "prd" # Everything is prod at this scope for now
-
   # From the host, get the VLAN. From the VLAN, get the site slug for the A record
   host_site = {
     for name, h in local.hosts :
@@ -21,7 +19,7 @@ locals {
   host_records = {
     for name, h in local.hosts :
     name => {
-      fqdn     = "${name}.${local.env}.${local.sites[local.host_site[name]].slug}.${local.domain}"
+      fqdn     = "${name}.${var.env}.${local.sites[local.host_site[name]].slug}.${local.domain}"
       ipv4     = cidrhost(local.vlans[h.vlan].prefix, h.host_octet)
       ptr_name = "${join(".", reverse(split(".", cidrhost(local.vlans[h.vlan].prefix, h.host_octet))))}.in-addr.arpa."
       rev_zone = local.reverse_zones[h.vlan]

@@ -61,7 +61,7 @@
             "maxLength": 200
           },
           "status": {
-            "enum": ["active", "reserved", "deprecated", "planned"]
+            "enum": ["active", "reserved", "deprecated"]
           },
           "dhcp": {
             "type": "object",

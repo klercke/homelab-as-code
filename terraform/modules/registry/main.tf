@@ -1,9 +1,17 @@
 locals {
   _base = "${path.module}/${var.registry_path}"
 
-  sites = yamldecode(file("${local._base}/sites.yaml")).sites
-  vlans = yamldecode(file("${local._base}/vlans.yaml")).vlans
-  hosts = yamldecode(file("${local._base}/hosts.yaml")).hosts
+  _devices = yamldecode(file("${local._base}/devices.yaml"))
+
+  sites        = yamldecode(file("${local._base}/sites.yaml")).sites
+  vlans        = yamldecode(file("${local._base}/vlans.yaml")).vlans
+  hosts        = yamldecode(file("${local._base}/hosts.yaml")).hosts
+  regions      = try(yamldecode(file("${local._base}/sites.yaml")).regions, {})
+  racks        = local._devices.racks
+  locations    = local._devices.locations
+  device_roles = local._devices.device_roles
+  device_types = local._devices.device_types
+  devices      = local._devices.devices
 
   host_site = {
     for name, h in local.hosts : name => local.vlans[h.vlan].site
@@ -48,5 +56,15 @@ locals {
       ptr_name = "${join(".", reverse(split(".", local.host_ipv4[name])))}.in-addr.arpa."
       rev_zone = local.reverse_zones[h.vlan]
     }
+  }
+
+  device_mgmt_cidr = {
+    for k, d in local.devices :
+    k => "${d.mgmt_ip}/${one([
+      for _, v in local.vlans :
+      split("/", v.prefix)[1]
+      if cidrhost(v.prefix, 0) == cidrhost("${d.mgmt_ip}/${split("/", v.prefix)[1]}", 0)
+    ])}"
+    if try(d.mgmt_ip, null) != null
   }
 }
