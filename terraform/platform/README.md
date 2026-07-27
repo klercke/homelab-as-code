@@ -8,6 +8,7 @@ This module contains services that build on the substrate, but are still upstrea
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.10 |
+| <a name="requirement_kea"></a> [kea](#requirement\_kea) | 0.0.3 |
 | <a name="requirement_netbox"></a> [netbox](#requirement\_netbox) | ~> 5.7 |
 | <a name="requirement_powerdns"></a> [powerdns](#requirement\_powerdns) | ~> 1.5 |
 
@@ -15,6 +16,7 @@ This module contains services that build on the substrate, but are still upstrea
 
 | Name | Version |
 |------|---------|
+| <a name="provider_kea"></a> [kea](#provider\_kea) | 0.0.3 |
 | <a name="provider_netbox"></a> [netbox](#provider\_netbox) | 5.7.0 |
 | <a name="provider_powerdns"></a> [powerdns](#provider\_powerdns) | 1.5.0 |
 
@@ -28,12 +30,14 @@ This module contains services that build on the substrate, but are still upstrea
 
 | Name | Type |
 |------|------|
+| [kea_dhcp4_reservation.this](https://registry.terraform.io/providers/wfdewith/kea/0.0.3/docs/resources/dhcp4_reservation) | resource |
 | [netbox_aggregate.private](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/aggregate) | resource |
 | [netbox_cluster.protonet](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/cluster) | resource |
 | [netbox_cluster_type.pve](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/cluster_type) | resource |
 | [netbox_device.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device) | resource |
 | [netbox_device_bay.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_bay) | resource |
 | [netbox_device_interface.mgmt](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_interface) | resource |
+| [netbox_device_interface_primary_mac_address.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_interface_primary_mac_address) | resource |
 | [netbox_device_primary_ip.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_primary_ip) | resource |
 | [netbox_device_role.physical](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_role) | resource |
 | [netbox_device_role.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_role) | resource |
@@ -44,6 +48,7 @@ This module contains services that build on the substrate, but are still upstrea
 | [netbox_ip_range.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_range) | resource |
 | [netbox_ipam_role.fns](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ipam_role) | resource |
 | [netbox_location.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/location) | resource |
+| [netbox_mac_address.device](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/mac_address) | resource |
 | [netbox_mac_address.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/mac_address) | resource |
 | [netbox_manufacturer.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/manufacturer) | resource |
 | [netbox_platform.rocky9](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/platform) | resource |

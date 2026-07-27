@@ -59,3 +59,18 @@ output "device_mgmt_cidr" {
   description = "Device name -> management IP with prefix length, resolved against the VLAN registry."
   value       = local.device_mgmt_cidr
 }
+
+output "device_vlan" {
+  description = "Device name -> VLAN key containing its management address."
+  value       = local.device_vlan
+}
+
+output "reservations" {
+  description = "Device name -> Kea DHCP reservation. Only devices with a MAC."
+  value       = local.reservations
+}
+
+output "device_records" {
+  description = "Device name -> { fqdn, ipv4, ptr_name, rev_zone }."
+  value       = local.device_records
+}

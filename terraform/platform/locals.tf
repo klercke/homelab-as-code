@@ -60,4 +60,8 @@ locals {
       }
     } if try(v.dhcp.enabled, false)
   ]...)
+
+  reserved_devices = module.registry.reservations
+
+  dns_records = merge(module.registry.host_records, module.registry.device_records)
 }

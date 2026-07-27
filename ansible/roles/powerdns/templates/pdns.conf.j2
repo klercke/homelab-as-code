@@ -29,3 +29,6 @@ webserver-port=8081
 webserver-allow-from={{ pdns_api_allowed | join(',') }}
 
 version-string=anonymous
+
+# Set default SOA settings
+default-soa-content = ns1.protonet.internal hostmaster.protonet.internal 0 10800 3600 604800 300

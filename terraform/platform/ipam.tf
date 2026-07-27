@@ -176,3 +176,17 @@ resource "netbox_ipam_role" "fns" {
   name     = each.value.name
   slug     = each.value.fns
 }
+
+resource "netbox_mac_address" "device" {
+  for_each = local.reserved_devices
+
+  mac_address         = upper(each.value.mac)
+  device_interface_id = netbox_device_interface.mgmt[each.key].id
+}
+
+resource "netbox_device_interface_primary_mac_address" "this" {
+  for_each = local.reserved_devices
+
+  interface_id   = netbox_device_interface.mgmt[each.key].id
+  mac_address_id = netbox_mac_address.device[each.key].id
+}

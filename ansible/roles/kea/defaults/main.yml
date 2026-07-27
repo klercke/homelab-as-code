@@ -17,7 +17,7 @@ kea_api_user: "kea-ha"
 kea_api_password: "{{ kea_ca_password }}"
 kea_api_secret_file: kea-api-secret
 kea_api_static_allowed:
-  - 10.0.10.100/32
+  - 10.0.10.213/32
 
 # Will be built from inventory
 kea_resolvers: []

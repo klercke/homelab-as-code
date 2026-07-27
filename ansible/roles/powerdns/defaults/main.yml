@@ -9,4 +9,4 @@ pdns_query_cache_ttl: 30
 
 # Allow my desktop to write to the API (for Terraform)
 pdns_api_static_allowed:
-  - 10.0.10.100/32
+  - 10.0.10.213/32
