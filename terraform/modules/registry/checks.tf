@@ -70,3 +70,10 @@ check "dhcp_dynamic_below_reservations" {
     error_message = "A dynamic pool overlaps its reservation range in vlans.yaml."
   }
 }
+
+check "no_name_collisions" {
+  assert {
+    condition     = length(setintersection(keys(local.hosts), keys(local.devices))) == 0
+    error_message = "A name appears in both hosts.yaml and devices.yaml; their DNS records would collide."
+  }
+}

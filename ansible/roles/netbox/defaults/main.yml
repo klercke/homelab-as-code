@@ -12,4 +12,6 @@ netbox_redis_port: 6379
 
 netbox_allowed_hosts:
   - netbox01.protonet.internal
+  - netbox01.prd.hme.protonet.internal
+  - netbox01
   - 10.0.20.11

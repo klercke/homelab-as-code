@@ -45,12 +45,12 @@ vlans:
     fns: "clients"
     name: "Clients"
     prefix: "10.0.10.0/24"
-    gateway: "10.0.20.1"
+    gateway: "10.0.10.1"
     description: "Non-guest client devices"
     status: "active"
     dhcp:
       enabled: true
-      dynamic_start: "10.0.10.101"  # For legacy reasons, THOR is 10.0.10.100
+      dynamic_start: "10.0.10.100"
       dynamic_end: "10.0.10.199"
       reservation_start: "10.0.10.200"
       reservation_end: "10.0.10.249"

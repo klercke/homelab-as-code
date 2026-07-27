@@ -37,3 +37,25 @@ provider "registry.opentofu.org/pan-net/powerdns" {
     "zh:e02960d79ccfeeaea64c07aa1ad88cdd3688f49b670c9b607ea188283cd519d6",
   ]
 }
+
+provider "registry.opentofu.org/wfdewith/kea" {
+  version     = "0.0.3"
+  constraints = "0.0.3"
+  hashes = [
+    "h1:ZoNdKBZbVGi6PzL/48pI4IIdeQBLwPkSit6o7xB9gos=",
+    "zh:054e2227953b90b8156e415d9f8c51ebd52a417df78d195598b7c914a119fedc",
+    "zh:061e6be1bddecf74c7140fe6c0e21a789a6a5acbaa65dc6baade3e5550bdfffc",
+    "zh:5165b776370b8fb9c37da273691dd6cb7ee7e99d7e467c93e2047f0e1bf8b164",
+    "zh:56c652fe1d50832f0b62c48ff2658b92c6602f61c5055d7ae17cea7b5eaef16f",
+    "zh:7332c8ec3a538cf8db37136ba76ee1eaa2125abf6a9a2c4be4dc06a0e9f3f4fd",
+    "zh:7748c8b4c6b9d3f53723c86b3866d30665e5418441b01f88177dc77fd2e27ebd",
+    "zh:7ec91ab05f1fa6af4988cf44af816dcddeafc8502536dede824bb727fe19858b",
+    "zh:83f1fc3f74b0f498624e4a65fede7406a1946ef06e8b0af9b12a67e8ecad4414",
+    "zh:890df766e9b839623b1f0437355032a3c006226a6c200cd911e15ee1a9014e9f",
+    "zh:9bc12a5c6e4533dbda9e34254d9caca60568836ef6f850721e99697136c22bda",
+    "zh:cd615c052608d1a02207d749b583c6c9d78a5d2e7b586202b67fcc58053b4e64",
+    "zh:d30102dd660db2af66ce7f519e1ca1a0d40fb96f07d75de022dec0ee0f41b493",
+    "zh:dffa3d5d7175e3419c436ae800009f32bf201b26f77dc49da41c4916e331f7c9",
+    "zh:e5d4e67f6aa50dd004598b9d3ff6e7ecc5f3cf35aab82841f132800537fcb6b0",
+  ]
+}

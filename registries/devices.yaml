@@ -50,6 +50,9 @@ device_roles:
   sbc:
     name: "Single Board Computer"
     color: "e91e63"  # #e91e63
+  workstation:
+    name: "Workstation"
+    color: "3f51b5"  # #3f51b5
 
 device_types:
   protectli-fw4b:
@@ -140,14 +143,21 @@ device_types:
     full_depth: false
     library: true
 
+  generic-workstation:
+    manufacturer: "Generic"
+    model: "Desktop Workstation"
+    u_height: 0
+    full_depth: false
+    library: false
+
 devices:
-  opnsense01:
+  fw01:
     device_type: "protectli-fw4b"
     role: "firewall"
     site: "home"
     rack: "rack01"
     position: 32
-    mgmt_ip: "10.10.10.1"
+    mgmt_ip: "10.0.60.1"
     description: "OPNsense firewall and router. Sits on a 1U shelf."
 
   sw01:
@@ -208,6 +218,7 @@ devices:
     rack: "rack01"
     position: 5
     mgmt_ip: "10.10.10.58"
+    status: "decommissioning"
     description: "Secondary Proxmox VE host, runs PBS and PDM."
 
   nas01:
@@ -217,6 +228,7 @@ devices:
     rack: "rack01"
     position: 4
     mgmt_ip: "10.0.20.50"
+    mac: "d0:50:99:df:03:eb"
     description: "Recycled Siris running TrueNAS Core."
 
   ups01:
@@ -227,10 +239,11 @@ devices:
     position: 1
     description: "Emerson Liebert GXT4 1000VA. Nominally 2U, mounted horribly."
 
-  ap01:
+  ap02:
     device_type: "datto-ap840e"
     role: "access-point"
     site: "home"
+    mgmt_ip: "10.0.60.22"
     description: "Primary AP."
 
   pi01:
@@ -241,3 +254,11 @@ devices:
     parent: "shelf01"
     bay: 1
     description: "PoE hat, YubiKey, and TRNG. Intended as an offline CA. Not yet configured or networked."
+
+  thor:
+    device_type: "generic-workstation"
+    role: "workstation"
+    site: "home"
+    mgmt_ip: "10.0.10.213"
+    mac: "1a:4b:24:a0:f1:bf"
+    description: "Primary desktop. Reserved for for use in firewall rules."

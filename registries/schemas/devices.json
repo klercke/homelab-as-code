@@ -155,6 +155,11 @@
             "enum": ["offline", "active", "planned", "staged", "failed", "inventory", "decommissioning"]
           },
           "mgmt_ip": { "$ref": "#/$defs/ipv4" },
+          "mac": {
+            "type": "string",
+            "pattern": "^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$",
+            "description": "Present means Kea reserves this address; absent means the device is statically configured."
+          },
           "serial": { "type": "string" },
           "parent": {
             "$ref": "#/$defs/slug",
@@ -175,6 +180,10 @@
               "required": ["bay"],
               "not": { "anyOf": [{ "required": ["rack"] }, { "required": ["position"] }] }
             }
+          },
+          {
+            "if": { "required": ["mac"] },
+            "then": { "required": ["mgmt_ip"] }
           }
         ]
       }

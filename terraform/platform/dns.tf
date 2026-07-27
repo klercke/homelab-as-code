@@ -52,7 +52,7 @@ resource "powerdns_zone" "reverse" {
 
 # A records for every host
 resource "powerdns_record" "a" {
-  for_each = local.host_records
+  for_each = local.dns_records
 
   zone    = powerdns_zone.forward.name
   name    = each.value.fqdn
@@ -63,7 +63,7 @@ resource "powerdns_record" "a" {
 
 # PTR records for every host
 resource "powerdns_record" "ptr" {
-  for_each = local.host_records
+  for_each = local.dns_records
 
   zone    = powerdns_zone.reverse[each.value.rev_zone].name
   name    = each.value.ptr_name

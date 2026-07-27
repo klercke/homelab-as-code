@@ -11,6 +11,11 @@ terraform {
       source  = "pan-net/powerdns"
       version = "~> 1.5"
     }
+
+    kea = {
+      source  = "wfdewith/kea"
+      version = "0.0.3"
+    }
   }
 
   backend "http" {

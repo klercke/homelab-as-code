@@ -37,8 +37,10 @@ No resources.
 | Name | Description |
 |------|-------------|
 | <a name="output_device_mgmt_cidr"></a> [device\_mgmt\_cidr](#output\_device\_mgmt\_cidr) | Device name -> management IP with prefix length, resolved against the VLAN registry. |
+| <a name="output_device_records"></a> [device\_records](#output\_device\_records) | Device name -> { fqdn, ipv4, ptr\_name, rev\_zone }. |
 | <a name="output_device_roles"></a> [device\_roles](#output\_device\_roles) | n/a |
 | <a name="output_device_types"></a> [device\_types](#output\_device\_types) | n/a |
+| <a name="output_device_vlan"></a> [device\_vlan](#output\_device\_vlan) | Device name -> VLAN key containing its management address. |
 | <a name="output_devices"></a> [devices](#output\_devices) | n/a |
 | <a name="output_host_cidr"></a> [host\_cidr](#output\_host\_cidr) | Hostname -> IPv4 address with prefix length. |
 | <a name="output_host_ipv4"></a> [host\_ipv4](#output\_host\_ipv4) | Hostname -> bare IPv4 address. |
@@ -50,6 +52,7 @@ No resources.
 | <a name="output_macs"></a> [macs](#output\_macs) | Hostname -> deterministic locally-administered MAC. |
 | <a name="output_racks"></a> [racks](#output\_racks) | n/a |
 | <a name="output_regions"></a> [regions](#output\_regions) | n/a |
+| <a name="output_reservations"></a> [reservations](#output\_reservations) | Device name -> Kea DHCP reservation. Only devices with a MAC. |
 | <a name="output_reverse_zones"></a> [reverse\_zones](#output\_reverse\_zones) | VLAN key -> in-addr.arpa zone name, with trailing dot. |
 | <a name="output_sites"></a> [sites](#output\_sites) | Raw sites registry, keyed by site name. |
 | <a name="output_vlans"></a> [vlans](#output\_vlans) | Raw VLAN registry, keyed by VLAN name. |

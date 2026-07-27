@@ -58,13 +58,38 @@ locals {
     }
   }
 
-  device_mgmt_cidr = {
+  device_vlan = {
     for k, d in local.devices :
-    k => "${d.mgmt_ip}/${one([
-      for _, v in local.vlans :
-      split("/", v.prefix)[1]
+    k => one([
+      for vk, v in local.vlans : vk
       if cidrhost(v.prefix, 0) == cidrhost("${d.mgmt_ip}/${split("/", v.prefix)[1]}", 0)
-    ])}"
+    ])
     if try(d.mgmt_ip, null) != null
+  }
+
+  device_mgmt_cidr = {
+    for k, vk in local.device_vlan :
+    k => "${local.devices[k].mgmt_ip}/${split("/", local.vlans[vk].prefix)[1]}"
+  }
+
+  # Devices with MACs specified get reservations
+  reservations = {
+    for k, d in local.devices : k => {
+      hostname  = k
+      mac       = lower(d.mac)
+      ip        = d.mgmt_ip
+      subnet_id = local.vlans[local.device_vlan[k]].id
+    } if try(d.mac, null) != null
+  }
+
+  # Devices with a management address get DNS records, just like VMs
+  device_records = {
+    for k, vk in local.device_vlan :
+    k => {
+      fqdn     = "${k}.${var.env}.${local.sites[local.devices[k].site].slug}.${var.domain}"
+      ipv4     = local.devices[k].mgmt_ip
+      ptr_name = "${join(".", reverse(split(".", local.devices[k].mgmt_ip)))}.in-addr.arpa."
+      rev_zone = local.reverse_zones[vk]
+    }
   }
 }
