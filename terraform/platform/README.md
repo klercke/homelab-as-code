@@ -60,7 +60,8 @@ This module contains services that build on the substrate, but are still upstrea
 | [netbox_region.l1](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/region) | resource |
 | [netbox_region.l2](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/region) | resource |
 | [netbox_rir.rfc1918](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/rir) | resource |
-| [netbox_service.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/service) | resource |
+| [netbox_service.device](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/service) | resource |
+| [netbox_service.vm](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/service) | resource |
 | [netbox_site.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/site) | resource |
 | [netbox_tag.crit](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/tag) | resource |
 | [netbox_tag.hlac](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/tag) | resource |
@@ -72,7 +73,10 @@ This module contains services that build on the substrate, but are still upstrea
 | [powerdns_record.a](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_record.ns_alias](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_record.ptr](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
+| [powerdns_record.service](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
+| [powerdns_zone.doh_canary](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
 | [powerdns_zone.forward](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
+| [powerdns_zone.public_internal](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
 | [powerdns_zone.reverse](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
 
 ## Inputs

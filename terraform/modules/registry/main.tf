@@ -1,17 +1,21 @@
 locals {
-  _base = "${path.module}/${var.registry_path}"
+  _base     = "${path.module}/${var.registry_path}"
+  _devices  = yamldecode(file("${local._base}/devices.yaml"))
+  _services = yamldecode(file("${local._base}/services.yaml"))
 
-  _devices = yamldecode(file("${local._base}/devices.yaml"))
+  sites   = yamldecode(file("${local._base}/sites.yaml")).sites
+  vlans   = yamldecode(file("${local._base}/vlans.yaml")).vlans
+  hosts   = yamldecode(file("${local._base}/hosts.yaml")).hosts
+  regions = try(yamldecode(file("${local._base}/sites.yaml")).regions, {})
 
-  sites        = yamldecode(file("${local._base}/sites.yaml")).sites
-  vlans        = yamldecode(file("${local._base}/vlans.yaml")).vlans
-  hosts        = yamldecode(file("${local._base}/hosts.yaml")).hosts
-  regions      = try(yamldecode(file("${local._base}/sites.yaml")).regions, {})
   racks        = local._devices.racks
   locations    = local._devices.locations
   device_roles = local._devices.device_roles
   device_types = local._devices.device_types
   devices      = local._devices.devices
+
+  role_services   = local._services.role_services
+  public_services = local._services.public_services
 
   host_site = {
     for name, h in local.hosts : name => local.vlans[h.vlan].site
@@ -92,4 +96,20 @@ locals {
       rev_zone = local.reverse_zones[vk]
     }
   }
+
+  # Keyed by target/name/protocol: "DNS" exists on both TCP and UDP, so the
+  # protocol has to be part of the key or they collide.
+  vm_services = merge(concat([
+    for hk, h in local.hosts : {
+      for s in try(local.role_services[h.role], []) :
+      "${hk}/${s.name}/${s.protocol}" => merge(s, { target = hk })
+    }
+  ], [{}])...)
+
+  device_services = merge(concat([
+    for dk, d in local.devices : {
+      for s in try(local.role_services[d.role], []) :
+      "${dk}/${s.name}/${s.protocol}" => merge(s, { target = dk })
+    }
+  ], [{}])...)
 }

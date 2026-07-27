@@ -74,3 +74,23 @@ output "device_records" {
   description = "Device name -> { fqdn, ipv4, ptr_name, rev_zone }."
   value       = local.device_records
 }
+
+output "role_services" {
+  description = "Role key -> list of listening services."
+  value       = local.role_services
+}
+
+output "public_services" {
+  description = "User-facing name -> backend host and port, for the reverse proxy."
+  value       = local.public_services
+}
+
+output "vm_services" {
+  description = "Flattened services for virtual machines, keyed target/name/protocol."
+  value       = local.vm_services
+}
+
+output "device_services" {
+  description = "Flattened services for physical devices, keyed target/name/protocol."
+  value       = local.device_services
+}

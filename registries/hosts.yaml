@@ -121,3 +121,15 @@ hosts:
     memory: 2048
     disk: 16
     description: "Valkey. Cache and RQ task queue for NetBox."
+
+  caddy01:
+    vlan: "servers"
+    host_octet: 19
+    layer: "l1"
+    role: "caddy"
+    crit: 2
+    node: "pve01"
+    cores: 2
+    memory: 2048
+    disk: 16
+    description: "Caddy. Reverse proxy for user-facing services."

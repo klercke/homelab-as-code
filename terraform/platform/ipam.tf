@@ -154,13 +154,26 @@ resource "netbox_vlan_group" "site" {
   vid_ranges = [[1, 4094]]
 }
 
-resource "netbox_service" "this" {
-  for_each = local.services
+resource "netbox_service" "vm" {
+  for_each = module.registry.vm_services
 
   name               = each.value.name
-  virtual_machine_id = netbox_virtual_machine.this[each.value.host].id
+  virtual_machine_id = netbox_virtual_machine.this[each.value.target].id
   protocol           = each.value.protocol
   ports              = each.value.ports
+  description        = try(each.value.description, null)
+  tags               = [netbox_tag.hlac.name]
+}
+
+resource "netbox_service" "device" {
+  for_each = module.registry.device_services
+
+  name        = each.value.name
+  device_id   = netbox_device.this[each.value.target].id
+  protocol    = each.value.protocol
+  ports       = each.value.ports
+  description = try(each.value.description, null)
+  tags        = [netbox_tag.hlac.name]
 }
 
 resource "netbox_virtual_disk" "this" {

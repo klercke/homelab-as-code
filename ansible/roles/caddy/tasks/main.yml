@@ -1,0 +1,107 @@
+---
+- name: Create caddy system user
+  ansible.builtin.user:
+    name: caddy
+    system: true
+    shell: /sbin/nologin
+    home: /var/lib/caddy
+    create_home: true
+
+- name: Download Caddy with Cloudflare DNS module
+  ansible.builtin.get_url:
+    url: "{{ caddy_download_url }}"
+    dest: /usr/local/bin/caddy
+    mode: "0755"
+    owner: root
+    group: root
+    checksum: "{{ ('sha256:' + caddy_checksum) if caddy_checksum else omit }}"
+  notify: Restart caddy
+
+# Binds 80 and 443 as a non-root user. The alternative is running as root
+- name: Allow caddy to bind privileged ports
+  community.general.capabilities:
+    path: /usr/local/bin/caddy
+    capability: cap_net_bind_service=+ep
+    state: present
+
+- name: Create config and state directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: caddy
+    group: caddy
+    mode: "0750"
+  loop:
+    - /etc/caddy
+    - /var/lib/caddy
+    - /var/log/caddy
+
+- name: Write Cloudflare credentials
+  ansible.builtin.copy:
+    content: "CF_API_TOKEN={{ cloudflare_api_token }}\n"
+    dest: /etc/caddy/cloudflare.env
+    owner: root
+    group: caddy
+    mode: "0640"
+  no_log: true
+  notify: Restart caddy
+
+- name: Write Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: caddy
+    mode: "0640"
+  notify: Reload caddy
+
+- name: Validate Caddyfile
+  ansible.builtin.command:
+    cmd: /usr/local/bin/caddy validate --config /etc/caddy/Caddyfile
+  become: true
+  become_user: caddy
+  environment:
+    CF_API_TOKEN: "{{ cloudflare_api_token }}"
+  changed_when: false
+  no_log: true
+
+- name: Install systemd unit
+  ansible.builtin.template:
+    src: caddy.service.j2
+    dest: /etc/systemd/system/caddy.service
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Create systemd drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/caddy.service.d
+    state: directory
+    mode: "0755"
+
+- name: Install restart limit drop-in
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/caddy.service.d/10-restart-limits.conf
+    mode: "0644"
+    content: |
+      # A config error should fail fast, not loop. These belong in [Unit].
+      [Unit]
+      StartLimitIntervalSec=60
+      StartLimitBurst=5
+  notify: Reload systemd
+
+- name: Open HTTP and HTTPS
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - http
+    - https
+
+- name: Enable and start caddy
+  ansible.builtin.systemd_service:
+    name: caddy
+    enabled: true
+    state: started
+    daemon_reload: true
