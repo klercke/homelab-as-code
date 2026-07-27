@@ -77,3 +77,25 @@ check "no_name_collisions" {
     error_message = "A name appears in both hosts.yaml and devices.yaml; their DNS records would collide."
   }
 }
+
+check "public_service_backends_exist" {
+  assert {
+    condition = alltrue([
+      for k, s in local.public_services : contains(keys(local.hosts), s.backend)
+    ])
+    error_message = "A public_service in services.yaml references a backend that is not in hosts.yaml."
+  }
+}
+
+check "role_services_reference_real_roles" {
+  assert {
+    condition = length(setsubtract(
+      keys(local.role_services),
+      distinct(concat(
+        [for _, h in local.hosts : h.role],
+        [for _, d in local.devices : d.role]
+      ))
+    )) == 0
+    error_message = "services.yaml defines role_services for a role no host or device uses."
+  }
+}

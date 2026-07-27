@@ -8,10 +8,12 @@ incoming:
 
 recursor:
   forward_zones:
-    - zone: protonet.internal
+{% for zone in recursor_internal_zones %}
+    - zone: {{ zone }}
       forwarders:
 {% for ip in recursor_auth_targets %}
         - {{ ip }}
+{% endfor %}
 {% endfor %}
 {% for zone in recursor_reverse_zones %}
     - zone: {{ zone }}
@@ -24,8 +26,10 @@ recursor:
 dnssec:
   validation: validate
   negative_trustanchors:
-    - name: protonet.internal
-      reason: "internal unsigned zone"
+{% for zone in recursor_internal_zones %}
+    - name: {{ zone }}
+      reason: "internally served, unsigned"
+{% endfor %}
 {% for zone in recursor_reverse_zones %}
     - name: {{ zone }}
       reason: "internal unsigned reverse zone"

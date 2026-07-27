@@ -82,3 +82,27 @@ resource "powerdns_record" "ns_alias" {
   ttl     = 300
   records = [each.value]
 }
+
+resource "powerdns_zone" "public_internal" {
+  name        = "int.ptxe.dev."
+  kind        = "Native"
+  nameservers = ["ns1.protonet.internal.", "ns2.protonet.internal."]
+}
+
+resource "powerdns_record" "service" {
+  for_each = module.registry.public_services
+
+  zone    = powerdns_zone.public_internal.name
+  name    = "${each.key}.int.ptxe.dev."
+  type    = "A"
+  ttl     = 300
+  records = [module.registry.host_records["caddy01"].ipv4]
+}
+
+# Firefox DoH canary
+# https://support.mozilla.org/kb/canary-domain-use-application-dnsnet
+resource "powerdns_zone" "doh_canary" {
+  name        = "use-application-dns.net."
+  kind        = "Native"
+  nameservers = ["ns1.protonet.internal.", "ns2.protonet.internal."]
+}

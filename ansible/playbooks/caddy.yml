@@ -1,0 +1,48 @@
+---
+- name: Caddy reverse proxy
+  hosts: tag_role_caddy
+  pre_tasks:
+    - name: Load platform secrets
+      community.sops.load_vars:
+        file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
+      no_log: true
+
+    - name: Load registries
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../../registries/{{ item.file }}"
+        name: "{{ item.name }}"
+      loop:
+        - { file: "services.yaml", name: "reg_services" }
+        - { file: "vlans.yaml", name: "reg_vlans" }
+        - { file: "hosts.yaml", name: "reg_hosts" }
+      loop_control:
+        label: "{{ item.file }}"
+
+    # Backends are proxied by IP rather than name so the proxy has no runtime DNS dependency
+    # Bad idea? Maybe!
+    - name: Resolve service backends to addresses
+      ansible.builtin.set_fact:
+        caddy_services: >-
+          {{ caddy_services | default({}) | combine({
+               item.key: item.value | combine({
+                 'backend_ip':
+                   (reg_vlans.vlans[reg_hosts.hosts[item.value.backend].vlan].prefix
+                     | regex_replace('^(\d+\.\d+\.\d+)\.\d+/\d+$', '\1'))
+                   ~ '.' ~ reg_hosts.hosts[item.value.backend].host_octet
+               })
+             }) }}
+      loop: "{{ reg_services.public_services | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+
+    - name: Verify every backend resolved
+      ansible.builtin.assert:
+        that: item.value.backend_ip is defined
+        fail_msg: "Service {{ item.key }} references unknown backend {{ item.value.backend }}."
+      loop: "{{ caddy_services | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+  roles:
+    - caddy

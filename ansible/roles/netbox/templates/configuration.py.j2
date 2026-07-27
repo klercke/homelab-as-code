@@ -38,3 +38,5 @@ DISK_BASE_UNIT = 1024
 RAM_BASE_UNIT = 1024
 
 MAPS_URL = 'https://www.openstreetmap.org/search?query='
+
+CSRF_TRUSTED_ORIGINS = {{ netbox_csrf_origins | to_json }}

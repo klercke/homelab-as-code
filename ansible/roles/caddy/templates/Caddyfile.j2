@@ -1,0 +1,38 @@
+{# Managed by Ansible. Generated from registries/services.yaml. #}
+{
+	email {{ caddy_acme_email }}
+
+	# Caddy's admin API is local-only by default; nothing needs it remotely.
+	admin off
+
+	log {
+		output file /var/log/caddy/caddy.log
+		format json
+	}
+}
+
+# One wildcard certificate for the whole namespace. DNS-01 writes exactly one
+# TXT record at _acme-challenge.{{ caddy_public_domain }} and removes it after
+# validation. No other name in ptxe.dev is ever touched.
+#
+# Adding a service below needs no new certificate issuance.
+*.{{ caddy_public_domain }} {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+		resolvers 1.1.1.1 1.0.0.1
+	}
+
+{% for name, svc in caddy_services | dictsort %}
+	# {{ svc.description | default(name) }} -> {{ svc.backend }}
+	@{{ name }} host {{ name }}.{{ caddy_public_domain }}
+	handle @{{ name }} {
+		reverse_proxy {{ svc.scheme | default('http') }}://{{ svc.backend_ip }}:{{ svc.port }}
+	}
+
+{% endfor %}
+	# Anything not declared in the registry gets a clear answer rather than
+	# falling through to whichever backend happens to be first.
+	handle {
+		respond "No such service" 404
+	}
+}

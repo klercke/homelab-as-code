@@ -1,0 +1,125 @@
+---
+# ProtoNet service registry.
+#
+# Two sections, different cardinality:
+#
+#   role_services   what a role listens on. Projected into NetBox as a service
+#                   on every host or device with that role. Covers everything,
+#                   including things no proxy touches (Postgres, DNS, DHCP).
+#
+#   public_services user-facing names behind caddy01. Each becomes
+#                   <name>.int.ptxe.dev with a publicly trusted certificate.
+#                   Instance-specific: it names a backend host, not a role.
+#
+# A service appears in both when it is genuinely both: NetBox listens on 80
+# (role_services) and is reachable as netbox.int.ptxe.dev (public_services).
+#
+# Automation never goes through the proxy. Terraform talks to NetBox, Kea, and
+# PowerDNS on their own ports directly, so a proxy outage cannot block the
+# pipeline that would be used to repair it.
+#
+# All string values are quoted deliberately: see README.md.
+
+role_services:
+  postgres:
+    - name: "PostgreSQL"
+      protocol: "tcp"
+      ports: [5432]
+      description: "Lease, host, and application databases."
+    - name: "postgres_exporter"
+      protocol: "tcp"
+      ports: [9187]
+      description: "Prometheus metrics."
+
+  netbox:
+    - name: "HTTP"
+      protocol: "tcp"
+      ports: [80]
+      description: "Native web UI."
+
+  valkey:
+    - name: "Valkey"
+      protocol: "tcp"
+      ports: [6379]
+      description: "NetBox cache and RQ task queue."
+
+  pdns:
+    - name: "DNS"
+      protocol: "udp"
+      ports: [53]
+      description: "Authoritative. Queried only by the recursors."
+    - name: "DNS (TCP)"
+      protocol: "tcp"
+      ports: [53]
+    - name: "PowerDNS API"
+      protocol: "tcp"
+      ports: [8081]
+      description: "Zone and record management. Terraform targets pdns01 only."
+
+  recursor:
+    - name: "DNS"
+      protocol: "udp"
+      ports: [53]
+      description: "Client-facing resolver. Handed out as DHCP option 6."
+    - name: "DNS (TCP)"
+      protocol: "tcp"
+      ports: [53]
+
+  kea:
+    - name: "DHCP"
+      protocol: "udp"
+      ports: [67]
+      description: "Reached via the OPNsense relay for non-local VLANs."
+    - name: "Kea API"
+      protocol: "tcp"
+      ports: [8000]
+      description: "Direct control socket. Reservations are managed here."
+    - name: "Kea HA"
+      protocol: "tcp"
+      ports: [8001]
+      description: "Peer communication. Separate port from the control socket."
+
+  caddy:
+    - name: "HTTP"
+      protocol: "tcp"
+      ports: [80]
+      description: "Redirects to HTTPS."
+    - name: "HTTPS"
+      protocol: "tcp"
+      ports: [443]
+      description: "TLS termination for all public_services."
+
+  hypervisor:
+    - name: "Proxmox VE"
+      protocol: "tcp"
+      ports: [8006]
+      description: "Web UI and API."
+
+  storage:
+    - name: "TrueNAS"
+      protocol: "tcp"
+      ports: [443]
+    - name: "NFS"
+      protocol: "tcp"
+      ports: [2049]
+      description: "NFS data share."
+
+  switch:
+    - name: "SSH"
+      protocol: "tcp"
+      ports: [22]
+    - name: "Winbox"
+      protocol: "tcp"
+      ports: [8291]
+
+  firewall:
+    - name: "HTTPS"
+      protocol: "tcp"
+      ports: [443]
+      description: "OPNsense web UI."
+
+public_services:
+  netbox:
+    backend: "netbox01"
+    port: 80
+    description: "NetBox IPAM and DCIM."

@@ -11,7 +11,9 @@ netbox_redis_host: 10.0.20.18
 netbox_redis_port: 6379
 
 netbox_allowed_hosts:
-  - netbox01.protonet.internal
   - netbox01.prd.hme.protonet.internal
   - netbox01
   - 10.0.20.11
+  - netbox.int.ptxe.dev
+
+netbox_csrf_origins: ["https://netbox.int.ptxe.dev"]

@@ -1,3 +1,8 @@
 recursor_repo_track: "52"
 recursor_config_dir: /etc/pdns-recursor
 recursor_allow_from: "10.0.0.0/16"
+
+recursor_internal_zones:
+  - "protonet.internal"
+  - "int.ptxe.dev"
+  - "use-application-dns.net"

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://protonet.internal/schemas/services.json",
+  "title": "ProtoNet service registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["role_services", "public_services"],
+
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,30}$"
+    }
+  },
+
+  "properties": {
+    "role_services": {
+      "type": "object",
+      "description": "Role key -> list of listening services. Projected into NetBox per host or device holding that role.",
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "protocol", "ports"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "protocol": {
+              "enum": ["tcp", "udp", "sctp"],
+              "description": "NetBox service protocol choices. One entry per protocol; a service on both TCP and UDP needs two."
+            },
+            "ports": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              }
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        }
+      }
+    },
+
+    "public_services": {
+      "type": "object",
+      "description": "User-facing name -> backend. Each becomes <name>.int.ptxe.dev behind the proxy.",
+      "propertyNames": {
+        "$ref": "#/$defs/slug",
+        "description": "Becomes the leftmost label of the public name."
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["backend", "port"],
+        "properties": {
+          "backend": {
+            "$ref": "#/$defs/slug",
+            "description": "Host key from hosts.yaml."
+          },
+          "port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "scheme": {
+            "enum": ["http", "https"],
+            "description": "Backend protocol. Defaults to http."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 200
+          }
+        }
+      }
+    }
+  }
+}

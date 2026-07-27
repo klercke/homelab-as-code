@@ -1,0 +1,13 @@
+---
+# Caddy with the Cloudflare DNS module, built on demand by Caddy's download API
+caddy_download_url: "https://caddyserver.com/api/download?os=linux&arch=amd64&p=github.com/caddy-dns/cloudflare"
+
+caddy_checksum: ""
+
+caddy_public_domain: "int.ptxe.dev"
+caddy_acme_email: "admin@ptxe.dev"
+
+caddy_wildcard: true
+
+# Populated from registries/services.yaml in the playbook
+caddy_services: {}
