@@ -1,0 +1,29 @@
+# Managed by Ansible. Generated from registries/hosts.yaml and devices.yaml.
+#
+# Every target carries role, layer, and crit labels, so dashboards group by
+# role and alert routing can key off criticality without a second source.
+{% for hname, h in reg_hosts.hosts | dictsort %}
+{% if not job.roles or h.role in job.roles %}
+- targets:
+    - "{{ host_ips[hname] }}:{{ job.port }}"
+  labels:
+    instance: "{{ hname }}"
+    role: "{{ h.role }}"
+    layer: "{{ h.layer }}"
+    crit: "{{ h.crit }}"
+    kind: "vm"
+{% endif %}
+{% endfor %}
+{% if job_name == 'node' %}
+{% for dname, d in reg_devices.devices | dictsort %}
+#{% if d.mgmt_ip is defined and d.role in ['hypervisor'] %}
+#- targets:
+#    - "{{ d.mgmt_ip }}:{{ job.port }}"
+#  labels:
+#    instance: "{{ dname }}"
+#    role: "{{ d.role }}"
+#    crit: "2"
+#    kind: "device"
+#{% endif %}
+{% endfor %}
+{% endif %}

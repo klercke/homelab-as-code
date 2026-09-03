@@ -1,0 +1,23 @@
+---
+- name: Create filesystem on data device
+  community.general.filesystem:
+    fstype: xfs
+    dev: "{{ monitoring_data_device }}"
+    opts: "-L {{ monitoring_data_label }}"
+
+- name: Mount data volume
+  ansible.posix.mount:
+    path: "{{ monitoring_data_dir }}"
+    src: "LABEL={{ monitoring_data_label }}"
+    fstype: xfs
+    opts: defaults,noatime
+    state: mounted
+
+- name: Install Prometheus
+  ansible.builtin.include_tasks: prometheus.yml
+
+- name: Install Grafana
+  ansible.builtin.include_tasks: grafana.yml
+
+- name: Install Grafana dashboards
+  ansible.builtin.include_tasks: dashboards.yml

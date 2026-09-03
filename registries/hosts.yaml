@@ -21,7 +21,7 @@ hosts:
     crit: 1
     node: "pve01"
     cores: 4
-    memory: 8192
+    memory: 4096  # Ideally 8192 but I am low on RAM
     disk: 32
     data_disk: 64
     description: "PostgreSQL 18. Backing store for NetBox, PowerDNS, and Kea."
@@ -133,3 +133,16 @@ hosts:
     memory: 2048
     disk: 16
     description: "Caddy. Reverse proxy for user-facing services."
+
+  monitoring01:
+    vlan: "servers"
+    host_octet: 20
+    layer: "l1"
+    role: "monitoring"
+    crit: 2
+    node: "pve01"
+    cores: 4
+    memory: 8192
+    disk: 32
+    data_disk: 100
+    description: "Grafana, Loki, Prometheus, and Alertmanager-based monitoring stack."

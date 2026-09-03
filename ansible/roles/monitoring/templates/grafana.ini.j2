@@ -1,0 +1,22 @@
+; Managed by Ansible.
+[paths]
+data = {{ monitoring_data_dir }}/grafana
+logs = /var/log/grafana
+plugins = {{ monitoring_data_dir }}/grafana/plugins
+
+[server]
+http_port = {{ grafana_port }}
+; Set so generated links and redirects use the public name rather than the
+; backend address
+root_url = https://grafana.int.ptxe.dev/
+
+[security]
+admin_user = admin
+admin_password = {{ grafana_admin_password }}
+
+[users]
+allow_sign_up = false
+
+[analytics]
+reporting_enabled = false
+check_for_updates = false

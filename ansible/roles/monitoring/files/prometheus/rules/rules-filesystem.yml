@@ -1,0 +1,18 @@
+groups:
+  - name: filesystem
+    rules:
+      # Data filesystems only, exclude boot filesystems
+      - record: instance_mountpoint:node_filesystem_utilization:ratio
+        expr: >
+          1 - (
+            node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|overlay|squashfs|iso9660|autofs|devtmpfs|fuse.*|nfs.*|cifs", mountpoint!~"/(boot|efi)(/.*)?"}
+            /
+            node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|overlay|squashfs|iso9660|autofs|devtmpfs|fuse.*|nfs.*|cifs", mountpoint!~"/(boot|efi)(/.*)?"}
+          )
+      - record: instance_mountpoint:node_filesystem_inodes_utilization:ratio
+        expr: >
+          1 - (
+            node_filesystem_files_free{fstype!~"tmpfs|ramfs|overlay|squashfs|iso9660|autofs|devtmpfs|fuse.*|nfs.*|cifs", mountpoint!~"/(boot|efi)(/.*)?"}
+            /
+            node_filesystem_files{fstype!~"tmpfs|ramfs|overlay|squashfs|iso9660|autofs|devtmpfs|fuse.*|nfs.*|cifs", mountpoint!~"/(boot|efi)(/.*)?"}
+          )

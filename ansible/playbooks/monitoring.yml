@@ -1,0 +1,38 @@
+---
+- name: Monitoring stack
+  hosts: tag_role_monitoring
+  pre_tasks:
+    - name: Load platform secrets
+      community.sops.load_vars:
+        file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
+      no_log: true
+
+    # Namespaced under reg_* because "hosts" is a reserved Ansible variable
+    # name and shadows the registry
+    - name: Load registries
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../../registries/{{ item.file }}"
+        name: "{{ item.name }}"
+      loop:
+        - { file: "hosts.yaml", name: "reg_hosts" }
+        - { file: "devices.yaml", name: "reg_devices" }
+        - { file: "vlans.yaml", name: "reg_vlans" }
+      loop_control:
+        label: "{{ item.file }}"
+
+    # Same derivation Terraform does, so scrape targets and the addresses
+    # cloud-init actually assigned cannot disagree
+    - name: Derive host addresses from the registry
+      ansible.builtin.set_fact:
+        host_ips: >-
+          {{ host_ips | default({}) | combine({
+               item.key: (reg_vlans.vlans[item.value.vlan].prefix
+                 | regex_replace('^(\d+\.\d+\.\d+)\.\d+/\d+$', '\1'))
+                 ~ '.' ~ item.value.host_octet
+             }) }}
+      loop: "{{ reg_hosts.hosts | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+  roles:
+    - monitoring
