@@ -2,9 +2,6 @@
 {
 	email {{ caddy_acme_email }}
 
-	# Caddy's admin API is local-only by default; nothing needs it remotely.
-	admin off
-
 	log {
 		output file /var/log/caddy/caddy.log
 		format json
@@ -35,4 +32,10 @@
 	handle {
 		respond "No such service" 404
 	}
+}
+
+# Metrics on their own port. The admin API also serves them, but let's keep it
+# locked down :)
+:9180 {
+	metrics /metrics
 }

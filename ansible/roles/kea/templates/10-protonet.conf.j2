@@ -1,0 +1,10 @@
+# Managed by Ansible.
+[Unit]
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Restart=on-failure
+RestartSec=10s
+StartLimitBurst=10
+StartLimitIntervalSec=300

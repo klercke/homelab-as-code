@@ -29,19 +29,31 @@ role_services:
     - name: "postgres_exporter"
       protocol: "tcp"
       ports: [9187]
-      description: "Prometheus metrics."
+      description: "Prometheus Postgres metrics."
+    - name: "node_exporter"
+      protocol: "tcp"
+      ports: [9090]
+      description: "Prometheus host metrics."
 
   netbox:
     - name: "HTTP"
       protocol: "tcp"
       ports: [80]
       description: "Native web UI."
+    - name: "node_exporter"
+      protocol: "tcp"
+      ports: [9090]
+      description: "Prometheus host metrics."
 
   valkey:
     - name: "Valkey"
       protocol: "tcp"
       ports: [6379]
       description: "NetBox cache and RQ task queue."
+    - name: "node_exporter"
+      protocol: "tcp"
+      ports: [9090]
+      description: "Prometheus host metrics."
 
   pdns:
     - name: "DNS"
@@ -55,6 +67,10 @@ role_services:
       protocol: "tcp"
       ports: [8081]
       description: "Zone and record management. Terraform targets pdns01 only."
+    - name: "node_exporter"
+      protocol: "tcp"
+      ports: [9090]
+      description: "Prometheus host metrics."
 
   recursor:
     - name: "DNS"
@@ -64,6 +80,10 @@ role_services:
     - name: "DNS (TCP)"
       protocol: "tcp"
       ports: [53]
+    - name: "node_exporter"
+      protocol: "tcp"
+      ports: [9090]
+      description: "Prometheus host metrics."
 
   kea:
     - name: "DHCP"
@@ -78,6 +98,10 @@ role_services:
       protocol: "tcp"
       ports: [8001]
       description: "Peer communication. Separate port from the control socket."
+    - name: "node_exporter"
+      protocol: "tcp"
+      ports: [9090]
+      description: "Prometheus host metrics."
 
   caddy:
     - name: "HTTP"
@@ -88,6 +112,10 @@ role_services:
       protocol: "tcp"
       ports: [443]
       description: "TLS termination for all public_services."
+    - name: "node_exporter"
+      protocol: "tcp"
+      ports: [9090]
+      description: "Prometheus host metrics."
 
   hypervisor:
     - name: "Proxmox VE"
@@ -123,3 +151,7 @@ public_services:
     backend: "netbox01"
     port: 80
     description: "NetBox IPAM and DCIM."
+  grafana:
+    backend: "monitoring01"
+    port: 3000
+    description: "Grafana web UI."

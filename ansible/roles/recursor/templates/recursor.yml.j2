@@ -36,7 +36,12 @@ dnssec:
 {% endfor %}
 
 webservice:
-  webserver: false
+  webserver: true
+  address: {{ ansible_host }}
+  port: 8082
+  allow_from:
+    - 10.0.10.213/32  # thor
+    - 10.0.20.20/32   # monitoring01
 
 logging:
   loglevel: 4

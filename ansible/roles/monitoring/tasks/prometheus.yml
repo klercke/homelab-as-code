@@ -1,0 +1,98 @@
+---
+- name: Create prometheus user
+  ansible.builtin.user:
+    name: prometheus
+    system: true
+    shell: /sbin/nologin
+    create_home: false
+
+- name: Download Prometheus
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    dest: "/var/cache/prometheus-{{ prometheus_version }}.tar.gz"
+    checksum: "sha256:{{ prometheus_sha256 }}"
+    mode: "0644"
+
+- name: Install Prometheus binaries
+  ansible.builtin.unarchive:
+    src: "/var/cache/prometheus-{{ prometheus_version }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+      - --wildcards
+      - "*/prometheus"
+      - "*/promtool"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart prometheus
+
+- name: Restore SELinux context on binaries
+  ansible.builtin.command:
+    cmd: restorecon -v /usr/local/bin/prometheus /usr/local/bin/promtool
+  register: _prom_con
+  changed_when: _prom_con.stdout | length > 0
+
+- name: Create Prometheus directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: "0755"
+  loop:
+    - /etc/prometheus
+    - /etc/prometheus/targets
+    - /etc/prometheus/rules
+    - "{{ monitoring_data_dir }}/prometheus"
+
+- name: Write prometheus.yml
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: root
+    group: prometheus
+    mode: "0640"
+    validate: "/usr/local/bin/promtool check config %s"
+  notify: Reload prometheus
+
+- name: Install Prometheus rules
+  ansible.builtin.copy:
+    src: prometheus/rules/
+    dest: /etc/prometheus/rules/
+    owner: root
+    group: prometheus
+    mode: "0640"
+    validate: "/usr/local/bin/promtool check rules %s"
+  notify: Reload prometheus
+
+- name: Write file_sd target lists
+  ansible.builtin.template:
+    src: targets.yml.j2
+    dest: "/etc/prometheus/targets/{{ item.key }}.yml"
+    owner: root
+    group: prometheus
+    mode: "0640"
+  loop: "{{ monitoring_scrape_jobs | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  vars:
+    job_name: "{{ item.key }}"
+    job: "{{ item.value }}"
+
+- name: Install Prometheus unit
+  ansible.builtin.template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart prometheus
+
+- name: Enable Prometheus
+  ansible.builtin.systemd_service:
+    name: prometheus
+    enabled: true
+    state: started
+    daemon_reload: true

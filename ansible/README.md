@@ -11,6 +11,8 @@
 | powerdns | Applies the PowerDNS role |
 | recursor | Applies the Recursor role |
 | kea | Applies the Kea role |
+| caddy | Applies the Caddy role |
+| monitoring | Applies the monitoring role |
 
 ## Roles
 
@@ -23,6 +25,8 @@
 | powerdns | Installs and configures PowerDNS Authoritative. Servers with this role will only be reachable by servers with the `recursor` role. |
 | recursor | Installs and configures PowerDNS Recursor. This acts as a DNS server for downstream clients, pointing toward servers with the `powerdns` role. |
 | kea | Installs and configures ISC Kea. |
+| caddy | Installs and configures Caddy reverse proxy for TLS termination for `public_services`.
+| monitoring | Installs Grafana and Prometheus and configures them to scrape other hosts. |
 
 
 ## Inventories

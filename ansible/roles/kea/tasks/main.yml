@@ -108,10 +108,10 @@
     state: directory
     mode: "0755"
 
-- name: Install restart limit drop-in
+- name: Install custom Kea DCHPv4 Systemd service drop-in
   ansible.builtin.template:
-    src: restart-limits.conf.j2
-    dest: /etc/systemd/system/kea-dhcp4.service.d/10-restart-limits.conf
+    src: 10-protonet.conf.j2
+    dest: /etc/systemd/system/kea-dhcp4.service.d/10-protonet.conf
     mode: "0644"
   notify: Reload systemd
 

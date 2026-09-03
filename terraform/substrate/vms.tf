@@ -23,7 +23,7 @@ resource "proxmox_virtual_environment_vm" "substrate" {
 
   cpu {
     cores = each.value.cores
-    type  = "host"
+    type  = "x86-64-v2-AES" # Maximum supported version on Jotunheim
   }
 
   memory {

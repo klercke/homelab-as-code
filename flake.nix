@@ -180,6 +180,7 @@
               pkgs.openssl
               pkgs.ansible
               pkgs.check-jsonschema
+              pkgs.kea # for perfdhcp
             ]
             ++ enabledPackages;
         };

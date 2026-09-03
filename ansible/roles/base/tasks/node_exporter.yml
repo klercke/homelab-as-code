@@ -1,0 +1,90 @@
+---
+- name: Create node_exporter user
+  ansible.builtin.user:
+    name: node_exporter
+    system: true
+    shell: /sbin/nologin
+    create_home: false
+
+- name: Download node_exporter
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/var/cache/node_exporter-{{ node_exporter_version }}.tar.gz"
+    checksum: "sha256:{{ node_exporter_sha256 }}"
+    mode: "0644"
+
+- name: Install node_exporter
+  ansible.builtin.unarchive:
+    src: "/var/cache/node_exporter-{{ node_exporter_version }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+      - --wildcards
+      - "*/node_exporter"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart node_exporter
+
+- name: Restore SELinux context
+  ansible.builtin.command:
+    cmd: restorecon -v /usr/local/bin/node_exporter
+  register: _ne_con
+  changed_when: _ne_con.stdout | length > 0
+
+- name: Install node_exporter unit
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/node_exporter.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Prometheus node exporter
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      User=node_exporter
+      Group=node_exporter
+      ExecStart=/usr/local/bin/node_exporter \
+        --web.listen-address=:{{ node_exporter_port }} \
+        --collector.systemd \
+        --collector.processes \
+        --collector.textfile.directory=/var/lib/node_exporter/textfile
+      Restart=on-failure
+      RestartSec=5
+      NoNewPrivileges=true
+      ProtectSystem=strict
+      ProtectHome=true
+      PrivateTmp=true
+
+      [Install]
+      WantedBy=multi-user.target
+  notify:
+    - Reload systemd
+    - Restart node_exporter
+
+- name: Create textfile collector directory
+  ansible.builtin.file:
+    path: /var/lib/node_exporter/textfile
+    state: directory
+    owner: node_exporter
+    group: node_exporter
+    mode: "0755"
+
+- name: Open node_exporter port
+  ansible.posix.firewalld:
+    rich_rule: >-
+      rule family=ipv4 source address={{ node_exporter_allowed_cidr }}
+      port port={{ node_exporter_port }} protocol=tcp accept
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Enable node_exporter
+  ansible.builtin.systemd_service:
+    name: node_exporter
+    enabled: true
+    state: started
+    daemon_reload: true

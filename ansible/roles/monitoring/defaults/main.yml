@@ -1,0 +1,46 @@
+---
+monitoring_data_device: /dev/sdb
+monitoring_data_label: mondata
+monitoring_data_dir: /var/lib/monitoring
+
+# Size-based retention self-limits as the series count grows, unlike a time
+# limit which balloons when exporters are added.
+prometheus_version: "3.13.1"
+prometheus_sha256: "962b812371aff838d152b6ff2d56fdb7a6396f5542f48ebf73421b9721f0d103"
+prometheus_port: 9090
+prometheus_retention_size: "45GB"
+prometheus_scrape_interval: "30s"
+
+grafana_port: 3000
+
+# Grafana.com dashboard IDs, fetched and provisioned as files
+grafana_dashboards:
+  - { id: 1860, name: "node-exporter-full" }
+  - { id: 9628, name: "postgresql" }
+
+# Grafana is fronted by caddy01, so only the proxy and the management VLAN
+# need direct access to the UI.
+monitoring_ui_allowed:
+  - "10.0.20.19/32"
+  - "10.0.60.0/24"
+
+# Exporter ports by role, used to build the file_sd target lists
+monitoring_scrape_jobs:
+  node:
+    port: 9100
+    roles: []  # empty means every host and device
+  postgres:
+    port: 9187
+    roles: ["postgres"]
+  pdns:
+    port: 8081
+    roles: ["pdns"]
+  recursor:
+    port: 8082
+    roles: ["recursor"]
+  netbox:
+    port: 80
+    roles: ["netbox"]
+  caddy:
+    port: 9180
+    roles: ["caddy"]
