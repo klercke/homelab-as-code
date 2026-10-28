@@ -7,7 +7,7 @@ locals {
 
   manufacturers = toset([for _, t in local.dtypes : t.manufacturer])
 
-  # Devices that sit in a rack, as opposed to a bay or nowhere
+  # Devices that sit in a rack as opposed to a bay or nowhere
   racked_devices = {
     for k, d in local.dev : k => d if try(d.rack, null) != null
   }
@@ -158,7 +158,7 @@ resource "netbox_device_interface" "mgmt" {
 resource "netbox_ip_address" "device_mgmt" {
   for_each = local.managed_devices
 
-  ip_address   = module.registry.device_mgmt_cidr[each.key]
+  ip_address   = module.registry.device_mgmt_cidr_v4[each.key]
   status       = "active"
   dns_name     = "${each.key}.${var.env}.${netbox_site.this[each.value.site].slug}.protonet.internal"
   interface_id = netbox_device_interface.mgmt[each.key].id

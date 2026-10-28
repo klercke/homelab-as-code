@@ -1,5 +1,8 @@
 module "registry" {
   source = "../modules/registry"
+
+  domain = "protonet.internal."
+  env    = "prd"
 }
 
 locals {

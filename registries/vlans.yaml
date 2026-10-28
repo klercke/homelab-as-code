@@ -8,11 +8,17 @@
 # For class B addresses, the second octet is currently undefined.
 # For class C addresses, the second octet is always 168.
 # For example, at site 0:
-#   VLAN 120 -> 10.0.20.0/24
-#   VLAN 160 -> 10.0.60.0/24
-#   VLAN 210 -> 172.16.10.0/24
-#   VLAN 380 -> 192.168.80.0/24
+#   VLAN 120  -> 10.0.20.0/24
+#   VLAN 160  -> 10.0.60.0/24
+#   VLAN 210  -> 172.16.10.0/24
+#   VLAN 380  -> 192.168.80.0/24
 #   VLAN 1250 -> 10.0.250.0/24
+#
+# Class B and C addresses are currently out-of-scope.
+#
+# If a VLAN has prefix_v4 defined, it must have vlan_id INSTEAD of net_id.
+# In this case, neither will be automatically derived downstream and IPv6 will
+# be disabled for that VLAN.
 #
 # Default address plan within each /24 (can be overridden):
 #   .1          gateway
@@ -23,110 +29,77 @@
 #   .200-.249   DHCP reservations
 #   .250-.254   reserved
 #
-# All string values are quoted deliberately: see README.md.
+# All string values are quoted deliberately, see README
 
 
 vlans:
-  legacy:
-    id: 1
+  home-legacy:
+    vlan_id: 1
+    prefix_v4: "10.10.10.0/24"
     site: "home"
     fns: "legacy"
     name: "Legacy LAN"
-    prefix: "10.10.10.0/24"
-    gateway: "10.10.10.1"
     description: "Untagged. Decommissioning; DHCP still served by OPNsense and therefore out of scope."
     status: "deprecated"
-    dhcp:
+    dhcp_v4:
       enabled: false
 
-  clients:
-    id: 110
+  home-clients:
+    net_id: 10
     site: "home"
     fns: "clients"
     name: "Clients"
-    prefix: "10.0.10.0/24"
-    gateway: "10.0.10.1"
-    description: "Non-guest client devices"
+    description: "Non-guest client devices."
     status: "active"
-    dhcp:
+    dhcp_v4:
       enabled: true
-      dynamic_start: "10.0.10.100"
-      dynamic_end: "10.0.10.199"
-      reservation_start: "10.0.10.200"
-      reservation_end: "10.0.10.249"
 
-  servers:
-    id: 120
+  home-servers:
+    net_id: 20
     site: "home"
     fns: "servers"
     name: "Servers"
-    prefix: "10.0.20.0/24"
-    gateway: "10.0.20.1"
-    description: "Server workloads and platform substrate"
+    description: "Server workloads and platform substrate."
     status: "active"
-    dhcp:
+    dhcp_v4:
       enabled: true
-      dynamic_start: "10.0.20.100"
-      dynamic_end: "10.0.20.199"
-      reservation_start: "10.0.20.200"
-      reservation_end: "10.0.20.249"
 
-  iot:
-    id: 130
+  home-iot:
+    net_id: 30
     site: "home"
     fns: "iot"
     name: "IoT"
-    prefix: "10.0.30.0/24"
-    gateway: "10.0.30.1"
-    description: "IoT devices"
+    description: "IoT devices."
     status: "active"
-    dhcp:
+    dhcp_v4:
       enabled: true
-      dynamic_start: "10.0.30.100"
-      dynamic_end: "10.0.30.199"
-      reservation_start: "10.0.30.200"
-      reservation_end: "10.0.30.249"
 
-  lab:
-    id: 140
+  home-lab:
+    net_id: 40
     site: "home"
     fns: "lab"
     name: "Lab"
-    prefix: "10.0.40.0/24"
-    gateway: "10.0.40.1"
-    description: "Lab for testing new devices"
+    description: "Lab for testing new devices and services."
     status: "active"
-    dhcp:
+    dhcp_v4:
       enabled: true
-      dynamic_start: "10.0.40.100"
-      dynamic_end: "10.0.40.199"
-      reservation_start: "10.0.40.200"
-      reservation_end: "10.0.40.249"
 
-  guest:
-    id: 150
+  home-guest:
+    net_id: 50
     site: "home"
     fns: "guest"
     name: "Guest"
-    prefix: "10.0.50.0/24"
-    gateway: "10.0.50.1"
-    description: "Guest-owned devices"
+    description: "Guest-owned devices, or devices that don't need access to network resources."
     status: "active"
-    dhcp:
+    dhcp_v4:
       enabled: true
-      dynamic_start: "10.0.50.100"
-      dynamic_end: "10.0.50.199"
-      reservation_start: "10.0.50.200"
-      reservation_end: "10.0.50.249"
 
-  management:
-    id: 160
+  home-management:
+    net_id: 60
     site: "home"
     fns: "management"
     name: "Management"
-    prefix: "10.0.60.0/24"
-    gateway: "10.0.60.1"
-    description: "Hypervisors, switches, APs, and out-of-band management"
+    description: "Hypervisors, switches, APs, and out-of-band management."
     status: "active"
-    dhcp:
+    dhcp_v4:
       enabled: false

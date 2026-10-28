@@ -6,10 +6,6 @@
         file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
       no_log: true
 
-    - name: Load VLAN registry
-      ansible.builtin.include_vars:
-        file: "{{ playbook_dir }}/../../registries/vlans.yaml"
-
     - name: Build recursor DNS allow-list from inventory
       ansible.builtin.set_fact:
         pdns_dns_allowed: >-
@@ -21,6 +17,7 @@
     - name: Build API allow-list from management VLAN plus static admin hosts
       ansible.builtin.set_fact:
         pdns_api_allowed: >-
-          {{ [vlans.management.prefix] + pdns_api_static_allowed }}
+          {{ [hlac.vlans[pdns_api_vlan].prefix_v4] + pdns_api_static_allowed }}
+
   roles:
     - powerdns

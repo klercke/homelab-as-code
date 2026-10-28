@@ -1,10 +1,22 @@
+# == Raw Registry Passthroughs ==
+
 output "sites" {
   description = "Raw sites registry, keyed by site name."
   value       = local.sites
 }
 
+output "regions" {
+  description = "Raw regions registry, keyed by region slug."
+  value       = local.regions
+}
+
+output "site_index" {
+  description = "Site key -> index within the addressing plan."
+  value       = local.site_index
+}
+
 output "vlans" {
-  description = "Raw VLAN registry, keyed by VLAN name."
+  description = "Raw VLAN registry, keyed by VLAN name. Derived values live in the vlan_* outputs."
   value       = local.vlans
 }
 
@@ -13,8 +25,57 @@ output "hosts" {
   value       = local.hosts
 }
 
+output "racks" {
+  description = "Raw rack registry, keyed by rack name."
+  value       = local.racks
+}
+
+output "locations" {
+  description = "Raw location registry, keyed by location slug."
+  value       = local.locations
+}
+
+output "device_roles" {
+  description = "Raw device role registry, keyed by role slug."
+  value       = local.device_roles
+}
+
+output "device_types" {
+  description = "Raw device type registry, keyed by type slug."
+  value       = local.device_types
+}
+
+output "devices" {
+  description = "Raw device registry, keyed by device name."
+  value       = local.devices
+}
+
+# == VLANs ==
+
+output "vlan_id" {
+  description = "VLAN key -> 802.1Q ID."
+  value       = local.vlan_id
+}
+
+output "vlan_prefix_v4" {
+  description = "VLAN key -> IPv4 prefix in CIDR."
+  value       = local.vlan_prefix_v4
+}
+
+output "vlan_gateway_v4" {
+  description = "VLAN key -> IPv4 default gateway address."
+  value       = local.vlan_gateway_v4
+}
+
+output "vlan_dhcp_v4" {
+  description = "VLAN key -> DHCPv4 pool boundary addresses. Only DHCPv4-enabled VLANs are present."
+  value       = local.vlan_dhcp_v4
+}
+
+# == Hosts ==
+
 output "host_site" {
-  description = "Hostname -> site key, resolved through the host's VLAN."
+  description = "Hostname -> site key."
   value       = local.host_site
 }
 
@@ -23,9 +84,9 @@ output "host_ipv4" {
   value       = local.host_ipv4
 }
 
-output "host_cidr" {
+output "host_cidr_v4" {
   description = "Hostname -> IPv4 address with prefix length."
-  value       = local.host_cidr
+  value       = local.host_cidr_v4
 }
 
 output "host_vmid" {
@@ -34,46 +95,45 @@ output "host_vmid" {
 }
 
 output "macs" {
-  description = "Hostname -> deterministic locally-administered MAC."
+  description = "Hostname -> MAC address."
   value       = local.macs
 }
 
-output "reverse_zones" {
-  description = "VLAN key -> in-addr.arpa zone name, with trailing dot."
-  value       = local.reverse_zones
+# == DNS ==
+
+output "reverse_zones_v4" {
+  description = "VLAN key -> in-addr.arpa zone name."
+  value       = local.reverse_zones_v4
 }
 
-output "host_records" {
-  description = "Hostname -> { fqdn, ipv4, ptr_name, rev_zone } for DNS and documentation."
-  value       = local.host_records
+output "host_records_v4" {
+  description = "Hostname -> { fqdn, ipv4, ptr_name, rev_zone }."
+  value       = local.host_records_v4
 }
 
-output "racks" { value = local.racks }
-output "locations" { value = local.locations }
-output "regions" { value = local.regions }
-output "device_roles" { value = local.device_roles }
-output "device_types" { value = local.device_types }
-output "devices" { value = local.devices }
-
-output "device_mgmt_cidr" {
-  description = "Device name -> management IP with prefix length, resolved against the VLAN registry."
-  value       = local.device_mgmt_cidr
+output "device_records_v4" {
+  description = "Device name -> { fqdn, ipv4, ptr_name, rev_zone }."
+  value       = local.device_records_v4
 }
+
+# == Devices ==
 
 output "device_vlan" {
   description = "Device name -> VLAN key containing its management address."
   value       = local.device_vlan
 }
 
+output "device_mgmt_cidr_v4" {
+  description = "Device name -> management IP with prefix length."
+  value       = local.device_mgmt_cidr_v4
+}
+
 output "reservations" {
-  description = "Device name -> Kea DHCP reservation. Only devices with a MAC."
+  description = "Device name -> Kea DHCPv4 reservation. Only contains devices with a specified MAC."
   value       = local.reservations
 }
 
-output "device_records" {
-  description = "Device name -> { fqdn, ipv4, ptr_name, rev_zone }."
-  value       = local.device_records
-}
+# == Services ==
 
 output "role_services" {
   description = "Role key -> list of listening services."
@@ -81,16 +141,21 @@ output "role_services" {
 }
 
 output "public_services" {
-  description = "User-facing name -> backend host and port, for the reverse proxy."
+  description = "User-facing name -> backend host and port for the reverse proxy."
   value       = local.public_services
 }
 
 output "vm_services" {
-  description = "Flattened services for virtual machines, keyed target/name/protocol."
+  description = "Flattened services for virtual machines keyed target/name/protocol."
   value       = local.vm_services
 }
 
 output "device_services" {
-  description = "Flattened services for physical devices, keyed target/name/protocol."
+  description = "Flattened services for physical devices keyed target/name/protocol."
   value       = local.device_services
+}
+
+output "backend_records_v4" {
+  description = "Host or device name -> { fqdn, ipv4, ptr_name, rev_zone }. Valid public_service backends."
+  value       = local.backend_records_v4
 }

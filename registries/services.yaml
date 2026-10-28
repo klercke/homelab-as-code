@@ -155,3 +155,15 @@ public_services:
     backend: "monitoring01"
     port: 3000
     description: "Grafana web UI."
+  homeassistant:
+    backend: "homeassistant"
+    port: 8123
+    description: "Home Assistant web UI."
+  music:
+    backend: "homeassistant"
+    port: 8095
+    description: "Music Assistant web UI."
+  noct:
+    backend: "noct01"
+    port: 80
+    description: "Networked Off-grid Communications Terminal."

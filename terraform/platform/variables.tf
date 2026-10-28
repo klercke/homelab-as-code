@@ -4,6 +4,12 @@ variable "env" {
   default     = "prd"
 }
 
+variable "internal_proxy_host" {
+  description = "The host key for the server proxying internal services."
+  type        = string
+  default     = "caddy01"
+}
+
 variable "site_location" {
   description = "Per-site location information. Supplied via SOPS."
   type = map(object({

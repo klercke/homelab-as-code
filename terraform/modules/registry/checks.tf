@@ -3,7 +3,7 @@ check "vlan_references_resolve" {
     condition = alltrue([
       for name, h in local.hosts : contains(keys(local.vlans), h.vlan)
     ])
-    error_message = "A host in hosts.yaml references a vlan key that does not exist in vlans.yaml."
+    error_message = "A host in hosts.yaml references a vlan that does not exist in vlans.yaml."
   }
 }
 
@@ -12,7 +12,66 @@ check "site_references_resolve" {
     condition = alltrue([
       for name, v in local.vlans : contains(keys(local.sites), v.site)
     ])
-    error_message = "A VLAN in vlans.yaml references a site key that does not exist in sites.yaml."
+    error_message = "A VLAN in vlans.yaml references a site that does not exist in sites.yaml."
+  }
+}
+
+check "site_prefix_v4_shape" {
+  assert {
+    condition = alltrue([
+      for sk, s in local.sites :
+      tonumber(split("/", s.prefix_v4)[1]) == var.site_prefix_v4_bits &&
+      local.site_class[sk] != null
+    ])
+    error_message = "A site prefix_v4 is the wrong length or starts with an invalid octet."
+  }
+}
+
+check "site_class_allowed" {
+  assert {
+    condition = alltrue([
+      for sk, c in local.site_class : contains(var.allowed_classes, c) if c != null
+    ])
+    error_message = "A site uses a class digit outside allowed_classes. Class B and C are reserved but not in use."
+  }
+}
+
+check "vlan_shape" {
+  assert {
+    condition = alltrue([
+      for k, v in local.vlans : (
+        local.vlan_is_derived[k]
+        ? try(v.net_id, null) != null && try(v.vlan_id, null) == null
+        : try(v.vlan_id, null) != null && try(v.net_id, null) == null
+      )
+    ])
+    error_message = "A VLAN must specify EITHER net_id OR prefix_v4 AND vlan_id, NOT both."
+  }
+}
+
+check "net_id_in_range" {
+  assert {
+    condition = alltrue([
+      for k, v in local.vlans :
+      v.net_id >= 0 && v.net_id <= 255 if local.vlan_is_derived[k]
+    ])
+    error_message = "net_id must be 0-255."
+  }
+}
+
+check "vlan_id_unique_per_site" {
+  assert {
+    condition = length(distinct([
+      for k, v in local.vlans : "${v.site}/${local.vlan_id[k]}"
+    ])) == length(local.vlans)
+    error_message = "Two VLANs at the same site have the same 802.1Q VLAN ID."
+  }
+}
+
+check "vlan_prefix_v4_unique" {
+  assert {
+    condition     = length(distinct(values(local.vlan_prefix_v4))) == length(local.vlan_prefix_v4)
+    error_message = "Two VLANs have the same IPv4 prefix."
   }
 }
 
@@ -21,53 +80,80 @@ check "unique_octets_per_vlan" {
     condition = length(local.hosts) == length(distinct([
       for name, h in local.hosts : "${h.vlan}/${h.host_octet}"
     ]))
-    error_message = "Duplicate host_octet within a VLAN in hosts.yaml: two hosts would share an IP, VMID, and DHCP reservation."
+    error_message = "Duplicate host_octet within a VLAN in hosts.yaml."
   }
 }
 
 check "octets_in_static_range" {
   assert {
     condition = alltrue([
-      for name, h in local.hosts : h.host_octet >= 10 && h.host_octet <= 49
+      for name, h in local.hosts :
+      h.host_octet >= var.static_range[0] && h.host_octet <= var.static_range[1]
     ])
-    error_message = "A host_octet falls outside the static infrastructure range (.10-.49)."
+    error_message = "A host_octet falls outside the static IP range."
   }
 }
 
-check "dhcp_pools_within_prefix" {
+check "dhcp_v4_pools_within_prefix" {
   assert {
     condition = alltrue(flatten([
-      for name, v in local.vlans : [
-        for ip in [
-          v.dhcp.dynamic_start, v.dhcp.dynamic_end,
-          v.dhcp.reservation_start, v.dhcp.reservation_end,
-        ] : cidrhost(v.prefix, 0) == cidrhost("${ip}/${split("/", v.prefix)[1]}", 0)
-      ] if try(v.dhcp.enabled, false)
+      for k, octets in local.vlan_dhcp_v4_octets : [
+        for octet in values(octets) :
+        octet >= 1 && octet <= pow(2, 32 - tonumber(split("/", local.vlan_prefix_v4[k])[1])) - 2
+      ]
     ]))
-    error_message = "A DHCP pool boundary in vlans.yaml falls outside its own prefix."
+    error_message = "A DHCPv4 pool boundary falls outside its own prefix in vlans.yaml."
   }
 }
 
-check "dhcp_pools_above_static_range" {
-  assert {
-    condition = alltrue(flatten([
-      for name, v in local.vlans : [
-        for ip in [v.dhcp.dynamic_start, v.dhcp.reservation_start] :
-        tonumber(split(".", ip)[3]) >= 50
-      ] if try(v.dhcp.enabled, false)
-    ]))
-    error_message = "A DHCP pool starts at or below .49, colliding with the static infrastructure range."
-  }
-}
-
-check "dhcp_dynamic_below_reservations" {
+check "dhcp_v4_pools_clear_static_range" {
   assert {
     condition = alltrue([
-      for name, v in local.vlans :
-      tonumber(split(".", v.dhcp.dynamic_end)[3]) < tonumber(split(".", v.dhcp.reservation_start)[3])
-      if try(v.dhcp.enabled, false)
+      for octets in local.vlan_dhcp_v4_octets :
+      octets.dynamic_start > var.static_range[1] && octets.reservation_start > var.static_range[1]
+    ])
+    error_message = "A DHCPv4 pool starts inside the static IP range in vlans.yaml."
+  }
+}
+
+check "dhcp_v4_dynamic_below_reservations" {
+  assert {
+    condition = alltrue([
+      for octets in local.vlan_dhcp_v4_octets :
+      octets.dynamic_start <= octets.dynamic_end &&
+      octets.dynamic_end < octets.reservation_start &&
+      octets.reservation_start <= octets.reservation_end
     ])
     error_message = "A dynamic pool overlaps its reservation range in vlans.yaml."
+  }
+}
+
+check "device_mgmt_ip_resolves" {
+  assert {
+    condition     = alltrue([for k, vk in local.device_vlan : vk != null])
+    error_message = "A device mgmt_ip does not fall inside any VLAN prefix at that device's site."
+  }
+}
+
+check "reservations_have_a_dhcp_v4_subnet" {
+  assert {
+    condition = alltrue([
+      for k, _ in local.reservations :
+      contains(keys(local.vlan_dhcp_v4_octets), local.device_vlan[k])
+    ])
+    error_message = "A device reservation targets a VLAN with DHCPv4 disabled."
+  }
+}
+
+check "reservations_outside_dynamic_pool" {
+  assert {
+    condition = alltrue([
+      for k, r in local.reservations : !(
+        tonumber(split(".", r.ip)[3]) >= local.vlan_dhcp_v4_octets[local.device_vlan[k]].dynamic_start &&
+        tonumber(split(".", r.ip)[3]) <= local.vlan_dhcp_v4_octets[local.device_vlan[k]].dynamic_end
+      )
+    ])
+    error_message = "A device reservation address falls inside its VLAN's dynamic pool."
   }
 }
 
@@ -80,10 +166,8 @@ check "no_name_collisions" {
 
 check "public_service_backends_exist" {
   assert {
-    condition = alltrue([
-      for k, s in local.public_services : contains(keys(local.hosts), s.backend)
-    ])
-    error_message = "A public_service in services.yaml references a backend that is not in hosts.yaml."
+    condition     = length(local.unresolved_backends) == 0
+    error_message = "public_services with no host or addressed device as backend: ${join(", ", local.unresolved_backends)}"
   }
 }
 

@@ -6,7 +6,7 @@ kea_db_user: kea
 
 # The VLAN (from vlans.yaml) that the Kea hosts run on
 # All clients on other VLANs reach Kea via relay
-kea_local_vlan: "servers"
+kea_local_vlan: "home-servers"
 
 kea_interface: "{{ ansible_default_ipv4.interface }}"
 
@@ -16,8 +16,9 @@ kea_api_port: 8000
 kea_api_user: "kea-ha"
 kea_api_password: "{{ kea_ca_password }}"
 kea_api_secret_file: kea-api-secret
+kea_api_vlan: "home-management"  # All hosts on this VLAN can reach Kea's API
 kea_api_static_allowed:
-  - 10.0.10.213/32
+  - 10.0.10.213/32  # Thor
 
 # Will be built from inventory
 kea_resolvers: []

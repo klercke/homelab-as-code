@@ -1,24 +1,9 @@
 - name: PowerDNS Recursor
   hosts: tag_role_recursor
   pre_tasks:
-    - name: Load VLAN registry
-      ansible.builtin.include_vars:
-        file: "{{ playbook_dir }}/../../registries/vlans.yaml"
-
-    - name: Build Auth targets from inventory
-      ansible.builtin.set_fact:
-        recursor_auth_targets: >-
-          {{ groups['tag_role_pdns'] | default([])
-             | map('extract', hostvars, 'ansible_host') | list }}
-
     - name: Build reverse zone list from registry
       ansible.builtin.set_fact:
-        recursor_reverse_zones: "{{ recursor_reverse_zones | default([]) + [_z] }}"
-      vars:
-        _octets: "{{ (item.value.prefix | split('/'))[0] | split('.') }}"
-        _z: "{{ _octets[2] }}.{{ _octets[1] }}.{{ _octets[0] }}.in-addr.arpa"
-      loop: "{{ vlans | dict2items }}"
-      loop_control:
-        label: "{{ item.key }}"
+        recursor_reverse_zones: "{{ hlac.reverse_zones_v4.values() | unique | list }}"
+
   roles:
     - recursor

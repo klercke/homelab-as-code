@@ -17,7 +17,7 @@ This module contains services that build on the substrate, but are still upstrea
 | Name | Version |
 |------|---------|
 | <a name="provider_kea"></a> [kea](#provider\_kea) | 0.0.3 |
-| <a name="provider_netbox"></a> [netbox](#provider\_netbox) | 5.7.0 |
+| <a name="provider_netbox"></a> [netbox](#provider\_netbox) | 5.8.0 |
 | <a name="provider_powerdns"></a> [powerdns](#provider\_powerdns) | 1.5.0 |
 
 ## Modules
@@ -84,6 +84,7 @@ This module contains services that build on the substrate, but are still upstrea
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_env"></a> [env](#input\_env) | The environment slug that this module operates under (prd, dev, lab). | `string` | `"prd"` | no |
+| <a name="input_internal_proxy_host"></a> [internal\_proxy\_host](#input\_internal\_proxy\_host) | The host key for the server proxying internal services. | `string` | `"caddy01"` | no |
 | <a name="input_site_location"></a> [site\_location](#input\_site\_location) | Per-site location information. Supplied via SOPS. | <pre>map(object({<br/>    latitude         = optional(number)<br/>    longitude        = optional(number)<br/>    physical_address = optional(string)<br/>  }))</pre> | `{}` | no |
 
 ## Outputs

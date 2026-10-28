@@ -53,6 +53,9 @@ device_roles:
   workstation:
     name: "Workstation"
     color: "3f51b5"  # #3f51b5
+  appliance:
+    name: "Appliance"
+    color: "eb77db"  # #eb77db
 
 device_types:
   protectli-fw4b:
@@ -246,14 +249,15 @@ devices:
     mgmt_ip: "10.0.60.22"
     description: "Primary AP."
 
-  pi01:
+  noct01:
     device_type: "raspberry-pi-4b"
-    role: "sbc"
+    role: "appliance"
     site: "home"
-    status: "planned"
     parent: "shelf01"
     bay: 1
-    description: "PoE hat, YubiKey, and TRNG. Intended as an offline CA. Not yet configured or networked."
+    mac: "e4:5f:01:6a:08:dd"
+    mgmt_ip: "10.0.20.32"
+    description: "PoE-powered Pi running NOCT server."
 
   thor:
     device_type: "generic-workstation"
@@ -262,3 +266,19 @@ devices:
     mgmt_ip: "10.0.10.213"
     mac: "1a:4b:24:a0:f1:bf"
     description: "Primary desktop. Reserved for for use in firewall rules."
+
+  sdr01:
+    device_type: "raspberry-pi-4b"
+    role: "appliance"
+    site: "home"
+    mac: "e4:5f:01:da:bd:a3"
+    mgmt_ip: "10.0.30.200"
+    description: "Pi sitting upstairs with SDR connected for ADS-B collection."
+
+  homeassistant:
+    device_type: "generic-workstation"
+    role: "appliance"
+    site: "home"
+    mac: "00:23:24:b9:72:d1"
+    mgmt_ip: "10.0.20.31"
+    description: "Mini PC sitting in rack running HAOS."

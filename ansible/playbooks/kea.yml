@@ -6,10 +6,6 @@
         file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
       no_log: true
 
-    - name: Load VLAN registry
-      ansible.builtin.include_vars:
-        file: "{{ playbook_dir }}/../../registries/vlans.yaml"
-
     # Clients get the recursors as option 6
     - name: Build resolver list from inventory
       ansible.builtin.set_fact:

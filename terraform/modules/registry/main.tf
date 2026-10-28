@@ -2,11 +2,16 @@ locals {
   _base     = "${path.module}/${var.registry_path}"
   _devices  = yamldecode(file("${local._base}/devices.yaml"))
   _services = yamldecode(file("${local._base}/services.yaml"))
+  _sites    = yamldecode(file("${local._base}/sites.yaml"))
 
-  sites   = yamldecode(file("${local._base}/sites.yaml")).sites
-  vlans   = yamldecode(file("${local._base}/vlans.yaml")).vlans
-  hosts   = yamldecode(file("${local._base}/hosts.yaml")).hosts
-  regions = try(yamldecode(file("${local._base}/sites.yaml")).regions, {})
+  sites   = local._sites.sites
+  regions = try(local._sites.regions, {})
+  # Second octet of the site's /16
+  site_index = {
+    for sk, s in local.sites : sk => tonumber(split(".", split("/", s.prefix_v4)[0])[1])
+  }
+  vlans = yamldecode(file("${local._base}/vlans.yaml")).vlans
+  hosts = yamldecode(file("${local._base}/hosts.yaml")).hosts
 
   racks        = local._devices.racks
   locations    = local._devices.locations
@@ -17,23 +22,83 @@ locals {
   role_services   = local._services.role_services
   public_services = local._services.public_services
 
+  # == Site plan ==
+
+  _site_first_octet = {
+    for sk, s in local.sites : sk => split(".", split("/", s.prefix_v4)[0])[0]
+  }
+
+  # Class digit, prepended to net_id to form the 802.1Q tag.
+  site_class = {
+    for sk, o in local._site_first_octet : sk => lookup(var.class_digits, o, null)
+  }
+
+  # == VLANs ==
+
+  # A VLAN will have its prefixes and VLAN tag derived from net_id and the site
+  # plan, unless prefix_v4 and vlan_id are specified, in which case IPv6 is
+  # disabled and no values are derived automatically.
+
+  vlan_is_derived = {
+    for k, v in local.vlans : k => try(v.prefix_v4, null) == null
+  }
+
+  vlan_id = { for k, v in local.vlans : k => (
+    local.vlan_is_derived[k]
+    ? tonumber("${local.site_class[v.site]}${v.net_id}")
+    : v.vlan_id
+  ) }
+
+  vlan_prefix_v4 = { for k, v in local.vlans : k => (
+    local.vlan_is_derived[k]
+    ? cidrsubnet(
+      local.sites[v.site].prefix_v4,
+      var.vlan_prefix_v4_bits - var.site_prefix_v4_bits,
+      v.net_id
+    )
+    : v.prefix_v4
+  ) }
+
+  vlan_gateway_v4 = {
+    for k, _ in local.vlans : k => cidrhost(local.vlan_prefix_v4[k], var.gateway_host_octet)
+  }
+
+  # Will only get generated for DHCPv4-enabled VLANs
+  vlan_dhcp_v4_octets = {
+    for k, v in local.vlans : k => {
+      dynamic_start     = try(v.dhcp_v4.dynamic_start, var.dhcp_v4_dynamic_range[0])
+      dynamic_end       = try(v.dhcp_v4.dynamic_end, var.dhcp_v4_dynamic_range[1])
+      reservation_start = try(v.dhcp_v4.reservation_start, var.dhcp_v4_reservation_range[0])
+      reservation_end   = try(v.dhcp_v4.reservation_end, var.dhcp_v4_reservation_range[1])
+    } if v.dhcp_v4.enabled
+  }
+
+  vlan_dhcp_v4 = {
+    for k, octets in local.vlan_dhcp_v4_octets : k => {
+      for label, octet in octets : label => cidrhost(local.vlan_prefix_v4[k], octet)
+    }
+  }
+
+
+  # == Hosts ==
+
   host_site = {
     for name, h in local.hosts : name => local.vlans[h.vlan].site
   }
 
   host_ipv4 = {
     for name, h in local.hosts :
-    name => cidrhost(local.vlans[h.vlan].prefix, h.host_octet)
+    name => cidrhost(local.vlan_prefix_v4[h.vlan], h.host_octet)
   }
 
-  host_cidr = {
+  host_cidr_v4 = {
     for name, h in local.hosts :
-    name => "${local.host_ipv4[name]}/${split("/", local.vlans[h.vlan].prefix)[1]}"
+    name => "${local.host_ipv4[name]}/${split("/", local.vlan_prefix_v4[h.vlan])[1]}"
   }
 
   host_vmid = {
     for name, h in local.hosts :
-    name => local.vlans[h.vlan].id * 1000 + h.host_octet
+    name => local.vlan_id[h.vlan] * 1000 + h.host_octet
   }
 
   macs = {
@@ -47,33 +112,38 @@ locals {
     ]))
   }
 
-  reverse_zones = {
-    for k, v in local.vlans :
-    k => "${join(".", slice(reverse(split(".", split("/", v.prefix)[0])), 1, 4))}.in-addr.arpa."
+  # == DNS ==
+
+  reverse_zones_v4 = {
+    for k, _ in local.vlans :
+    k => format("%s.in-addr.arpa.", join(".", slice(reverse(split(".",
+      split("/", local.vlan_prefix_v4[k])[0]
+    )), 1, 4)))
   }
 
-  host_records = {
-    for name, h in local.hosts :
-    name => {
+  host_records_v4 = {
+    for name, h in local.hosts : name => {
       fqdn     = "${name}.${var.env}.${local.sites[local.host_site[name]].slug}.${var.domain}"
       ipv4     = local.host_ipv4[name]
       ptr_name = "${join(".", reverse(split(".", local.host_ipv4[name])))}.in-addr.arpa."
-      rev_zone = local.reverse_zones[h.vlan]
+      rev_zone = local.reverse_zones_v4[h.vlan]
     }
   }
 
+  # == Devices ==
+
   device_vlan = {
-    for k, d in local.devices :
-    k => one([
+    for k, d in local.devices : k => one([
       for vk, v in local.vlans : vk
-      if cidrhost(v.prefix, 0) == cidrhost("${d.mgmt_ip}/${split("/", v.prefix)[1]}", 0)
-    ])
-    if try(d.mgmt_ip, null) != null
+      if v.site == d.site && cidrhost(local.vlan_prefix_v4[vk], 0) == cidrhost(
+        "${d.mgmt_ip}/${split("/", local.vlan_prefix_v4[vk])[1]}", 0
+      )
+    ]) if try(d.mgmt_ip, null) != null
   }
 
-  device_mgmt_cidr = {
+  device_mgmt_cidr_v4 = {
     for k, vk in local.device_vlan :
-    k => "${local.devices[k].mgmt_ip}/${split("/", local.vlans[vk].prefix)[1]}"
+    k => "${local.devices[k].mgmt_ip}/${split("/", local.vlan_prefix_v4[vk])[1]}"
   }
 
   # Devices with MACs specified get reservations
@@ -82,23 +152,24 @@ locals {
       hostname  = k
       mac       = lower(d.mac)
       ip        = d.mgmt_ip
-      subnet_id = local.vlans[local.device_vlan[k]].id
+      subnet_id = local.vlan_id[local.device_vlan[k]]
     } if try(d.mac, null) != null
   }
 
-  # Devices with a management address get DNS records, just like VMs
-  device_records = {
-    for k, vk in local.device_vlan :
-    k => {
+  # Devices with a management address get DNS records
+  device_records_v4 = {
+    for k, vk in local.device_vlan : k => {
       fqdn     = "${k}.${var.env}.${local.sites[local.devices[k].site].slug}.${var.domain}"
       ipv4     = local.devices[k].mgmt_ip
       ptr_name = "${join(".", reverse(split(".", local.devices[k].mgmt_ip)))}.in-addr.arpa."
-      rev_zone = local.reverse_zones[vk]
+      rev_zone = local.reverse_zones_v4[vk]
     }
   }
 
-  # Keyed by target/name/protocol: "DNS" exists on both TCP and UDP, so the
-  # protocol has to be part of the key or they collide.
+  # == Services ==
+
+  # Keyed by target/name/protocol because DNS exists on both TCP and UDP, so
+  # the protocol has to be part of the key to avoid collisions
   vm_services = merge(concat([
     for hk, h in local.hosts : {
       for s in try(local.role_services[h.role], []) :
@@ -112,4 +183,15 @@ locals {
       "${dk}/${s.name}/${s.protocol}" => merge(s, { target = dk })
     }
   ], [{}])...)
+
+  # Anything that a public_service can point at
+  backend_records_v4 = merge(
+    local.host_records_v4,
+    local.device_records_v4,
+  )
+
+  unresolved_backends = [
+    for k, s in local.public_services : "${k} -> ${s.backend}"
+    if !contains(keys(local.backend_records_v4), s.backend)
+  ]
 }

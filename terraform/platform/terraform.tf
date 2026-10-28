@@ -47,6 +47,8 @@ provider "netbox" {
   # api_token comes from NETBOX_API_TOKEN
   server_url           = "http://10.0.20.11"
   allow_insecure_https = false
+
+  request_timeout = 60
 }
 
 provider "powerdns" {

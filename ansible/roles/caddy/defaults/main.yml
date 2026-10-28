@@ -8,6 +8,3 @@ caddy_public_domain: "int.ptxe.dev"
 caddy_acme_email: "admin@ptxe.dev"
 
 caddy_wildcard: true
-
-# Populated from registries/services.yaml in the playbook
-caddy_services: {}

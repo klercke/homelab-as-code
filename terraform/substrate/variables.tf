@@ -25,3 +25,9 @@ variable "pbs_storage" {
   type        = string
   default     = "pbs-wasabi"
 }
+
+variable "ansible_inventory_name" {
+  description = "The name of the inventory that Ansible will use after this module applies."
+  type        = string
+  default     = "protonet"
+}

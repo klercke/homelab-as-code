@@ -1,7 +1,8 @@
 resource "netbox_vlan" "this" {
   for_each = local.vlans
+
   name     = each.value.name
-  vid      = each.value.id
+  vid      = module.registry.vlan_id[each.key]
   group_id = netbox_vlan_group.site[each.value.site].id
   status   = each.value.status
   role_id  = netbox_ipam_role.fns[each.value.fns].id
@@ -13,11 +14,12 @@ resource "netbox_vlan" "this" {
 
 resource "netbox_prefix" "this" {
   for_each = local.vlans
-  prefix   = each.value.prefix
-  status   = each.value.status
-  vlan_id  = netbox_vlan.this[each.key].id
-  site_id  = netbox_site.this[each.value.site].id
-  role_id  = netbox_ipam_role.fns[each.value.fns].id
+
+  prefix  = module.registry.vlan_prefix_v4[each.key]
+  status  = each.value.status
+  vlan_id = netbox_vlan.this[each.key].id
+  site_id = netbox_site.this[each.value.site].id
+  role_id = netbox_ipam_role.fns[each.value.fns].id
 }
 
 resource "netbox_tag" "hlac" {
@@ -96,7 +98,7 @@ resource "netbox_virtual_machine_interface_primary_mac_address" "this" {
 resource "netbox_ip_address" "this" {
   for_each = local.hosts
 
-  ip_address   = "${local.host_records[each.key].ipv4}/${split("/", local.vlans[each.value.vlan].prefix)[1]}"
+  ip_address   = module.registry.host_cidr_v4[each.key]
   status       = "active"
   dns_name     = trimsuffix(local.host_records[each.key].fqdn, ".")
   interface_id = netbox_interface.this[each.key].id
@@ -112,12 +114,11 @@ resource "netbox_primary_ip" "this" {
 resource "netbox_ip_range" "this" {
   for_each = local.ip_ranges
 
-  start_address = "${each.value.start}/${split("/", module.registry.vlans[each.value.vlan].prefix)[1]}"
-  end_address   = "${each.value.end}/${split("/", module.registry.vlans[each.value.vlan].prefix)[1]}"
+  start_address = "${each.value.start}/${split("/", module.registry.vlan_prefix_v4[each.value.vlan])[1]}"
+  end_address   = "${each.value.end}/${split("/", module.registry.vlan_prefix_v4[each.value.vlan])[1]}"
   status        = "active"
   description   = each.value.desc
   tags          = [netbox_tag.hlac.name]
-
   mark_utilized = each.value.utilized
 }
 
@@ -135,7 +136,7 @@ resource "netbox_aggregate" "private" {
 resource "netbox_prefix" "site" {
   for_each = module.registry.sites
 
-  prefix      = each.value.prefix
+  prefix      = each.value.prefix_v4
   status      = "container"
   site_id     = netbox_site.this[each.key].id
   description = "${each.value.name} site allocation"
@@ -185,9 +186,10 @@ resource "netbox_virtual_disk" "this" {
 }
 
 resource "netbox_ipam_role" "fns" {
-  for_each = local.vlans
-  name     = each.value.name
-  slug     = each.value.fns
+  for_each = local.fns_roles
+
+  name = each.value
+  slug = each.key
 }
 
 resource "netbox_mac_address" "device" {

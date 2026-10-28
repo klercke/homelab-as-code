@@ -1,4 +1,4 @@
-{# Managed by Ansible. Generated from registries/services.yaml. #}
+{# Managed by Ansible. Generated from ansible/group_vars/all/hlac.json. #}
 {
 	email {{ caddy_acme_email }}
 
@@ -19,14 +19,14 @@
 		resolvers 1.1.1.1 1.0.0.1
 	}
 
-{% for name, svc in caddy_services | dictsort %}
-	# {{ svc.description | default(name) }} -> {{ svc.backend }}
-	@{{ name }} host {{ name }}.{{ caddy_public_domain }}
-	handle @{{ name }} {
-		reverse_proxy {{ svc.scheme | default('http') }}://{{ svc.backend_ip }}:{{ svc.port }}
-	}
-
+{% for name, svc in hlac.public_services | dictsort %}
+    # {{ svc.description | default(name) }} -> {{ svc.backend }}
+    @{{ name }} host {{ name }}.{{ caddy_public_domain }}
+    handle @{{ name }} {
+        reverse_proxy {{ svc.scheme | default('http') }}://{{ svc.backend_ipv4 }}:{{ svc.port }}
+    }
 {% endfor %}
+
 	# Anything not declared in the registry gets a clear answer rather than
 	# falling through to whichever backend happens to be first.
 	handle {
