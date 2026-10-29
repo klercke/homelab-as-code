@@ -1,0 +1,7 @@
+---
+# Compressed swap in RAM. Guests are overcommitted via ballooning, so this
+# turns a host OOM into a slowdown. Never swap to a ZFS zvol: it can deadlock
+# under exactly the memory pressure swap exists for.
+hypervisor_zram_algo: "zstd"
+hypervisor_zram_percent: 25
+hypervisor_zram_priority: 100
