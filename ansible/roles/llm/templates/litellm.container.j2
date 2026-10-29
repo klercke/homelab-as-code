@@ -12,6 +12,9 @@ ContainerName=litellm
 Network=host
 EnvironmentFile={{ llm_config_dir }}/litellm.env
 Volume={{ llm_config_dir }}/litellm.yaml:/app/config.yaml:ro,Z
+# Persona hook: LiteLLM imports callbacks from the config file's directory
+Volume={{ llm_config_dir }}/persona.py:/app/persona.py:ro,Z
+Volume={{ llm_config_dir }}/persona.json:/app/persona.json:ro,Z
 Exec=--config /app/config.yaml --host 0.0.0.0 --port {{ llm_litellm_port }}
 
 [Service]

@@ -19,13 +19,16 @@
   loop:
     - "{{ llm_config_dir }}"
 
-- name: Create Open WebUI data directory
+- name: Create data directories
   ansible.builtin.file:
-    path: "{{ llm_openwebui_data_dir }}"
+    path: "{{ item }}"
     state: directory
     owner: root
     group: root
     mode: "0750"
+  loop:
+    - "{{ llm_openwebui_data_dir }}"
+    - "{{ llm_embed_cache_dir }}"
 
 - name: Write LiteLLM config
   ansible.builtin.template:
@@ -34,6 +37,26 @@
     owner: root
     group: root
     mode: "0640"
+  notify: Restart litellm
+
+- name: Install the persona hook
+  ansible.builtin.copy:
+    src: persona.py
+    dest: "{{ llm_config_dir }}/persona.py"
+    owner: root
+    group: root
+    mode: "0640"
+  notify: Restart litellm
+
+- name: Write persona prompts
+  ansible.builtin.template:
+    src: persona.json.j2
+    dest: "{{ llm_config_dir }}/persona.json"
+    owner: root
+    group: root
+    mode: "0640"
+  # Holds the personal prompts decrypted from SOPS
+  no_log: true
   notify: Restart litellm
 
 - name: Write LiteLLM environment
@@ -56,6 +79,27 @@
   no_log: true
   notify: Restart open-webui
 
+- name: Write SearXNG settings
+  ansible.builtin.template:
+    src: searxng.yml.j2
+    dest: "{{ llm_config_dir }}/searxng.yml"
+    owner: root
+    group: root
+    # The container runs as an unprivileged user that must read it, so the
+    # secret lives in searxng.env instead
+    mode: "0644"
+  notify: Restart searxng
+
+- name: Write SearXNG environment
+  ansible.builtin.copy:
+    content: "SEARXNG_SECRET={{ searxng_secret_key }}\n"
+    dest: "{{ llm_config_dir }}/searxng.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart searxng
+
 # Pull outside systemd: the Open WebUI image is several GB, and pulling it as
 # part of unit start blows through TimeoutStartSec on a slow host, after which
 # every retry discards the partial layers and starts over.
@@ -65,6 +109,8 @@
   loop:
     - "{{ llm_litellm_image }}"
     - "{{ llm_openwebui_image }}"
+    - "{{ llm_searxng_image }}"
+    - "{{ llm_embed_image }}"
   register: _llm_pull
   changed_when: "'present' not in _llm_pull.stdout"
   async: 3600
@@ -72,6 +118,8 @@
   notify:
     - Restart litellm
     - Restart open-webui
+    - Restart searxng
+    - Restart llm-embed
 
 - name: Install quadlets
   ansible.builtin.template:
@@ -83,11 +131,15 @@
   loop:
     - { src: litellm.container.j2, dest: litellm.container }
     - { src: open-webui.container.j2, dest: open-webui.container }
+    - { src: searxng.container.j2, dest: searxng.container }
+    - { src: llm-embed.container.j2, dest: llm-embed.container }
   loop_control:
     label: "{{ item.dest }}"
   notify:
     - Restart litellm
     - Restart open-webui
+    - Restart searxng
+    - Restart llm-embed
 
 - name: Allow the reverse proxy
   ansible.posix.firewalld:
@@ -107,3 +159,60 @@
   loop:
     - litellm
     - open-webui
+    - searxng
+    - llm-embed
+
+# Open WebUI's LiteLLM key. LiteLLM accepts a caller-chosen key value, so the
+# value lives in SOPS and this only makes sure LiteLLM knows about it.
+- name: Wait for LiteLLM
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ llm_litellm_port }}/health/liveliness"
+  register: _litellm_live
+  until: _litellm_live.status == 200
+  retries: 30
+  delay: 5
+
+- name: Look up the Open WebUI key
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ llm_litellm_port }}/key/info?key={{ litellm_openwebui_key | urlencode }}"
+    headers:
+      Authorization: "Bearer {{ litellm_master_key }}"
+    status_code: [200, 400, 404]
+  register: _openwebui_key
+  no_log: true
+
+- name: Register the Open WebUI key
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ llm_litellm_port }}/key/generate"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ litellm_master_key }}"
+    body_format: json
+    body:
+      key: "{{ litellm_openwebui_key }}"
+      key_alias: "{{ llm_openwebui_key_alias }}"
+      max_budget: "{{ llm_openwebui_budget }}"
+      budget_duration: "{{ llm_openwebui_budget_duration }}"
+      metadata:
+        managed_by: "hlac"
+  when: _openwebui_key.status != 200
+  changed_when: true
+  no_log: true
+
+- name: Keep the Open WebUI key's budget in step
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ llm_litellm_port }}/key/update"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ litellm_master_key }}"
+    body_format: json
+    body:
+      key: "{{ litellm_openwebui_key }}"
+      max_budget: "{{ llm_openwebui_budget }}"
+      budget_duration: "{{ llm_openwebui_budget_duration }}"
+  when:
+    - _openwebui_key.status == 200
+    - (_openwebui_key.json.info.max_budget | default(0, true) | float) != (llm_openwebui_budget | float)
+      or (_openwebui_key.json.info.budget_duration | default('', true)) != llm_openwebui_budget_duration
+  changed_when: true
+  no_log: true

@@ -1,0 +1,24 @@
+# Managed by Ansible. Local changes will be overwritten.
+#
+# Only the overrides live here; use_default_settings pulls in everything else,
+# so image upgrades pick up new engines and fixes on their own.
+use_default_settings: true
+
+general:
+  instance_name: "ProtoNet search"
+
+server:
+  # secret_key comes from SEARXNG_SECRET in searxng.env, which only root can read
+  # Bot protection is for public instances. Open WebUI is the only client and
+  # sends bursts of queries, which the limiter would block.
+  limiter: false
+  public_instance: false
+  image_proxy: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  # Open WebUI reads JSON; without it every query gets a 403
+  formats:
+    - html
+    - json

@@ -2,7 +2,7 @@
 # Pin both to a release tag before the first deploy. Quadlets never pull a
 # newer image on their own, so a tag change here is the only upgrade path.
 llm_litellm_image: "ghcr.io/berriai/litellm:v1.83.14-stable"
-llm_openwebui_image: "ghcr.io/open-webui/open-webui:v0.12.4"
+llm_openwebui_image: "ghcr.io/open-webui/open-webui:v0.12.5"
 
 llm_litellm_port: 4000
 llm_openwebui_port: 8080
@@ -18,3 +18,44 @@ llm_allowed_hosts:
   - 10.0.20.19 # caddy01
 
 llm_postgres_host: "{{ hlac.hosts.postgres01.ipv4 }}"
+
+# SearXNG backs Open WebUI's web search. It listens only to OpenWebUI
+llm_searxng_image: "docker.io/searxng/searxng:2026.10.29-cff884f98"
+llm_searxng_port: 8888
+
+# Open WebUI's own LiteLLM key. The value comes from SOPS
+# (litellm_openwebui_key); the role registers it with LiteLLM so a rebuilt
+# database gets the same key back. It can use every model; the budget is in
+# USD per budget duration and only ever counts cloud models.
+llm_openwebui_key_alias: "open-webui"
+llm_openwebui_budget: 20
+llm_openwebui_budget_duration: "30d"
+
+# New chats start on this model, so a cloud model is only used when picked
+llm_openwebui_default_model: "gemma-moe"
+
+# Embedding server (registries/models.yaml embeddings:). CPU-only llama.cpp
+# on loopback; LiteLLM routes to it like any other model. Pin the tag (the
+# server-bNNNN builds) before relying on it.
+llm_embed_image: "ghcr.io/ggml-org/llama.cpp:server-b11977"
+llm_embed_port: 8901
+llm_embed_threads: 2
+llm_embed_cache_dir: /var/lib/llm-embed
+# Hard cap so a runaway batch can't push LiteLLM or Open WebUI out of memory
+llm_embed_memory_limit: "1g"
+
+# Muninn's persona, injected by LiteLLM (files/persona.py). Each key alias
+# maps to prompt files from prompts/ in hlac (`system`, sent to every model)
+# and to SOPS secrets in platform.sops.yaml (`personal`, sent to local models
+# only), concatenated in order. Personal context never lands in the public
+# repo or reaches a cloud model. Keys not listed here get no persona, which
+# keeps scripts and benchmarks on the raw models.
+llm_prompts_dir: "{{ playbook_dir }}/../../prompts"
+llm_persona_timezone: "America/New_York"
+llm_persona_surfaces:
+  open-webui:
+    system: [core, user-chat, chat]
+  # OpenCode's key, created by hand. Must match its alias in LiteLLM.
+  opencode:
+    system: [core, coding]
+    personal: [persona_konnor]

@@ -8,6 +8,17 @@ model_list:
       api_base: "{{ llm_models.workers[m.worker].url }}/v1"
       api_key: "none"
 {% endfor %}
+{% for name, e in llm_models.embeddings | dictsort %}
+  - model_name: "{{ name }}"
+    litellm_params:
+      model: "openai/{{ name }}"
+      api_base: "http://127.0.0.1:{{ llm_embed_port }}/v1"
+      api_key: "none"
+      # BerriAI/litellm#25388. Drop once the pinned version has the fix
+      encoding_format: "float"
+    model_info:
+      mode: "embedding"
+{% endfor %}
 {% for name, c in llm_models.cloud | dictsort %}
   - model_name: "{{ name }}"
     litellm_params:
@@ -18,6 +29,8 @@ model_list:
 litellm_settings:
   # Clients send params some backends reject; drop them instead of erroring
   drop_params: true
+  # Muninn's persona for every client key; see files/persona.py
+  callbacks: persona.proxy_handler_instance
 
 general_settings:
   master_key: "os.environ/LITELLM_MASTER_KEY"

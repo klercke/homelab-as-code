@@ -4,7 +4,7 @@
   "title": "ProtoNet model registry",
   "type": "object",
   "additionalProperties": false,
-  "required": ["workers", "models", "cloud"],
+  "required": ["workers", "models", "embeddings", "cloud"],
   "$defs": {
     "slug": {
       "type": "string",
@@ -63,6 +63,37 @@
             "maxLength": 300,
             "pattern": "^[A-Za-z0-9 ._:=,/+-]*$",
             "description": "Extra llama-server flags, e.g. KV cache quantization or MoE offload. No shell quoting: llama-swap splits on whitespace."
+          }
+        }
+      }
+    },
+    "embeddings": {
+      "type": "object",
+      "description": "Embedding models served on the gateway host's CPU by the llm role. Exactly one for now: it gets a single loopback port.",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["hf", "ctx"],
+        "properties": {
+          "hf": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(:[A-Za-z0-9._-]+)?$",
+            "description": "Hugging Face GGUF repo, optionally with :quant, passed to llama-server -hf."
+          },
+          "ctx": {
+            "type": "integer",
+            "minimum": 512,
+            "maximum": 32768,
+            "description": "Longest input in tokens. Also the batch size, since embedding models take a whole input in one batch."
+          },
+          "args": {
+            "type": "string",
+            "maxLength": 300,
+            "pattern": "^[A-Za-z0-9 ._:=,/+-]*$",
+            "description": "Extra llama-server flags."
           }
         }
       }

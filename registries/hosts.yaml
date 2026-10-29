@@ -180,8 +180,8 @@ hosts:
     crit: 4
     node: "pve01"
     cores: 2
-    memory: 4096
-    memory_min: 3072
+    memory: 5120
+    memory_min: 4096
     disk: 32
     description: "LiteLLM gateway and Open WebUI. Routes to GPU workers and cloud models."
     ipv6: false

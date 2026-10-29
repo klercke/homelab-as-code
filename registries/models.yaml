@@ -3,8 +3,8 @@
 #
 # Single source of truth for LLM routing. Two consumers read this file:
 #
-#   LiteLLM config      rendered by the llm role on llm01. Every model and
-#                       cloud entry becomes a route.
+#   LiteLLM config      rendered by the llm role on llm01. Every model,
+#                       embedding and cloud entry becomes a route.
 #   llama-swap config   built by the NixOS llmWorker module on each worker
 #                       from the entries listed for it. Workers hold no model
 #                       decisions of their own.
@@ -89,6 +89,13 @@ models:
     ctx: 32768
     ttl: 600
     args: "-fa on --temp 1.0 --top-p 0.95 --top-k 64"
+
+# Served on llm01's CPU by the llm role, not on a worker: Open WebUI needs
+# embeddings for documents and web search even while thor is off.
+embeddings:
+  embeddinggemma-300m:
+    hf: "unsloth/embeddinggemma-300m-GGUF:Q8_0"
+    ctx: 2048
 
 cloud:
   opus:

@@ -1,0 +1,26 @@
+# Managed by Ansible. Generated from registries/models.yaml.
+{% set name, e = (llm_models.embeddings | dictsort | first) %}
+[Unit]
+Description=Embedding server ({{ name }})
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image={{ llm_embed_image }}
+ContainerName=llm-embed
+# Host networking bound to loopback: only LiteLLM on this host reaches it
+Network=host
+Environment=LLAMA_CACHE=/models
+Volume={{ llm_embed_cache_dir }}:/models:Z
+PodmanArgs=--memory={{ llm_embed_memory_limit }}
+# Embedding models take each input in one batch, so the batch sizes must
+# cover the whole context or long inputs are rejected.
+Exec=-hf {{ e.hf }} --embedding --host 127.0.0.1 --port {{ llm_embed_port }} -c {{ e.ctx }} -b {{ e.ctx }} -ub {{ e.ctx }} -t {{ llm_embed_threads }}{{ (' ' ~ e.args) if e.args is defined else '' }}
+
+[Service]
+Restart=always
+# First start downloads the GGUF
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

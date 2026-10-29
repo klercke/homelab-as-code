@@ -1,0 +1,21 @@
+# Managed by Ansible. Local changes will be overwritten.
+[Unit]
+Description=SearXNG metasearch for Open WebUI
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image={{ llm_searxng_image }}
+ContainerName=searxng
+# Loopback only, so it needs no firewalld rule and is unreachable off-host
+PublishPort=127.0.0.1:{{ llm_searxng_port }}:8080
+EnvironmentFile={{ llm_config_dir }}/searxng.env
+Environment=SEARXNG_BASE_URL=http://127.0.0.1:{{ llm_searxng_port }}/
+Volume={{ llm_config_dir }}/searxng.yml:/etc/searxng/settings.yml:ro,Z
+
+[Service]
+Restart=always
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target
