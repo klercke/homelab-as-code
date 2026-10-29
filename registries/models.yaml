@@ -85,7 +85,7 @@ models:
   # Gemma 4 12B with refusals removed (abliterated).
   gemma-12b-abliterated:
     worker: "thor"
-    hf: "huihui-ai/Huihui-gemma-4-12B-it-qat-q4_0-unquantized-abliterated-GGUF:Q4_K_M"
+    hf: "huihui-ai/Huihui-gemma-4-12B-it-qat-q4_0-unquantized-abliterated-GGUF:Q4_K"
     ctx: 32768
     ttl: 600
     args: "-fa on --temp 1.0 --top-p 0.95 --top-k 64"
