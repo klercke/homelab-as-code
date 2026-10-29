@@ -105,14 +105,9 @@
   when: not _psi.stat.exists
   changed_when: true
 
-- name: Persist psi=1 for future kernel installs
-  ansible.builtin.lineinfile:
-    path: /etc/kernel/cmdline
-    regexp: '(^|\s)psi=\S*'
-    line: "{{ (lookup('file', '/etc/kernel/cmdline', errors='ignore') | default('', true) | trim | regex_replace('(^|\\s)psi=\\S*', '') | trim ~ ' psi=1') | trim }}"
-    create: false
-  when: not _psi.stat.exists
-  failed_when: false
+# Runs after the PSI change so the persisted arguments include psi=1
+- name: Keep root= on every boot entry and future kernel
+  ansible.builtin.include_tasks: bootloader.yml
 
 - name: Warn that PSI needs a reboot
   ansible.builtin.debug:

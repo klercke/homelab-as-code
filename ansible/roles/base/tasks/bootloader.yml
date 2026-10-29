@@ -1,0 +1,64 @@
+# Every boot entry must carry root=, and so must the sources new kernels copy
+# their arguments from. The genericcloud image's entries were written under a
+# different machine-id and grubenv has no kernelopts, so kernel updates were
+# producing entries with no root= and guests dropped to the dracut shell on
+# their next reboot.
+
+- name: Find the root filesystem UUID
+  ansible.builtin.command:
+    cmd: findmnt -no UUID /
+  register: _root_uuid
+  changed_when: false
+
+# grubby --info lifts root= out of args onto its own root="..." line, so an
+# entry is missing it when there are more index= lines than root= lines.
+- name: Count boot entries without root=
+  ansible.builtin.shell:
+    cmd: >-
+      set -o pipefail;
+      grubby --info=ALL | awk '/^index=/ {n++} /^root=/ {r++} END {print n-r}'
+  register: _missing_root
+  changed_when: false
+
+- name: Add root= to every boot entry
+  ansible.builtin.command:
+    cmd: grubby --update-kernel=ALL --args="root=UUID={{ _root_uuid.stdout | trim }} ro"
+  when: _missing_root.stdout | int > 0
+  changed_when: true
+
+# Rebuild the full command line from grubby's split root= and args= lines
+- name: Read the default entry's arguments
+  ansible.builtin.shell:
+    cmd: >-
+      set -o pipefail;
+      grubby --info=DEFAULT | awk -F'"' '/^root=/ {r=$2} /^args=/ {a=$2}
+      END {if (r != "") printf "root=%s %s\n", r, a; else print a}'
+  register: _default_args
+  changed_when: false
+
+- name: Refuse to persist arguments without root=
+  ansible.builtin.assert:
+    that: _default_args.stdout is search('(^|\\s)root=')
+    fail_msg: "Default boot entry still has no root= after repair. Fix by hand before rebooting."
+
+# kernel-install takes new entries' arguments from here when it exists
+- name: Persist kernel arguments for future kernels
+  ansible.builtin.copy:
+    dest: /etc/kernel/cmdline
+    content: "{{ _default_args.stdout | trim }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Read grubenv kernelopts
+  ansible.builtin.command:
+    cmd: grub2-editenv - list
+  register: _grubenv
+  changed_when: false
+
+# Entries that reference $kernelopts expand it from grubenv at boot
+- name: Keep grubenv kernelopts in step
+  ansible.builtin.command:
+    cmd: grub2-editenv - set "kernelopts={{ _default_args.stdout | trim }}"
+  when: ("kernelopts=" ~ (_default_args.stdout | trim)) not in _grubenv.stdout_lines
+  changed_when: true
