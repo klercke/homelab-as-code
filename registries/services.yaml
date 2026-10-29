@@ -117,6 +117,20 @@ role_services:
       ports: [9090]
       description: "Prometheus host metrics."
 
+  llm:
+    - name: "LiteLLM"
+      protocol: "tcp"
+      ports: [4000]
+      description: "OpenAI-compatible gateway. Owns all model routing."
+    - name: "Open WebUI"
+      protocol: "tcp"
+      ports: [8080]
+      description: "Chat UI. Talks only to LiteLLM."
+    - name: "node_exporter"
+      protocol: "tcp"
+      ports: [9090]
+      description: "Prometheus host metrics."
+
   hypervisor:
     - name: "Proxmox VE"
       protocol: "tcp"
@@ -155,3 +169,23 @@ public_services:
     backend: "monitoring01"
     port: 3000
     description: "Grafana web UI."
+  homeassistant:
+    backend: "homeassistant"
+    port: 8123
+    description: "Home Assistant web UI."
+  music:
+    backend: "homeassistant"
+    port: 8095
+    description: "Music Assistant web UI."
+  noct:
+    backend: "noct01"
+    port: 80
+    description: "Networked Off-grid Communications Terminal."
+  llm:
+    backend: "llm01"
+    port: 4000
+    description: "LiteLLM OpenAI-compatible API."
+  chat:
+    backend: "llm01"
+    port: 8080
+    description: "Open WebUI chat."

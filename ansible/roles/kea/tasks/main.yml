@@ -100,7 +100,7 @@
     permanent: true
     immediate: true
     state: enabled
-  loop: "{{ [vlans.management.prefix] + kea_api_static_allowed }}"
+  loop: "{{ [hlac.vlans[kea_api_vlan].prefix_v4] + kea_api_static_allowed }}"
 
 - name: Create systemd drop-in directory
   ansible.builtin.file:

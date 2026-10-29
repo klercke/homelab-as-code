@@ -12,3 +12,18 @@ Terraform documentation is within the submodules in the `terraform/` directory.
 ## Ansible Documentation
 
 Ansible documentation is within the `ansible/` directory.
+
+## Order of Operations
+
+Operations should always be done in the following order:
+1. Apply Terraform substrate
+2. Run Ansible base playbook
+3. Apply Terraform platform
+4. Run Ansible role playbooks
+
+## TODO
+
+These are features that I intend to add in the future.
+
+- [ ] Full IPv6 support
+- [ ] Every host creates an alias in the firewall

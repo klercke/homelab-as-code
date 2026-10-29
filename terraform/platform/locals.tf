@@ -1,12 +1,21 @@
 module "registry" {
   source = "../modules/registry"
+
+  domain = local.domain
+  env    = "prd"
 }
 
 locals {
-  sites = yamldecode(file("${path.root}/../../registries/sites.yaml")).sites
-  vlans = yamldecode(file("${path.root}/../../registries/vlans.yaml")).vlans
-  hosts = yamldecode(file("${path.root}/../../registries/hosts.yaml")).hosts
+  sites = module.registry.sites
+  vlans = module.registry.vlans
+  hosts = module.registry.hosts
 
+  fns_roles = {
+    for fns, names in { for k, v in local.vlans : v.fns => v.name... } :
+    fns => names[0]
+  }
+
+  # Colors are commented so that Neovim renders them for me :)
   role_colors = {
     postgres = "336791" #336791
     netbox   = "00d9ff" #00d9ff
@@ -17,7 +26,7 @@ locals {
   }
 
   vdisks = merge([
-    for hname, h in module.registry.hosts : merge(
+    for hname, h in local.hosts : merge(
       { "${hname}-os" = { host = hname, name = "scsi0", size = h.disk } },
       try(h.data_disk, null) == null ? {} :
       { "${hname}-data" = { host = hname, name = "scsi1", size = h.data_disk } }
@@ -25,25 +34,24 @@ locals {
   ]...)
 
   ip_ranges = merge([
-    for name, v in module.registry.vlans : {
+    for name, pools in module.registry.vlan_dhcp_v4 : {
       "${name}-dynamic" = {
-        start    = v.dhcp.dynamic_start
-        end      = v.dhcp.dynamic_end
+        start    = pools.dynamic_start
+        end      = pools.dynamic_end
         desc     = "Dynamic pool"
         vlan     = name
         utilized = true
       }
       "${name}-reservation" = {
-        start    = v.dhcp.reservation_start
-        end      = v.dhcp.reservation_end
+        start    = pools.reservation_start
+        end      = pools.reservation_end
         desc     = "DHCP reservations"
         vlan     = name
         utilized = false
       }
-    } if try(v.dhcp.enabled, false)
+    }
   ]...)
 
   reserved_devices = module.registry.reservations
-
-  dns_records = merge(module.registry.host_records, module.registry.device_records)
+  dns_records      = merge(module.registry.host_records_v4, module.registry.device_records_v4)
 }

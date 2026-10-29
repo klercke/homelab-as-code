@@ -1,0 +1,28 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Restart litellm
+  ansible.builtin.systemd_service:
+    name: litellm
+    state: restarted
+    daemon_reload: true
+
+- name: Restart open-webui
+  ansible.builtin.systemd_service:
+    name: open-webui
+    state: restarted
+    daemon_reload: true
+
+- name: Restart searxng
+  ansible.builtin.systemd_service:
+    name: searxng
+    state: restarted
+    daemon_reload: true
+
+- name: Restart llm-embed
+  ansible.builtin.systemd_service:
+    name: llm-embed
+    state: restarted
+    daemon_reload: true

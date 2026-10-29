@@ -1,0 +1,17 @@
+{#- Managed by Ansible. Assembled from prompts/ in hlac; see files/persona.py. -#}
+{%- set ns = namespace(surfaces={}) -%}
+{%- for alias, s in llm_persona_surfaces | dictsort -%}
+{%-   set parts = namespace(system=[], personal=[]) -%}
+{%-   for f in s.system -%}
+{%-     set parts.system = parts.system + [lookup('ansible.builtin.file', llm_prompts_dir ~ '/' ~ f ~ '.md')] -%}
+{%-   endfor -%}
+{%-   for f in s.personal | default([]) -%}
+{%-     set parts.personal = parts.personal + [lookup('ansible.builtin.vars', f) | trim] -%}
+{%-   endfor -%}
+{%-   set ns.surfaces = ns.surfaces | combine({alias: {'system': parts.system | join('\n\n'), 'personal': parts.personal | join('\n\n')}}) -%}
+{%- endfor -%}
+{{ {
+  'timezone': llm_persona_timezone,
+  'local_models': llm_models.models.keys() | list | sort,
+  'surfaces': ns.surfaces,
+} | to_nice_json }}

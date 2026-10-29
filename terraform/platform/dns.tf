@@ -1,35 +1,18 @@
 locals {
   # Base DNS info
-  domain      = "protonet.internal."
-  nameservers = ["ns1.${local.domain}", "ns2.${local.domain}"]
+  domain             = "protonet.internal."
+  int_service_domain = "int.ptxe.dev."
+  nameservers        = ["ns1.${local.domain}", "ns2.${local.domain}"]
 
-  # From the host, get the VLAN. From the VLAN, get the site slug for the A record
-  host_site = {
-    for name, h in local.hosts :
-    name => local.vlans[h.vlan].site
-  }
-
-  # /24 prefix -> reverse zone name, e.g. 10.0.20.0/24 -> 20.0.10.in-addr.arpa.
-  reverse_zones = {
-    for k, v in local.vlans :
-    k => "${join(".", slice(reverse(split(".", split("/", v.prefix)[0])), 1, 4))}.in-addr.arpa."
-  }
-
-  # Substrate host FQDNs and IPs
-  host_records = {
-    for name, h in local.hosts :
-    name => {
-      fqdn     = "${name}.${var.env}.${local.sites[local.host_site[name]].slug}.${local.domain}"
-      ipv4     = cidrhost(local.vlans[h.vlan].prefix, h.host_octet)
-      ptr_name = "${join(".", reverse(split(".", cidrhost(local.vlans[h.vlan].prefix, h.host_octet))))}.in-addr.arpa."
-      rev_zone = local.reverse_zones[h.vlan]
-    }
-  }
+  host_site     = module.registry.host_site
+  reverse_zones = module.registry.reverse_zones_v4
+  host_records  = module.registry.host_records_v4
 
   # The authoritative PowerDNS hosts, sorted
   ns_hosts = {
     for name, h in local.hosts : name => h if h.role == "pdns"
   }
+
   ns_targets = {
     for idx, name in sort(keys(local.ns_hosts)) :
     "ns${idx + 1}" => local.host_records[name].ipv4
@@ -77,26 +60,26 @@ resource "powerdns_record" "ns_alias" {
   for_each = local.ns_targets
 
   zone    = powerdns_zone.forward.name
-  name    = "${each.key}.protonet.internal."
+  name    = "${each.key}.${local.domain}"
   type    = "A"
   ttl     = 300
   records = [each.value]
 }
 
 resource "powerdns_zone" "public_internal" {
-  name        = "int.ptxe.dev."
+  name        = local.int_service_domain
   kind        = "Native"
-  nameservers = ["ns1.protonet.internal.", "ns2.protonet.internal."]
+  nameservers = local.nameservers
 }
 
 resource "powerdns_record" "service" {
   for_each = module.registry.public_services
 
   zone    = powerdns_zone.public_internal.name
-  name    = "${each.key}.int.ptxe.dev."
+  name    = "${each.key}.${local.int_service_domain}"
   type    = "A"
   ttl     = 300
-  records = [module.registry.host_records["caddy01"].ipv4]
+  records = [module.registry.host_records_v4[var.internal_proxy_host].ipv4]
 }
 
 # Firefox DoH canary
@@ -104,5 +87,5 @@ resource "powerdns_record" "service" {
 resource "powerdns_zone" "doh_canary" {
   name        = "use-application-dns.net."
   kind        = "Native"
-  nameservers = ["ns1.protonet.internal.", "ns2.protonet.internal."]
+  nameservers = local.nameservers
 }

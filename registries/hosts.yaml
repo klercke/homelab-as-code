@@ -4,6 +4,9 @@
 # This is the source for the substrate OpenTofu module, Ansible host vars, and NetBox device records.
 # Address, VMID, MAC, and tags are all derived rather than stored.
 #
+# memory is the maximum the guest sees. memory_min is the balloon floor Proxmox
+# may reclaim down to when the host runs short; omit it to disable reclaim.
+#
 # crit levels:
 #   1  critical infrastructure
 #   2  infrastructure, non-critical
@@ -14,7 +17,7 @@
 
 hosts:
   postgres01:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 10
     layer: "l1"
     role: "postgres"
@@ -22,12 +25,14 @@ hosts:
     node: "pve01"
     cores: 4
     memory: 4096  # Ideally 8192 but I am low on RAM
+    memory_min: 2048
     disk: 32
     data_disk: 64
-    description: "PostgreSQL 18. Backing store for NetBox, PowerDNS, and Kea."
+    description: "PostgreSQL 18. Central database for most apps."
+    ipv6: false
 
   netbox01:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 11
     layer: "l1"
     role: "netbox"
@@ -35,11 +40,13 @@ hosts:
     node: "pve01"
     cores: 2
     memory: 4096
+    memory_min: 3072
     disk: 32
     description: "NetBox. Source of truth for IPAM and DCIM."
+    ipv6: false
 
   pdns01:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 12
     layer: "l1"
     role: "pdns"
@@ -47,11 +54,13 @@ hosts:
     node: "pve01"
     cores: 1
     memory: 2048
+    memory_min: 1024
     disk: 16
-    description: "PowerDNS Authoritative, gpgsql backend."
+    description: "PowerDNS Authoritative. Points to postgres for backend."
+    ipv6: false
 
   pdns02:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 13
     layer: "l1"
     role: "pdns"
@@ -59,11 +68,13 @@ hosts:
     node: "pve01"
     cores: 1
     memory: 2048
+    memory_min: 1024
     disk: 16
-    description: "PowerDNS Authoritative, gpgsql backend."
+    description: "PowerDNS Authoritative. Points to postgres for backend."
+    ipv6: false
 
   kea01:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 14
     layer: "l1"
     role: "kea"
@@ -71,11 +82,13 @@ hosts:
     node: "pve01"
     cores: 1
     memory: 2048
+    memory_min: 1024
     disk: 16
     description: "ISC Kea DHCPv4 with HA hook and PostgreSQL backend."
+    ipv6: false
 
   kea02:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 15
     layer: "l1"
     role: "kea"
@@ -83,11 +96,13 @@ hosts:
     node: "pve01"
     cores: 1
     memory: 2048
+    memory_min: 1024
     disk: 16
     description: "ISC Kea DHCPv4 with HA hook and PostgreSQL backend."
+    ipv6: false
 
   recursor01:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 16
     layer: "l1"
     role: "recursor"
@@ -95,11 +110,13 @@ hosts:
     node: "pve01"
     cores: 2
     memory: 2048
+    memory_min: 1024
     disk: 16
-    description: "PowerDNS Recursor. Forwards internal zones to pdns01/02."
+    description: "PowerDNS Recursor. Forwards internal zones to pdnsNN servers."
+    ipv6: false
 
   recursor02:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 17
     layer: "l1"
     role: "recursor"
@@ -107,11 +124,13 @@ hosts:
     node: "pve01"
     cores: 2
     memory: 2048
+    memory_min: 1024
     disk: 16
-    description: "PowerDNS Recursor. Forwards internal zones to pdns01/02."
+    description: "PowerDNS Recursor. Forwards internal zones to pdnsNN servers."
+    ipv6: false
 
   valkey01:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 18
     layer: "l1"
     role: "valkey"
@@ -119,11 +138,13 @@ hosts:
     node: "pve01"
     cores: 2
     memory: 2048
+    memory_min: 1024
     disk: 16
-    description: "Valkey. Cache and RQ task queue for NetBox."
+    description: "Valkey (Redis fork). Cache and RQ task queue for NetBox."
+    ipv6: false
 
   caddy01:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 19
     layer: "l1"
     role: "caddy"
@@ -131,18 +152,36 @@ hosts:
     node: "pve01"
     cores: 2
     memory: 2048
+    memory_min: 1024
     disk: 16
     description: "Caddy. Reverse proxy for user-facing services."
+    ipv6: false
 
   monitoring01:
-    vlan: "servers"
+    vlan: "home-servers"
     host_octet: 20
     layer: "l1"
     role: "monitoring"
     crit: 2
     node: "pve01"
     cores: 4
-    memory: 8192
+    memory: 4096
+    memory_min: 2048
     disk: 32
     data_disk: 100
     description: "Grafana, Loki, Prometheus, and Alertmanager-based monitoring stack."
+    ipv6: false
+
+  llm01:
+    vlan: "home-servers"
+    host_octet: 22  # .21 is immich (CT 102 on jotunheim, see devices.yaml)
+    layer: "l1"  # Really l2 (a workload); moves when a workloads module exists
+    role: "llm"
+    crit: 4
+    node: "pve01"
+    cores: 2
+    memory: 5120
+    memory_min: 4096
+    disk: 32
+    description: "LiteLLM gateway and Open WebUI. Routes to GPU workers and cloud models."
+    ipv6: false

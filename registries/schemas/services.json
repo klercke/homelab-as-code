@@ -67,7 +67,7 @@
         "properties": {
           "backend": {
             "$ref": "#/$defs/slug",
-            "description": "Host key from hosts.yaml."
+            "description": "Host key from hosts.yaml or a device key from devices.yaml."
           },
           "port": {
             "type": "integer",

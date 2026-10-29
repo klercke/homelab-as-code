@@ -1,11 +1,11 @@
-# Managed by Ansible. Generated from registries/hosts.yaml and devices.yaml.
+# Managed by Ansible. Generated from ansible/group_vars/all/hlac.json.
 #
 # Every target carries role, layer, and crit labels, so dashboards group by
 # role and alert routing can key off criticality without a second source.
-{% for hname, h in reg_hosts.hosts | dictsort %}
+{% for hname, h in hlac.hosts | dictsort %}
 {% if not job.roles or h.role in job.roles %}
 - targets:
-    - "{{ host_ips[hname] }}:{{ job.port }}"
+    - "{{ h.ipv4 }}:{{ job.port }}"
   labels:
     instance: "{{ hname }}"
     role: "{{ h.role }}"
@@ -15,7 +15,7 @@
 {% endif %}
 {% endfor %}
 {% if job_name == 'node' %}
-{% for dname, d in reg_devices.devices | dictsort %}
+{% for dname, d in hlac.devices | dictsort %}
 #{% if d.mgmt_ip is defined and d.role in ['hypervisor'] %}
 #- targets:
 #    - "{{ d.mgmt_ip }}:{{ job.port }}"

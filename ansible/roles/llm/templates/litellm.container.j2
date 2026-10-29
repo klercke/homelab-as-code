@@ -1,0 +1,26 @@
+# Managed by Ansible. Local changes will be overwritten.
+[Unit]
+Description=LiteLLM gateway
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image={{ llm_litellm_image }}
+ContainerName=litellm
+# Host networking so firewalld governs the port directly; published container
+# ports are DNAT'd ahead of the host's input rules.
+Network=host
+EnvironmentFile={{ llm_config_dir }}/litellm.env
+Volume={{ llm_config_dir }}/litellm.yaml:/app/config.yaml:ro,Z
+# Persona hook: LiteLLM imports callbacks from the config file's directory
+Volume={{ llm_config_dir }}/persona.py:/app/persona.py:ro,Z
+Volume={{ llm_config_dir }}/persona.json:/app/persona.json:ro,Z
+Exec=--config /app/config.yaml --host 0.0.0.0 --port {{ llm_litellm_port }}
+
+[Service]
+Restart=always
+# First start pulls the image and runs database migrations
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+# Managed by Ansible. Local changes will be overwritten.
+[Unit]
+Description=Open WebUI
+Wants=network-online.target litellm.service
+After=network-online.target litellm.service
+
+[Container]
+Image={{ llm_openwebui_image }}
+ContainerName=open-webui
+Network=host
+EnvironmentFile={{ llm_config_dir }}/openwebui.env
+Volume={{ llm_openwebui_data_dir }}:/app/backend/data:Z
+
+[Service]
+Restart=always
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

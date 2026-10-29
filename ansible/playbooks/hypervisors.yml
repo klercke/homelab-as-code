@@ -1,0 +1,25 @@
+---
+# Proxmox hosts aren't in the dynamic inventory (it only sees hlac-tagged
+# guests), so build the group from the device registry in hlac.json.
+- name: Find hypervisors
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Add active hypervisors from the registry
+      ansible.builtin.add_host:
+        name: "{{ item.key }}"
+        groups: hypervisors
+        ansible_host: "{{ item.value.ipv4 }}"
+        ansible_user: "{{ hypervisor_ssh_user | default('root') }}"
+      loop: "{{ hlac.devices | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      when:
+        - item.value.role == 'hypervisor'
+        - item.value.status == 'active'
+        - item.value.ipv4 is not none
+
+- name: Hypervisor configuration
+  hosts: hypervisors
+  roles:
+    - hypervisor

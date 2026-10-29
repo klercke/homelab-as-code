@@ -11,3 +11,5 @@ pdns_query_cache_ttl: 30
 pdns_api_static_allowed:
   - 10.0.10.213/32  # thor
   - 10.0.20.20/32   # monitoring01
+
+pdns_api_vlan: "home-management"

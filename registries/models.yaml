@@ -1,0 +1,109 @@
+---
+# ProtoNet model registry.
+#
+# Single source of truth for LLM routing. Two consumers read this file:
+#
+#   LiteLLM config      rendered by the llm role on llm01. Every model,
+#                       embedding and cloud entry becomes a route.
+#   llama-swap config   built by the NixOS llmWorker module on each worker
+#                       from the entries listed for it. Workers hold no model
+#                       decisions of their own.
+#
+# thor has one 16 GB card shared with the desktop, so llama-swap keeps one
+# model loaded at a time and swaps on request. The first request to a model
+# that is not loaded waits for the swap (seconds when cached, longer on the
+# very first download). Sizes below leave about 1.5 GB for the desktop.
+#
+# Repos with a vision projector (mmproj) get it automatically through -hf.
+# --no-mmproj-offload keeps the projector in system RAM where VRAM is tight.
+#
+# There is deliberately no automatic fallback to cloud models: they cost money
+# and are only ever used when a client asks for one by name.
+#
+# All string values are quoted deliberately: see README.md.
+
+workers:
+  thor:
+    url: "http://10.0.10.213:8467"
+    description: "Desktop. RX 6800 XT, 16 GB. Offline while gaming."
+
+models:
+  # OpenCode pair (plan-local / build-local agents)
+
+  # Reasoning and planning. MXFP4 is the native format, so no quant tag.
+  gpt-oss-20b:
+    worker: "thor"
+    hf: "ggml-org/gpt-oss-20b-GGUF"
+    ctx: 32768
+    ttl: 900
+
+  # Agentic coding. IQ4_XS is about 12.8 GB; q8_0 KV keeps 24K context in budget.
+  devstral-small-24b:
+    worker: "thor"
+    hf: "bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS"
+    ctx: 24576
+    ttl: 900
+    args: "-fa on -ctk q8_0 -ctv q8_0 --temp 0.15"
+
+  # Open WebUI daily drivers
+
+  # Best all-rounder that fits: 26B MoE, 4B active, vision, thinking. The
+  # 14.2 GB file leaves no room for the desktop, so six layers of experts run
+  # from system RAM. Raise --n-cpu-moe if it fails to load, lower it if headrom
+  gemma-moe:
+    worker: "thor"
+    hf: "unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL"
+    ctx: 16384
+    ttl: 600
+    args: "--n-cpu-moe 6 --no-mmproj-offload -fa on --temp 1.0 --top-p 0.95 --top-k 64"
+
+  # Fast vision model with room for long documents. About 6.7 GB.
+  gemma-12b:
+    worker: "thor"
+    hf: "unsloth/gemma-4-12b-it-qat-GGUF:UD-Q4_K_XL"
+    ctx: 65536
+    ttl: 600
+    args: "-fa on --temp 1.0 --top-p 0.95 --top-k 64"
+
+  # Small, quick, vision, long context. Good for summaries and quick questions.
+  qwen-9b:
+    worker: "thor"
+    hf: "unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL"
+    ctx: 65536
+    ttl: 600
+    args: "-fa on -ctk q8_0 -ctv q8_0 --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0"
+
+  # Newest dense Qwen, squeezed to 3-bit (12.5 GiB). Smartest per question,
+  # slowest per token. Experimental: drop it if quality at Q3 disappoints.
+  qwen-27b:
+    worker: "thor"
+    hf: "unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL"
+    ctx: 16384
+    ttl: 600
+    args: "--no-mmproj-offload -fa on -ctk q8_0 -ctv q8_0 --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0"
+
+  # Gemma 4 12B with refusals removed (abliterated).
+  gemma-12b-abliterated:
+    worker: "thor"
+    hf: "huihui-ai/Huihui-gemma-4-12B-it-qat-q4_0-unquantized-abliterated-GGUF:Q4_K"
+    ctx: 32768
+    ttl: 600
+    args: "-fa on --temp 1.0 --top-p 0.95 --top-k 64"
+
+# Served on llm01's CPU by the llm role, not on a worker: Open WebUI needs
+# embeddings for documents and web search even while thor is off.
+embeddings:
+  embeddinggemma-300m:
+    hf: "unsloth/embeddinggemma-300m-GGUF:Q8_0"
+    ctx: 2048
+
+cloud:
+  opus:
+    model: "anthropic/claude-opus-5-5"
+    api_key_env: "ANTHROPIC_API_KEY"
+  sonnet:
+    model: "anthropic/claude-sonnet-5-5"
+    api_key_env: "ANTHROPIC_API_KEY"
+  haiku:
+    model: "anthropic/claude-haiku-5-5"
+    api_key_env: "ANTHROPIC_API_KEY"

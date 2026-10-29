@@ -80,25 +80,23 @@
       }
     ],
 
-    // Subnet id is the VLAN id, so it is registry-derived and stable. Lease and
-    // host rows key off subnet id; renumbering these would orphan every lease.
     "subnet4": [
-{% for name, v in vlans.items() if v.dhcp.enabled %}
+{% for name, v in hlac.vlans.items() if v.dhcp_v4 %}
       {
-        "id": {{ v.id }},
-        "subnet": "{{ v.prefix }}",
+        "id": {{ v.dhcp_v4.subnet_id }},
+        "subnet": "{{ v.prefix_v4 }}",
         "pools": [
-          { "pool": "{{ v.dhcp.dynamic_start }} - {{ v.dhcp.dynamic_end }}" }
+          { "pool": "{{ v.dhcp_v4.dynamic_start }} - {{ v.dhcp_v4.dynamic_end }}" }
         ],
 {% if name == kea_local_vlan %}
         // Kea sits on this VLAN: clients broadcast directly, matched by interface.
         "interface": "{{ kea_interface }}",
 {% else %}
         // Reached via the OPNsense relay: matched on giaddr.
-        "relay": { "ip-addresses": [ "{{ v.gateway }}" ] },
+        "relay": { "ip-addresses": [ "{{ v.gateway_v4 }}" ] },
 {% endif %}
         "option-data": [
-          { "name": "routers", "data": "{{ v.gateway }}" },
+          { "name": "routers", "data": "{{ v.gateway_v4 }}" },
           { "name": "domain-name-servers", "data": "{{ kea_resolvers | join(', ') }}" },
           { "name": "domain-name", "data": "{{ kea_search_domain }}" }
         ]
