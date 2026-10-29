@@ -27,3 +27,5 @@ These are features that I intend to add in the future.
 
 - [ ] Full IPv6 support
 - [ ] Every host creates an alias in the firewall
+- [ ] Kubernetes for workloads
+- [ ] CI/CD to lint and deploy

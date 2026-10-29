@@ -22,6 +22,16 @@ resource "netbox_prefix" "this" {
   role_id = netbox_ipam_role.fns[each.value.fns].id
 }
 
+resource "netbox_prefix" "v6" {
+  for_each = module.registry.vlan_prefix_v6
+
+  prefix  = each.value
+  status  = local.vlans[each.key].status
+  vlan_id = netbox_vlan.this[each.key].id
+  site_id = netbox_site.this[local.vlans[each.key].site].id
+  role_id = netbox_ipam_role.fns[local.vlans[each.key].fns].id
+}
+
 resource "netbox_tag" "hlac" {
   name        = "hlac"
   color_hex   = "607d8b" #607d8b
@@ -111,6 +121,26 @@ resource "netbox_primary_ip" "this" {
   ip_address_id      = netbox_ip_address.this[each.key].id
 }
 
+# Only hosts with ipv6: true. The address itself is SLAAC with a fixed token.
+resource "netbox_ip_address" "v6" {
+  for_each = module.registry.host_cidr_v6
+
+  ip_address   = each.value
+  status       = "active"
+  dns_name     = trimsuffix(module.registry.host_records_v6[each.key].fqdn, ".")
+  interface_id = netbox_interface.this[each.key].id
+  object_type  = "virtualization.vminterface"
+  description  = "SLAAC, token ${module.registry.host_token_v6[each.key]}"
+}
+
+resource "netbox_primary_ip" "v6" {
+  for_each = module.registry.host_cidr_v6
+
+  virtual_machine_id = netbox_virtual_machine.this[each.key].id
+  ip_address_id      = netbox_ip_address.v6[each.key].id
+  ip_address_version = 6
+}
+
 resource "netbox_ip_range" "this" {
   for_each = local.ip_ranges
 
@@ -140,6 +170,16 @@ resource "netbox_prefix" "site" {
   status      = "container"
   site_id     = netbox_site.this[each.key].id
   description = "${each.value.name} site allocation"
+  tags        = [netbox_tag.hlac.name]
+}
+
+resource "netbox_prefix" "site_v6" {
+  for_each = module.registry.sites
+
+  prefix      = each.value.prefix_v6
+  status      = "container"
+  site_id     = netbox_site.this[each.key].id
+  description = "${each.value.name} site IPv6 delegation"
   tags        = [netbox_tag.hlac.name]
 }
 

@@ -94,6 +94,21 @@ output "host_cidr_v4" {
   value       = local.host_cidr_v4
 }
 
+output "host_ipv6" {
+  description = "Hostname -> bare IPv6 address. Only hosts with ipv6: true are present."
+  value       = local.host_ipv6
+}
+
+output "host_cidr_v6" {
+  description = "Hostname -> IPv6 address with prefix length. Only hosts with ipv6: true are present."
+  value       = local.host_cidr_v6
+}
+
+output "host_token_v6" {
+  description = "Hostname -> SLAAC interface identifier token (::<host_octet in hex>). Only hosts with ipv6: true are present."
+  value       = local.host_token_v6
+}
+
 output "host_vmid" {
   description = "Hostname -> Proxmox VMID."
   value       = local.host_vmid
@@ -109,6 +124,16 @@ output "macs" {
 output "reverse_zones_v4" {
   description = "VLAN key -> in-addr.arpa zone name."
   value       = local.reverse_zones_v4
+}
+
+output "reverse_zones_v6" {
+  description = "VLAN key -> ip6.arpa zone name. Only VLANs with an IPv6 prefix are present."
+  value       = local.reverse_zones_v6
+}
+
+output "host_records_v6" {
+  description = "Hostname -> { fqdn, ipv6, ptr_name, rev_zone }. Only hosts with ipv6: true are present."
+  value       = local.host_records_v6
 }
 
 output "host_records_v4" {

@@ -3,7 +3,9 @@
   pre_tasks:
     - name: Build reverse zone list from registry
       ansible.builtin.set_fact:
-        recursor_reverse_zones: "{{ hlac.reverse_zones_v4.values() | unique | list }}"
+        recursor_reverse_zones: >-
+          {{ (hlac.reverse_zones_v4.values() | list
+              + hlac.reverse_zones_v6.values() | list) | unique | list }}
 
     # Internal and reverse zones are forwarded to the authoritative servers
     - name: Build authoritative target list from inventory

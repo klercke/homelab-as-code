@@ -94,6 +94,12 @@
     regexp: "^{{ ansible_host }}\\s"
     line: "{{ ansible_host }} {{ inventory_hostname }}.protonet.internal {{ inventory_hostname }}"
 
+- name: Configure IPv6
+  ansible.builtin.include_tasks: ipv6.yml
+  vars:
+    _ipv6: "{{ hlac.hosts[inventory_hostname] }}"
+  when: hlac.hosts[inventory_hostname].token_v6 is not none
+
 - name: Check whether PSI is available
   ansible.builtin.stat:
     path: /proc/pressure/cpu

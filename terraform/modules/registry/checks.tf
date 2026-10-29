@@ -112,6 +112,16 @@ check "unique_octets_per_vlan" {
   }
 }
 
+check "ipv6_hosts_on_ipv6_vlans" {
+  assert {
+    condition = alltrue([
+      for name, h in local.hosts :
+      contains(keys(local.vlan_prefix_v6), h.vlan) if try(h.ipv6, false)
+    ])
+    error_message = "A host in hosts.yaml has ipv6: true but its VLAN has no IPv6 prefix (override VLANs have none)."
+  }
+}
+
 check "memory_min_within_memory" {
   assert {
     condition = alltrue([

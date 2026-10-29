@@ -2,9 +2,18 @@
 incoming:
   listen:
     - {{ ansible_host }}
+{% if recursor_listen_v6 %}
+    - {{ recursor_listen_v6 }}
+{% endif %}
+  # The IPv6 address comes from SLAAC and may not be up yet when the recursor
+  # starts (DAD, late RA). Bind anyway instead of failing to start.
+  non_local_bind: true
   port: 53
   allow_from:
     - {{ recursor_allow_from }}
+{% for prefix in recursor_allow_from_v6 %}
+    - {{ prefix }}
+{% endfor %}
 
 recursor:
   forward_zones:
