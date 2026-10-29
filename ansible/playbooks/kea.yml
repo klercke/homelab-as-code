@@ -6,11 +6,13 @@
         file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
       no_log: true
 
-    # Clients get the recursors as option 6
+    # Clients get the recursors as option 6. Sorted so recursor01 is always
+    # listed first: clients try the first server and wait out a timeout before
+    # falling back, and the 02 peer is the one that gets powered off.
     - name: Build resolver list from inventory
       ansible.builtin.set_fact:
         kea_resolvers: >-
-          {{ groups['tag_role_recursor'] | default([])
+          {{ groups['tag_role_recursor'] | default([]) | sort
              | map('extract', hostvars, 'ansible_host') | list }}
 
     # First host alphabetically is primary, second is standby

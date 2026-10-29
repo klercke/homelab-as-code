@@ -15,7 +15,7 @@
 
 workers:
   thor:
-    url: "http://10.0.10.213:8080"
+    url: "http://10.0.10.213:8467"
     description: "Desktop, RX 6800 XT 16GB. Not always available."
 
 models:
