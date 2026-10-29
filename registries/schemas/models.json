@@ -57,6 +57,12 @@
             "minimum": 0,
             "maximum": 86400,
             "description": "Seconds idle before llama-swap unloads the model. 0 never unloads."
+          },
+          "args": {
+            "type": "string",
+            "maxLength": 300,
+            "pattern": "^[A-Za-z0-9 ._:=,/+-]*$",
+            "description": "Extra llama-server flags, e.g. KV cache quantization or MoE offload. No shell quoting: llama-swap splits on whitespace."
           }
         }
       }
