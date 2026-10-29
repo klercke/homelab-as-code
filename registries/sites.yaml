@@ -1,6 +1,7 @@
 ---
 # ProtoNet site registry.
-# Each site owns one /16 out of 10.0.0.0/8, indexed by site_index.
+# Each site owns one /16 out of 10.0.0.0/8. Its second octet is the site index,
+# derived in terraform/modules/registry rather than stored here.
 # All string values are quoted deliberately: see README.md.
 
 regions:
@@ -18,7 +19,6 @@ regions:
 
 sites:
   home:
-    site_index: 0
     name: "Home"
     slug: "hme"
     region: "rochester"

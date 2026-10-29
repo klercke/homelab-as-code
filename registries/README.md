@@ -57,11 +57,16 @@ them would allow drift:
 
 | Value | Derivation |
 |---|---|
-| IPv4 address | `vlans[host.vlan].prefix` network + `host.host_octet` |
-| Proxmox VMID | `vlans[host.vlan].id * 1000 + host.host_octet` |
+| Site index | second octet of `sites[site].prefix_v4` |
+| 802.1Q VLAN ID | class digit of the site + `net_id` (override VLANs: `vlan_id`) |
+| VLAN IPv4 prefix | `/24` number `net_id` inside `sites[site].prefix_v4` (override VLANs: `prefix_v4`) |
+| IPv4 address | VLAN IPv4 prefix + `host.host_octet` |
+| Proxmox VMID | VLAN ID `* 1000 + host.host_octet` |
 | MAC address | `02:` + first 5 octets of `sha256(hostname)` |
-| Reverse DNS zone | third, second, first octets of `prefix` + `.in-addr.arpa` |
+| Reverse DNS zone | third, second, first octets of the VLAN IPv4 prefix + `.in-addr.arpa` |
 | Proxmox tags | `hlac`, `layer-<layer>`, `role-<role>`, `fns-<fns>`, `crit-<crit>` |
+
+All derivations live in `terraform/modules/registry`.
 
 ## Adding a VLAN
 

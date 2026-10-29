@@ -37,8 +37,10 @@ No resources.
 | <a name="input_gateway_host_octet"></a> [gateway\_host\_octet](#input\_gateway\_host\_octet) | Host octet of the default gateway within each VLAN prefix. | `number` | `1` | no |
 | <a name="input_registry_path"></a> [registry\_path](#input\_registry\_path) | Path to the registries directory relative to this module. | `string` | `"../../../registries"` | no |
 | <a name="input_site_prefix_v4_bits"></a> [site\_prefix\_v4\_bits](#input\_site\_prefix\_v4\_bits) | Prefix length every site supernet must carry. | `number` | `16` | no |
+| <a name="input_site_prefix_v6_bits"></a> [site\_prefix\_v6\_bits](#input\_site\_prefix\_v6\_bits) | Prefix length every site IPv6 prefix must carry (the ISP delegation). | `number` | `56` | no |
 | <a name="input_static_range"></a> [static\_range](#input\_static\_range) | Inclusive [first, last] host octets for statically addressed hosts. | `list(number)` | <pre>[<br/>  10,<br/>  49<br/>]</pre> | no |
 | <a name="input_vlan_prefix_v4_bits"></a> [vlan\_prefix\_v4\_bits](#input\_vlan\_prefix\_v4\_bits) | Prefix length of each derived VLAN segment. | `number` | `24` | no |
+| <a name="input_vlan_prefix_v6_bits"></a> [vlan\_prefix\_v6\_bits](#input\_vlan\_prefix\_v6\_bits) | Prefix length of each derived VLAN IPv6 segment. | `number` | `64` | no |
 
 ## Outputs
 
@@ -72,6 +74,7 @@ No resources.
 | <a name="output_vlan_gateway_v4"></a> [vlan\_gateway\_v4](#output\_vlan\_gateway\_v4) | VLAN key -> IPv4 default gateway address. |
 | <a name="output_vlan_id"></a> [vlan\_id](#output\_vlan\_id) | VLAN key -> 802.1Q ID. |
 | <a name="output_vlan_prefix_v4"></a> [vlan\_prefix\_v4](#output\_vlan\_prefix\_v4) | VLAN key -> IPv4 prefix in CIDR. |
+| <a name="output_vlan_prefix_v6"></a> [vlan\_prefix\_v6](#output\_vlan\_prefix\_v6) | VLAN key -> IPv6 prefix in CIDR. Only derived (net\_id) VLANs are present. |
 | <a name="output_vlans"></a> [vlans](#output\_vlans) | Raw VLAN registry, keyed by VLAN name. Derived values live in the vlan\_* outputs. |
 | <a name="output_vm_services"></a> [vm\_services](#output\_vm\_services) | Flattened services for virtual machines keyed target/name/protocol. |
 <!-- END_TF_DOCS -->

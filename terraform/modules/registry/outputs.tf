@@ -62,6 +62,11 @@ output "vlan_prefix_v4" {
   value       = local.vlan_prefix_v4
 }
 
+output "vlan_prefix_v6" {
+  description = "VLAN key -> IPv6 prefix in CIDR. Only derived (net_id) VLANs are present."
+  value       = local.vlan_prefix_v6
+}
+
 output "vlan_gateway_v4" {
   description = "VLAN key -> IPv4 default gateway address."
   value       = local.vlan_gateway_v4

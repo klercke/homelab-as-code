@@ -7,13 +7,18 @@
   "required": ["vlans"],
 
   "$defs": {
-    "ipv4": {
+    "slug": {
       "type": "string",
-      "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
+      "pattern": "^[a-z][a-z0-9-]{1,30}$"
     },
     "ipv4_cidr": {
       "type": "string",
       "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])/(?:[0-9]|[1-2][0-9]|3[0-2])$"
+    },
+    "host_octet": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 254
     }
   },
 
@@ -21,40 +26,40 @@
     "vlans": {
       "type": "object",
       "minProperties": 1,
-      "propertyNames": {
-        "pattern": "^[a-z][a-z0-9-]{1,30}$"
-      },
+      "propertyNames": { "$ref": "#/$defs/slug" },
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "site", "fns", "name", "prefix", "gateway", "status", "dhcp"],
+        "required": ["site", "fns", "name", "status", "dhcp_v4"],
         "properties": {
-          "id": {
+          "net_id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "Derived VLAN. Third octet of the IPv4 prefix, IPv6 subnet ID, and suffix of the 802.1Q tag."
+          },
+          "vlan_id": {
             "type": "integer",
             "minimum": 1,
             "maximum": 4094,
-            "description": "802.1Q VLAN ID."
+            "description": "Override VLAN only. Literal 802.1Q tag. Requires prefix_v4; IPv6 is disabled."
+          },
+          "prefix_v4": {
+            "$ref": "#/$defs/ipv4_cidr",
+            "description": "Override VLAN only. Literal IPv4 prefix. Requires vlan_id; IPv6 is disabled."
           },
           "site": {
-            "type": "string",
-            "pattern": "^[a-z][a-z0-9-]{1,30}$",
+            "$ref": "#/$defs/slug",
             "description": "Key into sites.yaml."
           },
           "fns": {
-            "type": "string",
-            "pattern": "^[a-z][a-z0-9-]{1,30}$",
+            "$ref": "#/$defs/slug",
             "description": "Functional network segment name."
           },
           "name": {
             "type": "string",
             "minLength": 1,
             "maxLength": 64
-          },
-          "prefix": { "$ref": "#/$defs/ipv4_cidr" },
-          "gateway": { "$ref": "#/$defs/ipv4" },
-          "prefix6": {
-            "type": "string",
-            "description": "Optional IPv6 prefix delegated from the site /48."
           },
           "description": {
             "type": "string",
@@ -63,51 +68,49 @@
           "status": {
             "enum": ["active", "reserved", "deprecated"]
           },
-          "dhcp": {
+          "dhcp_v4": {
             "type": "object",
             "additionalProperties": false,
             "required": ["enabled"],
+            "description": "Pool boundaries are host octets within the VLAN prefix. Omitted boundaries use the registry module defaults.",
             "properties": {
               "enabled": { "type": "boolean" },
-              "dynamic_start": { "$ref": "#/$defs/ipv4" },
-              "dynamic_end": { "$ref": "#/$defs/ipv4" },
-              "reservation_start": { "$ref": "#/$defs/ipv4" },
-              "reservation_end": { "$ref": "#/$defs/ipv4" }
+              "dynamic_start": { "$ref": "#/$defs/host_octet" },
+              "dynamic_end": { "$ref": "#/$defs/host_octet" },
+              "reservation_start": { "$ref": "#/$defs/host_octet" },
+              "reservation_end": { "$ref": "#/$defs/host_octet" }
             },
-            "allOf": [
-              {
-                "if": {
-                  "properties": { "enabled": { "const": true } },
-                  "required": ["enabled"]
-                },
-                "then": {
-                  "required": [
-                    "dynamic_start",
-                    "dynamic_end",
-                    "reservation_start",
-                    "reservation_end"
-                  ]
-                }
-              },
-              {
-                "if": {
-                  "properties": { "enabled": { "const": false } },
-                  "required": ["enabled"]
-                },
-                "then": {
-                  "not": {
-                    "anyOf": [
-                      { "required": ["dynamic_start"] },
-                      { "required": ["dynamic_end"] },
-                      { "required": ["reservation_start"] },
-                      { "required": ["reservation_end"] }
-                    ]
-                  }
-                }
+            "if": {
+              "properties": { "enabled": { "const": false } },
+              "required": ["enabled"]
+            },
+            "then": {
+              "not": {
+                "anyOf": [
+                  { "required": ["dynamic_start"] },
+                  { "required": ["dynamic_end"] },
+                  { "required": ["reservation_start"] },
+                  { "required": ["reservation_end"] }
+                ]
               }
-            ]
+            }
           }
-        }
+        },
+        "oneOf": [
+          {
+            "required": ["net_id"],
+            "not": {
+              "anyOf": [
+                { "required": ["vlan_id"] },
+                { "required": ["prefix_v4"] }
+              ]
+            }
+          },
+          {
+            "required": ["vlan_id", "prefix_v4"],
+            "not": { "required": ["net_id"] }
+          }
+        ]
       }
     }
   }
