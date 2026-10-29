@@ -31,14 +31,14 @@ models:
   # OpenCode pair (plan-local / build-local agents)
 
   # Reasoning and planning. MXFP4 is the native format, so no quant tag.
-  local-planner:
+  gpt-oss-20b:
     worker: "thor"
     hf: "ggml-org/gpt-oss-20b-GGUF"
     ctx: 32768
     ttl: 900
 
   # Agentic coding. IQ4_XS is about 12.8 GB; q8_0 KV keeps 24K context in budget.
-  local-builder:
+  devstral-small-24b:
     worker: "thor"
     hf: "bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS"
     ctx: 24576
