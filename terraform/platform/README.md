@@ -45,6 +45,7 @@ This module contains services that build on the substrate, but are still upstrea
 | [netbox_interface.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/interface) | resource |
 | [netbox_ip_address.device_mgmt](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
 | [netbox_ip_address.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
+| [netbox_ip_address.v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
 | [netbox_ip_range.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_range) | resource |
 | [netbox_ipam_role.fns](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ipam_role) | resource |
 | [netbox_location.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/location) | resource |
@@ -53,8 +54,11 @@ This module contains services that build on the substrate, but are still upstrea
 | [netbox_manufacturer.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/manufacturer) | resource |
 | [netbox_platform.rocky9](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/platform) | resource |
 | [netbox_prefix.site](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/prefix) | resource |
+| [netbox_prefix.site_v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/prefix) | resource |
 | [netbox_prefix.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/prefix) | resource |
+| [netbox_prefix.v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/prefix) | resource |
 | [netbox_primary_ip.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/primary_ip) | resource |
+| [netbox_primary_ip.v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/primary_ip) | resource |
 | [netbox_rack.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/rack) | resource |
 | [netbox_region.l0](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/region) | resource |
 | [netbox_region.l1](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/region) | resource |
@@ -71,13 +75,16 @@ This module contains services that build on the substrate, but are still upstrea
 | [netbox_vlan.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/vlan) | resource |
 | [netbox_vlan_group.site](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/vlan_group) | resource |
 | [powerdns_record.a](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
+| [powerdns_record.aaaa](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_record.ns_alias](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_record.ptr](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
+| [powerdns_record.ptr_v6](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_record.service](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_zone.doh_canary](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
 | [powerdns_zone.forward](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
 | [powerdns_zone.public_internal](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
 | [powerdns_zone.reverse](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
+| [powerdns_zone.reverse_v6](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
 
 ## Inputs
 

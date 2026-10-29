@@ -98,7 +98,8 @@
         "option-data": [
           { "name": "routers", "data": "{{ v.gateway_v4 }}" },
           { "name": "domain-name-servers", "data": "{{ kea_resolvers | join(', ') }}" },
-          { "name": "domain-name", "data": "{{ kea_search_domain }}" }
+          { "name": "domain-name", "data": "{{ kea_search_domains | first }}" },
+          { "name": "domain-search", "data": "{{ kea_search_domains | join(', ') }}" }
         ]
       }{{ "," if not loop.last }}
 {% endfor %}

@@ -57,6 +57,11 @@ variable "vlan_prefix_v6_bits" {
   description = "Prefix length of each derived VLAN IPv6 segment."
   type        = number
   default     = 64
+
+  validation {
+    condition     = var.vlan_prefix_v6_bits % 4 == 0 && var.vlan_prefix_v6_bits <= 64
+    error_message = "vlan_prefix_v6_bits must be a multiple of 4 (ip6.arpa zones fall on nibble boundaries) and at most 64 (SLAAC)."
+  }
 }
 
 variable "gateway_host_octet" {

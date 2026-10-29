@@ -1,0 +1,58 @@
+# IPv6 by SLAAC with a fixed interface identifier (token).
+#
+# The router advertisement supplies the /64, the token supplies the host part,
+# so the address is predictable (hlac.json ipv6) but follows a prefix change
+# without touching the VM. Temporary (privacy) addresses are disabled so the
+# token address is the one used as a source. DNS from the RA is ignored so
+# resolvers stay under hlac control.
+
+- name: Find the NetworkManager connection on the default interface
+  ansible.builtin.command:
+    cmd: nmcli -g GENERAL.CONNECTION device show {{ ansible_default_ipv4.interface }}
+  register: _ipv6_conn
+  changed_when: false
+
+- name: Configure SLAAC with the host's fixed token
+  ansible.builtin.shell:
+    executable: /bin/bash
+    cmd: |
+      set -euo pipefail
+      fields=ipv6.method,ipv6.addr-gen-mode,ipv6.token,ipv6.ip6-privacy,ipv6.ignore-auto-dns
+      before=$(nmcli -g "$fields" connection show {{ _ipv6_conn.stdout | quote }})
+      nmcli connection modify {{ _ipv6_conn.stdout | quote }} \
+        ipv6.method auto \
+        ipv6.addr-gen-mode eui64 \
+        ipv6.token {{ _ipv6.token_v6 | quote }} \
+        ipv6.ip6-privacy 0 \
+        ipv6.ignore-auto-dns yes
+      after=$(nmcli -g "$fields" connection show {{ _ipv6_conn.stdout | quote }})
+      if [ "$before" != "$after" ]; then echo CHANGED; fi
+  register: _ipv6_modify
+  changed_when: "'CHANGED' in _ipv6_modify.stdout"
+
+# reapply changes the live device without taking the connection down, so the
+# SSH session Ansible is using over IPv4 survives. Not a handler because the
+# address check below has to run after it.
+- name: Apply IPv6 settings to the running interface # noqa: no-handler
+  ansible.builtin.command:
+    cmd: nmcli device reapply {{ ansible_default_ipv4.interface }}
+  when: _ipv6_modify is changed
+  changed_when: true
+
+- name: Wait for the derived IPv6 address
+  ansible.builtin.command:
+    cmd: ip -6 -o addr show dev {{ ansible_default_ipv4.interface }} scope global
+  register: _ipv6_addr
+  changed_when: false
+  failed_when: false
+  until: (_ipv6.ipv6 ~ '/') in _ipv6_addr.stdout
+  retries: 10
+  delay: 3
+
+- name: Warn if the derived IPv6 address did not appear
+  ansible.builtin.debug:
+    msg: >-
+      {{ _ipv6.ipv6 }} is not on {{ ansible_default_ipv4.interface }}.
+      Check that the router advertises the VLAN prefix (SLAAC) and that it
+      matches prefix_v6 in sites.yaml.
+  when: (_ipv6.ipv6 ~ '/') not in _ipv6_addr.stdout

@@ -20,6 +20,7 @@ resource "local_file" "derived_network" {
           slug       = s.slug
           site_index = module.registry.site_index[k]
           prefix_v4  = s.prefix_v4
+          prefix_v6  = s.prefix_v6
         }
       }
 
@@ -31,6 +32,7 @@ resource "local_file" "derived_network" {
           vlan_id    = module.registry.vlan_id[k]
           prefix_v4  = module.registry.vlan_prefix_v4[k]
           gateway_v4 = module.registry.vlan_gateway_v4[k]
+          prefix_v6  = try(module.registry.vlan_prefix_v6[k], null)
           status     = v.status
 
           dhcp_v4 = try({
@@ -53,6 +55,11 @@ resource "local_file" "derived_network" {
           ipv4    = module.registry.host_ipv4[k]
           cidr_v4 = module.registry.host_cidr_v4[k]
           fqdn    = module.registry.host_records_v4[k].fqdn
+
+          # null unless the host has ipv6: true
+          ipv6     = try(module.registry.host_ipv6[k], null)
+          cidr_v6  = try(module.registry.host_cidr_v6[k], null)
+          token_v6 = try(module.registry.host_token_v6[k], null)
         }
       }
 
@@ -86,6 +93,7 @@ resource "local_file" "derived_network" {
       device_services = module.registry.device_services
 
       reverse_zones_v4 = module.registry.reverse_zones_v4
+      reverse_zones_v6 = module.registry.reverse_zones_v6
     }
   })}\n"
 }

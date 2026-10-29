@@ -38,6 +38,14 @@
     state: enabled
   loop: [tcp, udp]
 
+- name: Open DNS to site over IPv6
+  ansible.posix.firewalld:
+    rich_rule: "rule family=ipv6 source address={{ item[0] }} port port=53 protocol={{ item[1] }} accept"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ recursor_allow_from_v6 | product(['tcp', 'udp']) | list }}"
+
 - name: Enable recursor
   ansible.builtin.systemd_service:
     name: pdns-recursor

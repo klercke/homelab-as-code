@@ -1,6 +1,10 @@
 recursor_repo_track: "52"
 recursor_config_dir: /etc/pdns-recursor
 recursor_allow_from: "10.0.0.0/16"
+# Every site's IPv6 delegation
+recursor_allow_from_v6: "{{ hlac.sites.values() | map(attribute='prefix_v6') | list }}"
+# This host's derived IPv6 address, or null when the host has ipv6: false
+recursor_listen_v6: "{{ hlac.hosts[inventory_hostname].ipv6 }}"
 
 recursor_internal_zones:
   - "protonet.internal"

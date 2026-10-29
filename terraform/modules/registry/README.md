@@ -55,9 +55,13 @@ No resources.
 | <a name="output_device_vlan"></a> [device\_vlan](#output\_device\_vlan) | Device name -> VLAN key containing its management address. |
 | <a name="output_devices"></a> [devices](#output\_devices) | Raw device registry, keyed by device name. |
 | <a name="output_host_cidr_v4"></a> [host\_cidr\_v4](#output\_host\_cidr\_v4) | Hostname -> IPv4 address with prefix length. |
+| <a name="output_host_cidr_v6"></a> [host\_cidr\_v6](#output\_host\_cidr\_v6) | Hostname -> IPv6 address with prefix length. Only hosts with ipv6: true are present. |
 | <a name="output_host_ipv4"></a> [host\_ipv4](#output\_host\_ipv4) | Hostname -> bare IPv4 address. |
+| <a name="output_host_ipv6"></a> [host\_ipv6](#output\_host\_ipv6) | Hostname -> bare IPv6 address. Only hosts with ipv6: true are present. |
 | <a name="output_host_records_v4"></a> [host\_records\_v4](#output\_host\_records\_v4) | Hostname -> { fqdn, ipv4, ptr\_name, rev\_zone }. |
+| <a name="output_host_records_v6"></a> [host\_records\_v6](#output\_host\_records\_v6) | Hostname -> { fqdn, ipv6, ptr\_name, rev\_zone }. Only hosts with ipv6: true are present. |
 | <a name="output_host_site"></a> [host\_site](#output\_host\_site) | Hostname -> site key. |
+| <a name="output_host_token_v6"></a> [host\_token\_v6](#output\_host\_token\_v6) | Hostname -> SLAAC interface identifier token (::<host\_octet in hex>). Only hosts with ipv6: true are present. |
 | <a name="output_host_vmid"></a> [host\_vmid](#output\_host\_vmid) | Hostname -> Proxmox VMID. |
 | <a name="output_hosts"></a> [hosts](#output\_hosts) | Raw host registry, keyed by hostname. Filter by layer at the call site. |
 | <a name="output_locations"></a> [locations](#output\_locations) | Raw location registry, keyed by location slug. |
@@ -67,6 +71,7 @@ No resources.
 | <a name="output_regions"></a> [regions](#output\_regions) | Raw regions registry, keyed by region slug. |
 | <a name="output_reservations"></a> [reservations](#output\_reservations) | Device name -> Kea DHCPv4 reservation. Only contains devices with a specified MAC. |
 | <a name="output_reverse_zones_v4"></a> [reverse\_zones\_v4](#output\_reverse\_zones\_v4) | VLAN key -> in-addr.arpa zone name. |
+| <a name="output_reverse_zones_v6"></a> [reverse\_zones\_v6](#output\_reverse\_zones\_v6) | VLAN key -> ip6.arpa zone name. Only VLANs with an IPv6 prefix are present. |
 | <a name="output_role_services"></a> [role\_services](#output\_role\_services) | Role key -> list of listening services. |
 | <a name="output_site_index"></a> [site\_index](#output\_site\_index) | Site key -> index within the addressing plan. |
 | <a name="output_sites"></a> [sites](#output\_sites) | Raw sites registry, keyed by site name. |

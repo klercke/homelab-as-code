@@ -23,7 +23,11 @@ kea_api_static_allowed:
 # Will be built from inventory
 kea_resolvers: []
 
-kea_search_domain: "protonet.internal"
+# First entry is also sent as domain-name (option 15) for clients that ignore
+# domain-search (option 119). prd.hme first so short host names resolve.
+kea_search_domains:
+  - "prd.hme.protonet.internal"
+  - "protonet.internal"
 
 kea_valid_lifetime: 3600
 kea_renew_timer: 900

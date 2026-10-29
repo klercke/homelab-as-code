@@ -106,6 +106,28 @@ locals {
     name => "${local.host_ipv4[name]}/${split("/", local.vlan_prefix_v4[h.vlan])[1]}"
   }
 
+  # IPv6 is opt-in per host (ipv6: true) and only on VLANs with an IPv6 prefix.
+  # Hosts get their address by SLAAC with a fixed interface identifier (token)
+  # equal to host_octet, so the address is predictable without being static.
+  _host_v6 = {
+    for name, h in local.hosts : name => h
+    if try(h.ipv6, false) && contains(keys(local.vlan_prefix_v6), h.vlan)
+  }
+
+  host_ipv6 = {
+    for name, h in local._host_v6 :
+    name => cidrhost(local.vlan_prefix_v6[h.vlan], h.host_octet)
+  }
+
+  host_cidr_v6 = {
+    for name, h in local._host_v6 :
+    name => "${local.host_ipv6[name]}/${var.vlan_prefix_v6_bits}"
+  }
+
+  host_token_v6 = {
+    for name, h in local._host_v6 : name => format("::%x", h.host_octet)
+  }
+
   host_vmid = {
     for name, h in local.hosts :
     name => local.vlan_id[h.vlan] * 1000 + h.host_octet
@@ -129,6 +151,45 @@ locals {
     k => format("%s.in-addr.arpa.", join(".", slice(reverse(split(".",
       split("/", local.vlan_prefix_v4[k])[0]
     )), 1, 4)))
+  }
+
+  # Fully expanded 32-nibble forms of IPv6 addresses and VLAN prefixes, needed
+  # for ip6.arpa names. Splits on "::", pads the missing groups with zeros, then
+  # zero-pads every group to four hex digits.
+  _v6_in = merge(
+    { for k, a in local.host_ipv6 : "host/${k}" => a },
+    { for k, p in local.vlan_prefix_v6 : "vlan/${k}" => split("/", p)[0] },
+  )
+  _v6_halves = { for k, a in local._v6_in : k => split("::", a) }
+  _v6_left = {
+    for k, h in local._v6_halves : k => h[0] == "" ? [] : split(":", h[0])
+  }
+  _v6_right = {
+    for k, h in local._v6_halves : k => length(h) > 1 && h[1] != "" ? split(":", h[1]) : []
+  }
+  _v6_full = {
+    for k, _ in local._v6_in : k => join("", [
+      for g in concat(
+        local._v6_left[k],
+        [for i in range(8 - length(local._v6_left[k]) - length(local._v6_right[k])) : "0"],
+        local._v6_right[k],
+      ) : format("%04x", parseint(g, 16))
+    ])
+  }
+
+  reverse_zones_v6 = {
+    for k, _ in local.vlan_prefix_v6 : k => format("%s.ip6.arpa.", join(".", reverse(
+      regexall(".", substr(local._v6_full["vlan/${k}"], 0, var.vlan_prefix_v6_bits / 4))
+    )))
+  }
+
+  host_records_v6 = {
+    for name, h in local._host_v6 : name => {
+      fqdn     = "${name}.${var.env}.${local.sites[local.host_site[name]].slug}.${var.domain}"
+      ipv6     = local.host_ipv6[name]
+      ptr_name = format("%s.ip6.arpa.", join(".", reverse(regexall(".", local._v6_full["host/${name}"]))))
+      rev_zone = local.reverse_zones_v6[h.vlan]
+    }
   }
 
   host_records_v4 = {

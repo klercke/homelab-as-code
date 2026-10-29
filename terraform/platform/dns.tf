@@ -33,6 +33,14 @@ resource "powerdns_zone" "reverse" {
   nameservers = local.nameservers
 }
 
+resource "powerdns_zone" "reverse_v6" {
+  for_each = toset(values(module.registry.reverse_zones_v6))
+
+  name        = each.value
+  kind        = "Native"
+  nameservers = local.nameservers
+}
+
 # A records for every host
 resource "powerdns_record" "a" {
   for_each = local.dns_records
@@ -49,6 +57,27 @@ resource "powerdns_record" "ptr" {
   for_each = local.dns_records
 
   zone    = powerdns_zone.reverse[each.value.rev_zone].name
+  name    = each.value.ptr_name
+  type    = "PTR"
+  ttl     = 300
+  records = [each.value.fqdn]
+}
+
+# AAAA and PTR records for hosts with ipv6: true
+resource "powerdns_record" "aaaa" {
+  for_each = module.registry.host_records_v6
+
+  zone    = powerdns_zone.forward.name
+  name    = each.value.fqdn
+  type    = "AAAA"
+  ttl     = 300
+  records = [each.value.ipv6]
+}
+
+resource "powerdns_record" "ptr_v6" {
+  for_each = module.registry.host_records_v6
+
+  zone    = powerdns_zone.reverse_v6[each.value.rev_zone].name
   name    = each.value.ptr_name
   type    = "PTR"
   ttl     = 300
