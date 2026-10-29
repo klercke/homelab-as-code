@@ -84,6 +84,27 @@ check "unique_octets_per_vlan" {
   }
 }
 
+check "memory_min_within_memory" {
+  assert {
+    condition = alltrue([
+      for name, h in local.hosts : try(h.memory_min, h.memory) <= h.memory
+    ])
+    error_message = "A host in hosts.yaml has memory_min greater than memory."
+  }
+}
+
+# Hand-built guests outside hlac are registered as devices; a host must never
+# be derived onto one of their addresses.
+check "host_ips_clear_of_devices" {
+  assert {
+    condition = length(setintersection(
+      toset(values(local.host_ipv4)),
+      toset([for k, d in local.devices : d.mgmt_ip if try(d.mgmt_ip, null) != null])
+    )) == 0
+    error_message = "A host in hosts.yaml derives an address already used by a device in devices.yaml."
+  }
+}
+
 check "octets_in_static_range" {
   assert {
     condition = alltrue([

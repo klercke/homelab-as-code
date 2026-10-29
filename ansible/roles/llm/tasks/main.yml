@@ -1,0 +1,123 @@
+---
+- name: Load the model registry
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/../../registries/models.yaml"
+    name: llm_models
+
+- name: Install podman
+  ansible.builtin.dnf:
+    name: podman
+    state: present
+
+- name: Create config directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  loop:
+    - "{{ llm_config_dir }}"
+    - "{{ llm_config_dir }}/workers"
+
+- name: Create Open WebUI data directory
+  ansible.builtin.file:
+    path: "{{ llm_openwebui_data_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Write LiteLLM config
+  ansible.builtin.template:
+    src: litellm.yaml.j2
+    dest: "{{ llm_config_dir }}/litellm.yaml"
+    owner: root
+    group: root
+    mode: "0640"
+  notify: Restart litellm
+
+- name: Write LiteLLM environment
+  ansible.builtin.template:
+    src: litellm.env.j2
+    dest: "{{ llm_config_dir }}/litellm.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart litellm
+
+- name: Write Open WebUI environment
+  ansible.builtin.template:
+    src: openwebui.env.j2
+    dest: "{{ llm_config_dir }}/openwebui.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart open-webui
+
+# Rendered here so the registry stays the only place model choices live.
+# Distribution to the workers is handled separately.
+- name: Write llama-swap config for each worker
+  ansible.builtin.template:
+    src: llama-swap.yaml.j2
+    dest: "{{ llm_config_dir }}/workers/{{ item }}.yaml"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ llm_models.workers | list }}"
+  vars:
+    worker: "{{ item }}"
+
+# Pull outside systemd: the Open WebUI image is several GB, and pulling it as
+# part of unit start blows through TimeoutStartSec on a slow host, after which
+# every retry discards the partial layers and starts over.
+- name: Pull container images
+  ansible.builtin.shell:
+    cmd: podman image exists "{{ item }}" && echo present || podman pull --quiet "{{ item }}"
+  loop:
+    - "{{ llm_litellm_image }}"
+    - "{{ llm_openwebui_image }}"
+  register: _llm_pull
+  changed_when: "'present' not in _llm_pull.stdout"
+  async: 3600
+  poll: 15
+  notify:
+    - Restart litellm
+    - Restart open-webui
+
+- name: Install quadlets
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/etc/containers/systemd/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { src: litellm.container.j2, dest: litellm.container }
+    - { src: open-webui.container.j2, dest: open-webui.container }
+  loop_control:
+    label: "{{ item.dest }}"
+  notify:
+    - Restart litellm
+    - Restart open-webui
+
+- name: Allow the reverse proxy
+  ansible.posix.firewalld:
+    rich_rule: "rule family=ipv4 source address={{ item.0 }}/32 port port={{ item.1 }} protocol=tcp accept"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ llm_allowed_hosts | product([llm_litellm_port, llm_openwebui_port]) | list }}"
+
+# Quadlet units are generated, so they can't be enabled; WantedBy in the
+# .container file handles boot. This only starts them the first time.
+- name: Start services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: started
+    daemon_reload: true
+  loop:
+    - litellm
+    - open-webui

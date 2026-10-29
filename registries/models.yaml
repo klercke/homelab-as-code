@@ -1,0 +1,37 @@
+---
+# ProtoNet model registry.
+#
+# Single source of truth for LLM routing. The llm role renders two things
+# from this file:
+#
+#   LiteLLM config      on llm01. Every model and cloud entry becomes a route.
+#   llama-swap config   one per worker. The worker serves only what is listed
+#                       for it here and holds no model decisions of its own.
+#
+# There is deliberately no automatic fallback to cloud models: they cost money
+# and are only ever used when a client asks for one by name.
+#
+# All string values are quoted deliberately: see README.md.
+
+workers:
+  thor:
+    url: "http://10.0.10.213:8080"
+    description: "Desktop, RX 6800 XT 16GB. Not always available."
+
+models:
+  local-coder:
+    worker: "thor"
+    hf: "ggml-org/gpt-oss-20b-GGUF"
+    ctx: 32768
+    ttl: 900
+
+cloud:
+  opus:
+    model: "anthropic/claude-opus-5-5"
+    api_key_env: "ANTHROPIC_API_KEY"
+  sonnet:
+    model: "anthropic/claude-sonnet-5-5"
+    api_key_env: "ANTHROPIC_API_KEY"
+  haiku:
+    model: "anthropic/claude-haiku-5-5"
+    api_key_env: "ANTHROPIC_API_KEY"

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://protonet.internal/schemas/models.json",
+  "title": "ProtoNet model registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["workers", "models", "cloud"],
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,30}$"
+    }
+  },
+  "properties": {
+    "workers": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "pattern": "^https?://[^/]+$",
+            "description": "llama-swap base URL, no trailing slash or path."
+          },
+          "description": { "type": "string", "maxLength": 200 }
+        }
+      }
+    },
+    "models": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["worker", "hf", "ctx", "ttl"],
+        "properties": {
+          "worker": {
+            "$ref": "#/$defs/slug",
+            "description": "Key into workers."
+          },
+          "hf": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(:[A-Za-z0-9._-]+)?$",
+            "description": "Hugging Face GGUF repo, optionally with :quant, passed to llama-server -hf."
+          },
+          "ctx": {
+            "type": "integer",
+            "minimum": 2048,
+            "maximum": 1048576,
+            "description": "Context window in tokens. Context costs VRAM."
+          },
+          "ttl": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 86400,
+            "description": "Seconds idle before llama-swap unloads the model. 0 never unloads."
+          }
+        }
+      }
+    },
+    "cloud": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["model", "api_key_env"],
+        "properties": {
+          "model": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]+/.+$",
+            "description": "LiteLLM provider/model string."
+          },
+          "api_key_env": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]+$",
+            "description": "Env var LiteLLM reads the key from. Its lowercase form is the SOPS secret name."
+          }
+        }
+      }
+    }
+  }
+}

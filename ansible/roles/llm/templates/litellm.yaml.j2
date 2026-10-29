@@ -1,0 +1,24 @@
+# Managed by Ansible. Generated from registries/models.yaml.
+model_list:
+{% for name, m in llm_models.models | dictsort %}
+  - model_name: "{{ name }}"
+    litellm_params:
+      # llama-swap speaks the OpenAI API and selects the model by this name
+      model: "openai/{{ name }}"
+      api_base: "{{ llm_models.workers[m.worker].url }}/v1"
+      api_key: "none"
+{% endfor %}
+{% for name, c in llm_models.cloud | dictsort %}
+  - model_name: "{{ name }}"
+    litellm_params:
+      model: "{{ c.model }}"
+      api_key: "os.environ/{{ c.api_key_env }}"
+{% endfor %}
+
+litellm_settings:
+  # Clients send params some backends reject; drop them instead of erroring
+  drop_params: true
+
+general_settings:
+  master_key: "os.environ/LITELLM_MASTER_KEY"
+  database_url: "os.environ/DATABASE_URL"

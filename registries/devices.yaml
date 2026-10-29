@@ -282,3 +282,10 @@ devices:
     mac: "00:23:24:b9:72:d1"
     mgmt_ip: "10.0.20.31"
     description: "Mini PC sitting in rack running HAOS."
+
+  immich:
+    device_type: "generic-workstation"
+    role: "appliance"
+    site: "home"
+    mgmt_ip: "10.0.20.21"
+    description: "Immich. Hand-built LXC (CT 102) on jotunheim, outside hlac. Registered so its address is reserved."

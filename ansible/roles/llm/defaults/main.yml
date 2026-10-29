@@ -1,0 +1,20 @@
+---
+# Pin both to a release tag before the first deploy. Quadlets never pull a
+# newer image on their own, so a tag change here is the only upgrade path.
+llm_litellm_image: "ghcr.io/berriai/litellm:v1.83.14-stable"
+llm_openwebui_image: "ghcr.io/open-webui/open-webui:v0.12.4"
+
+llm_litellm_port: 4000
+llm_openwebui_port: 8080
+
+llm_config_dir: /etc/llm
+llm_openwebui_data_dir: /var/lib/open-webui
+
+llm_public_domain: "int.ptxe.dev"
+
+# Only the reverse proxy reaches the services directly. Clients go through
+# llm.int.ptxe.dev and chat.int.ptxe.dev.
+llm_allowed_hosts:
+  - 10.0.20.19 # caddy01
+
+llm_postgres_host: "{{ hlac.hosts.postgres01.ipv4 }}"

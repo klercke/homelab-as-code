@@ -14,3 +14,5 @@ postgres_databases:
   - { name: netbox, owner: netbox, password_key: postgres_netbox_password }
   - { name: pdns,   owner: pdns,   password_key: postgres_pdns_password }
   - { name: kea,    owner: kea,    password_key: postgres_kea_password }
+  - { name: litellm,   owner: litellm,   password_key: postgres_litellm_password }
+  - { name: openwebui, owner: openwebui, password_key: postgres_openwebui_password }

@@ -1,0 +1,8 @@
+# Managed by Ansible on llm01. Generated from registries/models.yaml.
+# Worker: {{ worker }}
+models:
+{% for name, m in llm_models.models | dictsort if m.worker == worker %}
+  "{{ name }}":
+    cmd: "llama-server --port ${PORT} -hf {{ m.hf }} -ngl 99 -c {{ m.ctx }} --jinja"
+    ttl: {{ m.ttl }}
+{% endfor %}

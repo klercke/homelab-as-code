@@ -67,7 +67,17 @@
             "type": "integer",
             "minimum": 2048,
             "maximum": 262144,
-            "description": "MiB. Floor of 2048: dnf transactions OOM below roughly 1.7 GiB usable."
+            "description": "MiB. Maximum the guest sees. Floor of 2048: dnf transactions OOM below roughly 1.7 GiB usable."
+          },
+          "memory_min": {
+            "type": "integer",
+            "minimum": 1024,
+            "maximum": 262144,
+            "description": "MiB. Balloon floor the host may reclaim down to under memory pressure. Must not exceed memory. Omit to disable reclaim."
+          },
+          "ipv6": {
+            "type": "boolean",
+            "description": "Whether the host gets a derived IPv6 address."
           },
           "disk": {
             "type": "integer",

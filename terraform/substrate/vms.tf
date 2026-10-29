@@ -28,7 +28,13 @@ resource "proxmox_virtual_environment_vm" "substrate" {
 
   memory {
     dedicated = each.value.memory
+    # Balloon floor. Equal to dedicated keeps the balloon device but never reclaims.
+    floating = try(each.value.memory_min, each.value.memory)
   }
+
+  # Balloon and memory size changes only apply on a cold boot. Never let an
+  # apply reboot the whole substrate at once; restart guests one at a time.
+  reboot_after_update = false
 
   disk {
     datastore_id = var.datastore_id
@@ -83,7 +89,9 @@ resource "proxmox_virtual_environment_vm" "substrate" {
   }
 
   lifecycle {
-    ignore_changes = [node_name]
+    # Power state is managed by hand (stopping guests is how RAM gets freed),
+    # so an apply never boots a VM that was shut down on purpose.
+    ignore_changes = [node_name, started]
 
     precondition {
       condition = (

@@ -8,7 +8,9 @@ resource "local_file" "derived_network" {
   filename        = "${path.root}/../../ansible/inventories/${var.ansible_inventory_name}/group_vars/all/hlac.json"
   file_permission = "0644"
 
-  content = jsonencode({
+  # Trailing newline so the end-of-file-fixer hook doesn't edit a generated file,
+  # which local_file would then see as drift and recreate on every apply.
+  content = "${jsonencode({
     hlac = {
       _generated_by = "terraform/substrate, do not edit by hand"
 
@@ -85,5 +87,5 @@ resource "local_file" "derived_network" {
 
       reverse_zones_v4 = module.registry.reverse_zones_v4
     }
-  })
+  })}\n"
 }
