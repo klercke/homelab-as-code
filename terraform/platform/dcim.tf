@@ -7,11 +7,6 @@ locals {
 
   manufacturers = toset([for _, t in local.dtypes : t.manufacturer])
 
-  # Devices that sit in a rack as opposed to a bay or nowhere
-  racked_devices = {
-    for k, d in local.dev : k => d if try(d.rack, null) != null
-  }
-
   # Devices that slot into a bay in another device
   child_devices = {
     for k, d in local.dev : k => d if try(d.parent, null) != null

@@ -47,6 +47,18 @@ variable "vlan_prefix_v4_bits" {
   default     = 24
 }
 
+variable "site_prefix_v6_bits" {
+  description = "Prefix length every site IPv6 prefix must carry (the ISP delegation)."
+  type        = number
+  default     = 56
+}
+
+variable "vlan_prefix_v6_bits" {
+  description = "Prefix length of each derived VLAN IPv6 segment."
+  type        = number
+  default     = 64
+}
+
 variable "gateway_host_octet" {
   description = "Host octet of the default gateway within each VLAN prefix."
   type        = number

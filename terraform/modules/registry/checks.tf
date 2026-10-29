@@ -27,6 +27,17 @@ check "site_prefix_v4_shape" {
   }
 }
 
+check "site_prefix_v6_shape" {
+  assert {
+    condition = alltrue([
+      for sk, s in local.sites :
+      tonumber(split("/", s.prefix_v6)[1]) == var.site_prefix_v6_bits &&
+      cidrhost(s.prefix_v6, 0) == split("/", s.prefix_v6)[0]
+    ])
+    error_message = "A site prefix_v6 is the wrong length, has host bits set, or is not in canonical lowercase form."
+  }
+}
+
 check "site_class_allowed" {
   assert {
     condition = alltrue([
@@ -68,10 +79,27 @@ check "vlan_id_unique_per_site" {
   }
 }
 
+check "net_id_fits_v6_subnet" {
+  assert {
+    condition = alltrue([
+      for k, v in local.vlans :
+      v.net_id < pow(2, var.vlan_prefix_v6_bits - var.site_prefix_v6_bits) if local.vlan_is_derived[k]
+    ])
+    error_message = "A net_id does not fit in the IPv6 subnet ID bits between the site and VLAN prefix lengths."
+  }
+}
+
 check "vlan_prefix_v4_unique" {
   assert {
     condition     = length(distinct(values(local.vlan_prefix_v4))) == length(local.vlan_prefix_v4)
     error_message = "Two VLANs have the same IPv4 prefix."
+  }
+}
+
+check "vlan_prefix_v6_unique" {
+  assert {
+    condition     = length(distinct(values(local.vlan_prefix_v6))) == length(local.vlan_prefix_v6)
+    error_message = "Two VLANs have the same IPv6 prefix."
   }
 }
 

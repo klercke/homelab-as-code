@@ -59,6 +59,16 @@ locals {
     : v.prefix_v4
   ) }
 
+  # Subnet ID is net_id taken as a plain number, so net_id 20 is :14 within the
+  # site prefix. Override VLANs get no IPv6 and are absent from this map.
+  vlan_prefix_v6 = {
+    for k, v in local.vlans : k => cidrsubnet(
+      local.sites[v.site].prefix_v6,
+      var.vlan_prefix_v6_bits - var.site_prefix_v6_bits,
+      v.net_id
+    ) if local.vlan_is_derived[k]
+  }
+
   vlan_gateway_v4 = {
     for k, _ in local.vlans : k => cidrhost(local.vlan_prefix_v4[k], var.gateway_host_octet)
   }
