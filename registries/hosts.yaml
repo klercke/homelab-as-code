@@ -29,7 +29,7 @@ hosts:
     disk: 32
     data_disk: 64
     description: "PostgreSQL 18. Central database for most apps."
-    ipv6: false
+    ipv6: true
 
   netbox01:
     vlan: "home-servers"
@@ -43,7 +43,7 @@ hosts:
     memory_min: 3072
     disk: 32
     description: "NetBox. Source of truth for IPAM and DCIM."
-    ipv6: false
+    ipv6: true
 
   pdns01:
     vlan: "home-servers"
@@ -57,7 +57,7 @@ hosts:
     memory_min: 1024
     disk: 16
     description: "PowerDNS Authoritative. Points to postgres for backend."
-    ipv6: false
+    ipv6: true
 
   pdns02:
     vlan: "home-servers"
@@ -71,7 +71,7 @@ hosts:
     memory_min: 1024
     disk: 16
     description: "PowerDNS Authoritative. Points to postgres for backend."
-    ipv6: false
+    ipv6: true
 
   kea01:
     vlan: "home-servers"
@@ -85,7 +85,7 @@ hosts:
     memory_min: 1024
     disk: 16
     description: "ISC Kea DHCPv4 with HA hook and PostgreSQL backend."
-    ipv6: false
+    ipv6: true
 
   kea02:
     vlan: "home-servers"
@@ -99,7 +99,7 @@ hosts:
     memory_min: 1024
     disk: 16
     description: "ISC Kea DHCPv4 with HA hook and PostgreSQL backend."
-    ipv6: false
+    ipv6: true
 
   recursor01:
     vlan: "home-servers"
@@ -141,7 +141,7 @@ hosts:
     memory_min: 1024
     disk: 16
     description: "Valkey (Redis fork). Cache and RQ task queue for NetBox."
-    ipv6: false
+    ipv6: true
 
   caddy01:
     vlan: "home-servers"
@@ -155,7 +155,7 @@ hosts:
     memory_min: 1024
     disk: 16
     description: "Caddy. Reverse proxy for user-facing services."
-    ipv6: false
+    ipv6: true
 
   monitoring01:
     vlan: "home-servers"
@@ -170,7 +170,7 @@ hosts:
     disk: 32
     data_disk: 100
     description: "Grafana, Loki, Prometheus, and Alertmanager-based monitoring stack."
-    ipv6: false
+    ipv6: true
 
   llm01:
     vlan: "home-servers"
