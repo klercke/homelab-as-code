@@ -152,7 +152,12 @@
     daemon_reload: true
   loop: [netbox, netbox-rq, nginx]
 
-- name: Bootstrap superuser and API token
+# admin is the break-glass login and holds no token. OpenTofu's token
+# (NETBOX_API_TOKEN) belongs to the hlac service user (active, no password), which can read every
+# object type except users and tokens, and write only what terraform/platform
+# manages. Add a model to netbox_hlac_write_types when OpenTofu starts
+# managing a new NetBox resource type.
+- name: Bootstrap admin, the hlac service user, and its API token
   tags: [config]
   vars:
     ansible_remote_tmp: /tmp
@@ -160,23 +165,64 @@
     _plaintext: "{{ NETBOX_API_TOKEN.split('.')[1] }}"
     _script: |
       from django.contrib.auth import get_user_model
-      from users.models import Token
+      from core.models import ObjectType
+      from users.models import ObjectPermission, Token
       User = get_user_model()
+      changed = False
 
-      u, _ = User.objects.get_or_create(
+      admin, _ = User.objects.get_or_create(
           username='admin',
           defaults={'is_superuser': True},
       )
-      u.is_superuser = True
-      u.set_password('{{ netbox_admin_password }}')
-      u.save()
+      admin.is_superuser = True
+      admin.set_password('{{ netbox_admin_password }}')
+      admin.save()
 
-      if Token.objects.filter(key='{{ _key }}', user=u).exists():
-          print('OK')
-      else:
-          Token.objects.filter(user=u, description='hlac').delete()
+      hlac, created = User.objects.get_or_create(username='hlac')
+      changed |= created
+      if hlac.is_superuser or not hlac.is_active or hlac.has_usable_password():
+          hlac.is_superuser = False
+          hlac.is_active = True
+          hlac.set_unusable_password()
+          hlac.save()
+          changed = True
+
+      wanted = {{ netbox_hlac_write_types | to_json }}
+      write_types = set()
+      for label in wanted:
+          app, model = label.split('.')
+          write_types |= set(ObjectType.objects.filter(app_label=app, model=model))
+      if len(write_types) != len(wanted):
+          found = {f'{o.app_label}.{o.model}' for o in write_types}
+          raise SystemExit(f'unknown NetBox object types: {sorted(set(wanted) - found)}')
+      read_types = set(ObjectType.objects.exclude(app_label='users'))
+
+      # object_types points at ContentType while these are ObjectType rows,
+      # and Django never treats instances of different models as equal, so
+      # compare primary keys.
+      for name, actions, types in [
+          ('hlac-read', ['view'], read_types),
+          ('hlac-write', ['view', 'add', 'change', 'delete'], write_types),
+      ]:
+          p, created = ObjectPermission.objects.get_or_create(
+              name=name, defaults={'actions': actions},
+          )
+          if (created or sorted(p.actions) != sorted(actions) or not p.enabled
+                  or set(p.object_types.values_list('pk', flat=True)) != {o.pk for o in types}
+                  or set(p.users.values_list('pk', flat=True)) != {hlac.pk}):
+              p.actions = actions
+              p.enabled = True
+              p.description = 'hlac service account, managed by Ansible'
+              p.save()
+              p.object_types.set(types)
+              p.users.set([hlac])
+              changed = True
+
+      if not Token.objects.filter(key='{{ _key }}', user=hlac).exists():
+          Token.objects.filter(key='{{ _key }}').delete()
+          Token.objects.filter(description='hlac').delete()
           t = Token(
-              user=u,
+              user=hlac,
               key='{{ _key }}',
               token='{{ _plaintext }}',
               description='hlac',
@@ -184,7 +230,9 @@
           )
           t.full_clean()
           t.save()
-          print('CHANGED')
+          changed = True
+
+      print('CHANGED' if changed else 'OK')
   ansible.builtin.command:
     cmd: "{{ netbox_root }}/venv/bin/python manage.py shell -c {{ _script | quote }}"
   args:
@@ -193,4 +241,14 @@
   become_user: "{{ netbox_user }}"
   register: _nb_bootstrap
   changed_when: "'CHANGED' in _nb_bootstrap.stdout"
+  failed_when: false
   no_log: true
+
+# no_log hides the whole result, because the command line carries the admin
+# password and token. The script's own error goes to stderr without them, so
+# surface its last lines when it fails.
+- name: Report bootstrap errors
+  tags: [config]
+  ansible.builtin.fail:
+    msg: "{{ _nb_bootstrap.stderr_lines[-6:] }}"
+  when: _nb_bootstrap.rc != 0

@@ -17,3 +17,35 @@ netbox_allowed_hosts:
   - netbox.int.ptxe.dev
 
 netbox_csrf_origins: ["https://netbox.int.ptxe.dev"]
+
+# Object types the hlac service user may write: everything terraform/platform
+# manages. Primary IP and primary MAC resources only change devices, VMs,
+# and interfaces, which are already listed.
+netbox_hlac_write_types:
+  - dcim.region
+  - dcim.site
+  - dcim.location
+  - dcim.rack
+  - dcim.manufacturer
+  - dcim.devicerole
+  - dcim.devicetype
+  - dcim.device
+  - dcim.devicebay
+  - dcim.interface
+  - dcim.macaddress
+  - dcim.platform
+  - ipam.rir
+  - ipam.aggregate
+  - ipam.role
+  - ipam.prefix
+  - ipam.iprange
+  - ipam.ipaddress
+  - ipam.vlangroup
+  - ipam.vlan
+  - ipam.service
+  - virtualization.clustertype
+  - virtualization.cluster
+  - virtualization.virtualmachine
+  - virtualization.vminterface
+  - virtualization.virtualdisk
+  - extras.tag
