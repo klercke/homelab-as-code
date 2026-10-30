@@ -131,6 +131,20 @@ role_services:
       ports: [9100]
       description: "Prometheus host metrics."
 
+  monitoring:
+    - name: "Prometheus"
+      protocol: "tcp"
+      ports: [9090]
+      description: "Metrics store and scraper. Grafana reads it locally."
+    - name: "Grafana"
+      protocol: "tcp"
+      ports: [3000]
+      description: "Dashboards. Reached through caddy01 as grafana.int.ptxe.dev."
+    - name: "node_exporter"
+      protocol: "tcp"
+      ports: [9100]
+      description: "Prometheus host metrics."
+
   hypervisor:
     - name: "Proxmox VE"
       protocol: "tcp"
