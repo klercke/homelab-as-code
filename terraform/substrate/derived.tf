@@ -52,6 +52,7 @@ resource "local_file" "derived_network" {
           role    = h.role
           layer   = h.layer
           crit    = h.crit
+          memory  = h.memory
           ipv4    = module.registry.host_ipv4[k]
           cidr_v4 = module.registry.host_cidr_v4[k]
           fqdn    = module.registry.host_records_v4[k].fqdn

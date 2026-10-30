@@ -48,16 +48,6 @@
   no_log: true
   run_once: true
 
-- name: Write kea-dhcp4.conf
-  ansible.builtin.template:
-    src: kea-dhcp4.conf.j2
-    dest: /etc/kea/kea-dhcp4.conf
-    owner: root
-    group: kea
-    mode: "0640"
-  no_log: true
-  notify: Restart kea-dhcp4
-
 - name: Write API auth secret file
   ansible.builtin.copy:
     content: "{{ kea_api_user }}:{{ kea_api_password }}\n"
@@ -68,10 +58,35 @@
   no_log: true
   notify: Restart kea-dhcp4
 
-- name: Validate kea-dhcp4.conf
-  ansible.builtin.command:
-    cmd: kea-dhcp4 -t /etc/kea/kea-dhcp4.conf
-  changed_when: false
+# Validated before it replaces the live file, so a bad template never reaches
+# disk or triggers a restart. The secret file above must exist first because
+# the config references it. no_log hides kea-dhcp4's error output too; on a
+# validation failure, render and test by hand with kea-dhcp4 -t.
+- name: Write kea-dhcp4.conf
+  ansible.builtin.template:
+    src: kea-dhcp4.conf.j2
+    dest: /etc/kea/kea-dhcp4.conf
+    owner: root
+    group: kea
+    mode: "0640"
+    validate: kea-dhcp4 -t %s
+    backup: true
+  no_log: true
+  notify: Restart kea-dhcp4
+
+- name: Find kea-dhcp4.conf backups
+  ansible.builtin.find:
+    paths: /etc/kea
+    patterns: "kea-dhcp4.conf.*~"
+  register: _kea_backups
+
+- name: Prune old kea-dhcp4.conf backups
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ (_kea_backups.files | sort(attribute='mtime', reverse=true))[kea_config_backups_kept:] }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
 
 - name: Open DHCP server port
   ansible.posix.firewalld:

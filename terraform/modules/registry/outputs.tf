@@ -165,6 +165,11 @@ output "reservations" {
 
 # == Services ==
 
+output "host_services" {
+  description = "Services on every host in hosts.yaml. Already folded into vm_services."
+  value       = local.host_services
+}
+
 output "role_services" {
   description = "Role key -> list of listening services."
   value       = local.role_services

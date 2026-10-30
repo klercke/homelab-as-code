@@ -29,6 +29,9 @@ kea_search_domains:
   - "prd.hme.protonet.internal"
   - "protonet.internal"
 
+# Timestamped copies of kea-dhcp4.conf kept in /etc/kea after changes
+kea_config_backups_kept: 5
+
 kea_valid_lifetime: 3600
 kea_renew_timer: 900
 kea_rebind_timer: 1800

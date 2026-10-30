@@ -19,6 +19,7 @@ locals {
   device_types = local._devices.device_types
   devices      = local._devices.devices
 
+  host_services   = try(local._services.host_services, [])
   role_services   = local._services.role_services
   public_services = local._services.public_services
 
@@ -241,9 +242,10 @@ locals {
 
   # Keyed by target/name/protocol because DNS exists on both TCP and UDP, so
   # the protocol has to be part of the key to avoid collisions
+  # Every host gets host_services (installed by the base role) plus its role's.
   vm_services = merge(concat([
     for hk, h in local.hosts : {
-      for s in try(local.role_services[h.role], []) :
+      for s in concat(local.host_services, try(local.role_services[h.role], [])) :
       "${hk}/${s.name}/${s.protocol}" => merge(s, { target = hk })
     }
   ], [{}])...)

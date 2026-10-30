@@ -17,13 +17,6 @@
     checksum: "{{ ('sha256:' + caddy_checksum) if caddy_checksum else omit }}"
   notify: Restart caddy
 
-# Binds 80 and 443 as a non-root user. The alternative is running as root
-- name: Allow caddy to bind privileged ports
-  community.general.capabilities:
-    path: /usr/local/bin/caddy
-    capability: cap_net_bind_service=+ep
-    state: present
-
 - name: Create config and state directories
   ansible.builtin.file:
     path: "{{ item }}"
