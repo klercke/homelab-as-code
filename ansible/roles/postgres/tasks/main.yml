@@ -1,15 +1,18 @@
 - name: Verify data device exists
+  tags: [install]
   ansible.builtin.assert:
     that: postgres_data_device in ansible_devices | map('regex_replace', '^', '/dev/') | list
     fail_msg: "{{ postgres_data_device }} not present. Check the scsi1 disk in Terraform."
 
 - name: Create filesystem on data device
+  tags: [install]
   community.general.filesystem:
     fstype: xfs
     dev: "{{ postgres_data_device }}"
     opts: "-L {{ postgres_data_label }}"
 
 - name: Mount data volume
+  tags: [install]
   ansible.posix.mount:
     path: /var/lib/pgsql
     src: "LABEL={{ postgres_data_label }}"
@@ -18,18 +21,21 @@
     state: mounted
 
 - name: Disable AppStream postgresql module
+  tags: [install]
   ansible.builtin.command:
     cmd: dnf -qy module disable postgresql
   args:
     creates: /etc/dnf/modules.d/postgresql.module
 
 - name: Install PGDG repository
+  tags: [install]
   ansible.builtin.dnf:
     name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
     state: present
     disable_gpg_check: true
 
 - name: Install PostgreSQL
+  tags: [install]
   ansible.builtin.dnf:
     name:
       - "postgresql{{ postgres_version }}-server"
@@ -38,6 +44,7 @@
     state: present
 
 - name: Own the data volume
+  tags: [install]
   ansible.builtin.file:
     path: /var/lib/pgsql
     owner: postgres
@@ -45,18 +52,21 @@
     mode: "0700"
 
 - name: Restore SELinux context
+  tags: [install]
   ansible.builtin.command:
     cmd: restorecon -Rv /var/lib/pgsql
   register: _restorecon
   changed_when: _restorecon.stdout | length > 0
 
 - name: Initialize the cluster
+  tags: [install]
   ansible.builtin.command:
     cmd: "/usr/pgsql-{{ postgres_version }}/bin/postgresql-{{ postgres_version }}-setup initdb"
   args:
     creates: "/var/lib/pgsql/{{ postgres_version }}/data/PG_VERSION"
 
 - name: Enable conf.d includes
+  tags: [config]
   ansible.builtin.lineinfile:
     path: "/var/lib/pgsql/{{ postgres_version }}/data/postgresql.conf"
     line: "include_dir = 'conf.d'"
@@ -64,6 +74,7 @@
   notify: Restart postgresql
 
 - name: Create conf.d
+  tags: [config]
   ansible.builtin.file:
     path: "/var/lib/pgsql/{{ postgres_version }}/data/conf.d"
     state: directory
@@ -72,6 +83,7 @@
     mode: "0700"
 
 - name: Write ProtoNet settings
+  tags: [config]
   ansible.builtin.template:
     src: 10-protonet.conf.j2
     dest: "/var/lib/pgsql/{{ postgres_version }}/data/conf.d/10-protonet.conf"
@@ -81,6 +93,7 @@
   notify: Restart postgresql
 
 - name: Write pg_hba.conf
+  tags: [config]
   ansible.builtin.template:
     src: pg_hba.conf.j2
     dest: "/var/lib/pgsql/{{ postgres_version }}/data/pg_hba.conf"
@@ -90,6 +103,7 @@
   notify: Reload postgresql
 
 - name: Open 5432 to the servers FNS
+  tags: [firewall]
   ansible.posix.firewalld:
     rich_rule: "rule family=ipv4 source address={{ postgres_allowed_cidr }} port port=5432 protocol=tcp accept"
     permanent: true
@@ -97,12 +111,14 @@
     state: enabled
 
 - name: Start PostgreSQL
+  tags: [service]
   ansible.builtin.systemd_service:
     name: "postgresql-{{ postgres_version }}"
     enabled: true
     state: started
 
 - name: Create roles
+  tags: [config]
   community.postgresql.postgresql_user:
     name: "{{ item.owner }}"
     password: "{{ vars[item.password_key] }}"
@@ -113,6 +129,7 @@
   no_log: true
 
 - name: Create databases
+  tags: [config]
   community.postgresql.postgresql_db:
     name: "{{ item.name }}"
     owner: "{{ item.owner }}"
@@ -122,6 +139,7 @@
   loop: "{{ postgres_databases }}"
 
 - name: Check public schema ownership
+  tags: [config]
   community.postgresql.postgresql_query:
     login_db: "{{ item.name }}"
     query: "SELECT pg_get_userbyid(nspowner) AS owner FROM pg_namespace WHERE nspname = 'public'"
@@ -134,6 +152,7 @@
     label: "{{ item.name }}"
 
 - name: Give each service owner its schema
+  tags: [config]
   community.postgresql.postgresql_query:
     login_db: "{{ item.item.name }}"
     query: "ALTER SCHEMA public OWNER TO {{ item.item.owner }}"
@@ -145,6 +164,7 @@
     label: "{{ item.item.name }}"
 
 - name: Create dump directory
+  tags: [backups, config]
   ansible.builtin.file:
     path: /var/lib/pgsql/backup
     state: directory
@@ -153,6 +173,7 @@
     mode: "0700"
 
 - name: Install dump script
+  tags: [backups, config]
   ansible.builtin.template:
     src: pg-dump.sh.j2
     dest: /usr/local/bin/pg-dump.sh
@@ -162,6 +183,7 @@
 
 # Superseded by the single script below
 - name: Remove per-database dump cron entries
+  tags: [backups, config]
   ansible.builtin.cron:
     name: "pg_dump {{ item.name }}"
     user: postgres
@@ -169,6 +191,7 @@
   loop: "{{ postgres_databases }}"
 
 - name: Schedule nightly dumps
+  tags: [backups, config]
   ansible.builtin.cron:
     name: "pg_dump all databases"
     user: postgres
@@ -177,4 +200,5 @@
     job: /usr/local/bin/pg-dump.sh
 
 - name: Configure metrics exporter
-  ansible.builtin.include_tasks: exporter.yml
+  ansible.builtin.import_tasks: exporter.yml
+  tags: [exporter]

@@ -3,11 +3,13 @@
   hosts: tag_role_caddy
   pre_tasks:
     - name: Load platform secrets
+      tags: [always]
       community.sops.load_vars:
         file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
       no_log: true
 
     - name: Verify every backend resolved
+      tags: [always]
       ansible.builtin.assert:
         that:
           - hlac.public_services | length > 0

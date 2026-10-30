@@ -1,5 +1,6 @@
 ---
 - name: Create caddy system user
+  tags: [install]
   ansible.builtin.user:
     name: caddy
     system: true
@@ -8,6 +9,7 @@
     create_home: true
 
 - name: Download Caddy with Cloudflare DNS module
+  tags: [install]
   ansible.builtin.get_url:
     url: "{{ caddy_download_url }}"
     dest: /usr/local/bin/caddy
@@ -18,6 +20,7 @@
   notify: Restart caddy
 
 - name: Create config and state directories
+  tags: [config]
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -30,6 +33,7 @@
     - /var/log/caddy
 
 - name: Write Cloudflare credentials
+  tags: [config]
   ansible.builtin.copy:
     content: "CF_API_TOKEN={{ cloudflare_api_token }}\n"
     dest: /etc/caddy/cloudflare.env
@@ -40,6 +44,7 @@
   notify: Restart caddy
 
 - name: Write Caddyfile
+  tags: [config]
   ansible.builtin.template:
     src: Caddyfile.j2
     dest: /etc/caddy/Caddyfile
@@ -49,6 +54,7 @@
   notify: Reload caddy
 
 - name: Validate Caddyfile
+  tags: [config]
   ansible.builtin.command:
     cmd: /usr/local/bin/caddy validate --config /etc/caddy/Caddyfile
   become: true
@@ -59,6 +65,7 @@
   no_log: true
 
 - name: Install systemd unit
+  tags: [config]
   ansible.builtin.template:
     src: caddy.service.j2
     dest: /etc/systemd/system/caddy.service
@@ -66,12 +73,14 @@
   notify: Reload systemd
 
 - name: Create systemd drop-in directory
+  tags: [config]
   ansible.builtin.file:
     path: /etc/systemd/system/caddy.service.d
     state: directory
     mode: "0755"
 
 - name: Install restart limit drop-in
+  tags: [config]
   ansible.builtin.copy:
     dest: /etc/systemd/system/caddy.service.d/10-restart-limits.conf
     mode: "0644"
@@ -83,6 +92,7 @@
   notify: Reload systemd
 
 - name: Open HTTP and HTTPS
+  tags: [firewall]
   ansible.posix.firewalld:
     service: "{{ item }}"
     permanent: true
@@ -93,6 +103,7 @@
     - https
 
 - name: Enable and start caddy
+  tags: [service]
   ansible.builtin.systemd_service:
     name: caddy
     enabled: true

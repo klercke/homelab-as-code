@@ -4,11 +4,13 @@
     fail_msg: "{{ inventory_hostname }} has {{ ansible_memtotal_mb }}MB. dnf transactions need ~2GB."
 
 - name: Enable EPEL
+  tags: [install]
   ansible.builtin.dnf:
     name: epel-release
     state: present
 
 - name: Install base packages
+  tags: [install]
   ansible.builtin.dnf:
     name: "{{ base_packages }}"
     state: present
@@ -19,10 +21,12 @@
     fail_msg: "SELinux is not enforcing. Investigate before continuing."
 
 - name: Set timezone
+  tags: [config]
   community.general.timezone:
     name: "{{ base_timezone }}"
 
 - name: Enable and start core services
+  tags: [service]
   ansible.builtin.systemd_service:
     name: "{{ item }}"
     enabled: true
@@ -31,11 +35,13 @@
     - chronyd
 
 - name: Enable qemu-guest-agent
+  tags: [service]
   ansible.builtin.systemd_service:
     name: qemu-guest-agent
     enabled: true
 
 - name: Harden sshd
+  tags: [ssh, config]
   ansible.builtin.copy:
     dest: /etc/ssh/sshd_config.d/10-protonet.conf
     mode: "0600"
@@ -47,6 +53,7 @@
   notify: Restart sshd
 
 - name: Configure automatic security updates
+  tags: [updates, config]
   ansible.builtin.copy:
     dest: /etc/dnf/automatic.conf
     mode: "0644"
@@ -60,12 +67,14 @@
   notify: Restart dnf-automatic timer
 
 - name: Enable automatic updates
+  tags: [updates, service]
   ansible.builtin.systemd_service:
     name: dnf-automatic.timer
     enabled: true
     state: started
 
 - name: Configure firewalld
+  tags: [firewall]
   when: base_firewalld_enabled
   block:
     - name: Enable firewalld
@@ -83,35 +92,33 @@
       loop: "{{ base_firewall_services }}"
 
 - name: Remove firewalld
+  tags: [firewall]
   when: not base_firewalld_enabled
   ansible.builtin.dnf:
     name: firewalld
     state: absent
 
-# Tagged so they can be rerun on their own, e.g. just base --tags dns
+# Static imports so tags reach each task, e.g. just base --tags dns or
+# just base --skip-tags install
 - name: Configure resolvers
-  ansible.builtin.include_tasks:
-    file: resolvers.yml
-    apply:
-      tags: [dns]
-  tags: [dns]
+  ansible.builtin.import_tasks: resolvers.yml
+  tags: [dns, config]
 
 - name: Configure IPv6
-  ansible.builtin.include_tasks:
-    file: ipv6.yml
-    apply:
-      tags: [ipv6]
-  tags: [ipv6]
+  ansible.builtin.import_tasks: ipv6.yml
+  tags: [ipv6, config]
   vars:
     _ipv6: "{{ hlac.hosts[inventory_hostname] }}"
   when: hlac.hosts[inventory_hostname].token_v6 is not none
 
 - name: Check whether PSI is available
+  tags: [bootloader]
   ansible.builtin.stat:
     path: /proc/pressure/cpu
   register: _psi
 
 - name: Enable kernel pressure stall information on existing entries
+  tags: [bootloader]
   ansible.builtin.command:
     cmd: grubby --update-kernel=ALL --args="psi=1"
   when: not _psi.stat.exists
@@ -119,12 +126,15 @@
 
 # Runs after the PSI change so the persisted arguments include psi=1
 - name: Keep root= on every boot entry and future kernel
-  ansible.builtin.include_tasks: bootloader.yml
+  ansible.builtin.import_tasks: bootloader.yml
+  tags: [bootloader]
 
 - name: Warn that PSI needs a reboot
+  tags: [bootloader]
   ansible.builtin.debug:
     msg: "PSI enabled on the kernel command line. Manual reboot required for change to take effect."
   when: not _psi.stat.exists
 
 - name: Configure node_exporter
-  ansible.builtin.include_tasks: node_exporter.yml
+  ansible.builtin.import_tasks: node_exporter.yml
+  tags: [node_exporter]

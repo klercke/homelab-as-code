@@ -6,6 +6,7 @@
   gather_facts: false
   tasks:
     - name: Add active hypervisors from the registry
+      tags: [always]
       ansible.builtin.add_host:
         name: "{{ item.key }}"
         groups: hypervisors

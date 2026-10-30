@@ -28,6 +28,33 @@
 | caddy | Installs and configures Caddy reverse proxy for TLS termination for `public_services`.
 | monitoring | Installs Grafana and Prometheus and configures them to scrape other hosts. |
 
+## Tags
+
+Every role task carries tags, so a role can be rerun in part.
+Untagged runs (`just base`, `just role kea`) still run everything.
+Playbook `pre_tasks` that load secrets or build variables are tagged `always`, so they run on tagged runs too.
+
+| Tag | Covers |
+|------|--------|
+| `install` | Vendor repos, packages, downloads, users, schema setup. The slow part. |
+| `config` | Templates, config files, and their validation. |
+| `firewall` | firewalld rules. |
+| `service` | Enabling and starting units. |
+| `dns`, `ipv6`, `ssh`, `updates`, `bootloader`, `node_exporter` | Areas of the base role. |
+| `prometheus`, `grafana`, `dashboards` | Areas of the monitoring role. |
+| `exporter`, `backups` | Areas of the postgres role. |
+| `keys` | LiteLLM key registration in the llm role. |
+
+Examples:
+
+```sh
+just base --limit pdns01 --tags dns
+just base --skip-tags install
+just role kea --limit kea01 --tags config
+just role monitoring --tags dashboards
+```
+
+A tagged run can skip a step that an untagged first run would do, so build new hosts with an untagged run.
 
 ## Inventories
 

@@ -1,15 +1,18 @@
 - name: Import ISC GPG key
+  tags: [install]
   ansible.builtin.rpm_key:
     key: "https://dl.cloudsmith.io/public/isc/kea-{{ kea_repo_track }}/gpg.720DD962343B440F.key"
     state: present
 
 - name: Install ISC Kea vendor repo
+  tags: [install]
   ansible.builtin.get_url:
     url: "https://dl.cloudsmith.io/public/isc/kea-{{ kea_repo_track }}/cfg/setup/config.rpm.txt?distro=el&codename=9"
     dest: "/etc/yum.repos.d/isc-kea-{{ kea_repo_track }}.repo"
     mode: "0644"
 
 - name: Install Kea
+  tags: [install]
   ansible.builtin.dnf:
     name:
       - isc-kea-dhcp4
@@ -22,11 +25,13 @@
 
 # kea-admin shells out to psql for the pgsql backend
 - name: Install PostgreSQL client for kea-admin
+  tags: [install]
   ansible.builtin.dnf:
     name: postgresql
     state: present
 
 - name: Check Kea schema version
+  tags: [install]
   ansible.builtin.command:
     cmd: >-
       kea-admin db-version pgsql
@@ -39,6 +44,7 @@
   run_once: true
 
 - name: Initialize Kea schema
+  tags: [install]
   ansible.builtin.command:
     cmd: >-
       kea-admin db-init pgsql
@@ -49,6 +55,7 @@
   run_once: true
 
 - name: Write API auth secret file
+  tags: [config]
   ansible.builtin.copy:
     content: "{{ kea_api_user }}:{{ kea_api_password }}\n"
     dest: "/etc/kea/{{ kea_api_secret_file }}"
@@ -63,6 +70,7 @@
 # the config references it. no_log hides kea-dhcp4's error output too; on a
 # validation failure, render and test by hand with kea-dhcp4 -t.
 - name: Write kea-dhcp4.conf
+  tags: [config]
   ansible.builtin.template:
     src: kea-dhcp4.conf.j2
     dest: /etc/kea/kea-dhcp4.conf
@@ -75,12 +83,14 @@
   notify: Restart kea-dhcp4
 
 - name: Find kea-dhcp4.conf backups
+  tags: [config]
   ansible.builtin.find:
     paths: /etc/kea
     patterns: "kea-dhcp4.conf.*~"
   register: _kea_backups
 
 - name: Prune old kea-dhcp4.conf backups
+  tags: [config]
   ansible.builtin.file:
     path: "{{ item.path }}"
     state: absent
@@ -89,6 +99,7 @@
     label: "{{ item.path | basename }}"
 
 - name: Open DHCP server port
+  tags: [firewall]
   ansible.posix.firewalld:
     service: dhcp
     permanent: true
@@ -96,6 +107,7 @@
     state: enabled
 
 - name: Allow HA peer communication
+  tags: [firewall]
   ansible.posix.firewalld:
     rich_rule: >-
       rule family=ipv4 source address={{ item.ip }}/32
@@ -108,6 +120,7 @@
     label: "{{ item.name }}"
 
 - name: Allow API access
+  tags: [firewall]
   ansible.posix.firewalld:
     rich_rule: >-
       rule family=ipv4 source address={{ item }}
@@ -118,12 +131,14 @@
   loop: "{{ [hlac.vlans[kea_api_vlan].prefix_v4] + kea_api_static_allowed }}"
 
 - name: Create systemd drop-in directory
+  tags: [config]
   ansible.builtin.file:
     path: /etc/systemd/system/kea-dhcp4.service.d
     state: directory
     mode: "0755"
 
 - name: Install custom Kea DCHPv4 Systemd service drop-in
+  tags: [config]
   ansible.builtin.template:
     src: 10-protonet.conf.j2
     dest: /etc/systemd/system/kea-dhcp4.service.d/10-protonet.conf
@@ -131,6 +146,7 @@
   notify: Reload systemd
 
 - name: Enable kea-dhcp4 at boot
+  tags: [service]
   ansible.builtin.systemd_service:
     name: kea-dhcp4
     enabled: true

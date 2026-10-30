@@ -2,6 +2,7 @@
   hosts: tag_role_kea
   pre_tasks:
     - name: Load platform secrets
+      tags: [always]
       community.sops.load_vars:
         file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
       no_log: true
@@ -10,6 +11,7 @@
     # listed first: clients try the first server and wait out a timeout before
     # falling back.
     - name: Build resolver list from inventory
+      tags: [always]
       ansible.builtin.set_fact:
         kea_resolvers: >-
           {{ groups['tag_role_recursor'] | default([]) | sort
@@ -17,6 +19,7 @@
 
     # First host alphabetically is primary, second is standby
     - name: Build HA peer list from inventory
+      tags: [always]
       ansible.builtin.set_fact:
         kea_ha_peers: >-
           {{ kea_ha_peers | default([]) + [{
@@ -30,6 +33,7 @@
         label: "{{ item }}"
 
     - name: Verify exactly two Kea hosts for hot-standby HA
+      tags: [always]
       ansible.builtin.assert:
         that: kea_ha_peers | length == 2
         fail_msg: >-
@@ -37,6 +41,7 @@
           {{ kea_ha_peers | length }}. Adjust the HA config before continuing.
 
     - name: Verify resolvers were discovered
+      tags: [always]
       ansible.builtin.assert:
         that: kea_resolvers | length > 0
         fail_msg: >-

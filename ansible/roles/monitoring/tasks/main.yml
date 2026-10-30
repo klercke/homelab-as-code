@@ -1,11 +1,13 @@
 ---
 - name: Create filesystem on data device
+  tags: [install]
   community.general.filesystem:
     fstype: xfs
     dev: "{{ monitoring_data_device }}"
     opts: "-L {{ monitoring_data_label }}"
 
 - name: Mount data volume
+  tags: [install]
   ansible.posix.mount:
     path: "{{ monitoring_data_dir }}"
     src: "LABEL={{ monitoring_data_label }}"
@@ -13,11 +15,15 @@
     opts: defaults,noatime
     state: mounted
 
+# Static imports so tags reach each task, e.g. just role monitoring --tags dashboards
 - name: Install Prometheus
-  ansible.builtin.include_tasks: prometheus.yml
+  ansible.builtin.import_tasks: prometheus.yml
+  tags: [prometheus]
 
 - name: Install Grafana
-  ansible.builtin.include_tasks: grafana.yml
+  ansible.builtin.import_tasks: grafana.yml
+  tags: [grafana]
 
 - name: Install Grafana dashboards
-  ansible.builtin.include_tasks: dashboards.yml
+  ansible.builtin.import_tasks: dashboards.yml
+  tags: [dashboards]

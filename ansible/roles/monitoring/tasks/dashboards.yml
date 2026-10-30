@@ -1,8 +1,10 @@
 - name: Enumerate dashboards in the repo
+  tags: [config]
   ansible.builtin.set_fact:
     monitoring_dashboards: "{{ query('ansible.builtin.fileglob', 'dashboards/*.json') }}"
 
 - name: Create the provisioned dashboard directory
+  tags: [config]
   ansible.builtin.file:
     path: /var/lib/grafana/dashboards/ProtoNet
     state: directory
@@ -11,6 +13,7 @@
     mode: "0750"
 
 - name: Install the Grafana dashboard provider
+  tags: [config]
   ansible.builtin.copy:
     src: grafana/dashboard-provider.yaml
     dest: /etc/grafana/provisioning/dashboards/protonet.yaml
@@ -20,6 +23,7 @@
   notify: Restart grafana
 
 - name: Deploy provisioned dashboards
+  tags: [config]
   ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/var/lib/grafana/dashboards/ProtoNet/{{ item | basename }}"
@@ -31,12 +35,14 @@
     label: "{{ item | basename }}"
 
 - name: Find dashboards currently on the host
+  tags: [config]
   ansible.builtin.find:
     paths: /var/lib/grafana/dashboards/ProtoNet
     patterns: "*.json"
   register: monitoring_dashboards_present
 
 - name: Remove dashboards no longer in the repo
+  tags: [config]
   ansible.builtin.file:
     path: "{{ item.path }}"
     state: absent

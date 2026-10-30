@@ -1,9 +1,11 @@
 - name: Install Valkey
+  tags: [install]
   ansible.builtin.dnf:
     name: valkey
     state: present
 
 - name: Write ProtoNet overrides
+  tags: [config]
   ansible.builtin.template:
     src: protonet.conf.j2
     dest: /etc/valkey/protonet.conf
@@ -14,6 +16,7 @@
   notify: Restart valkey
 
 - name: Include overrides at end of valkey.conf
+  tags: [config]
   ansible.builtin.lineinfile:
     path: /etc/valkey/valkey.conf
     line: "include /etc/valkey/protonet.conf"
@@ -21,6 +24,7 @@
   notify: Restart valkey
 
 - name: Allow consumers
+  tags: [firewall]
   ansible.posix.firewalld:
     rich_rule: "rule family=ipv4 source address={{ item }}/32 port port={{ valkey_port }} protocol=tcp accept"
     permanent: true
@@ -29,6 +33,7 @@
   loop: "{{ valkey_allowed_hosts }}"
 
 - name: Enable Valkey
+  tags: [service]
   ansible.builtin.systemd_service:
     name: valkey
     enabled: true
