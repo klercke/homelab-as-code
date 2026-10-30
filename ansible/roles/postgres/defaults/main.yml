@@ -16,3 +16,8 @@ postgres_databases:
   - { name: kea,    owner: kea,    password_key: postgres_kea_password }
   - { name: litellm,   owner: litellm,   password_key: postgres_litellm_password }
   - { name: openwebui, owner: openwebui, password_key: postgres_openwebui_password }
+
+# Memory to size shared_buffers and effective_cache_size from. The registry's
+# configured maximum, not ansible_memtotal_mb, which moves with the balloon
+# and would rewrite the config (and restart PostgreSQL) on every run.
+postgres_memory_mb: "{{ hlac.hosts[inventory_hostname].memory }}"
