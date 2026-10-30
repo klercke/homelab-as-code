@@ -1,7 +1,15 @@
-- name: Check available memory
+# Checks the registry's configured maximum, not ansible_memtotal_mb: the
+# balloon shrinks MemTotal toward memory_min, so a healthy host could fail a
+# check against the live value.
+- name: Check configured memory
   ansible.builtin.assert:
-    that: ansible_memtotal_mb >= 1500 # 2048 - (kernel-reserved memory + padding). 1 GB host will fail, 2 GB should be fine
-    fail_msg: "{{ inventory_hostname }} has {{ ansible_memtotal_mb }}MB. dnf transactions need ~2GB."
+    that:
+      - hlac.hosts[inventory_hostname].memory is defined
+      - hlac.hosts[inventory_hostname].memory >= 2048
+    fail_msg: >-
+      {{ inventory_hostname }} has memory
+      {{ hlac.hosts[inventory_hostname].memory | default('missing from hlac.json (run just substrate)') }}
+      (MB, from hosts.yaml). dnf transactions need ~2GB.
 
 - name: Enable EPEL
   tags: [install]
