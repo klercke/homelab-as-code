@@ -2,6 +2,30 @@
 
 This contains the baseline required to build the rest of the network.
 
+## Proxmox access
+
+OpenTofu authenticates to Proxmox as `terraform@pve` with an API token, through the custom role `Terraform` granted on `/`.
+The role is created by hand on the node and is not managed by this repo.
+It holds only what the resources in this module need, so a leaked token cannot manage users, permissions, realms, or the guest agent.
+
+| Privileges | Needed for |
+|---|---|
+| `VM.Allocate`, `VM.Audit`, `VM.Config.*` (CDROM, CPU, Cloudinit, Disk, HWType, Memory, Network, Options), `VM.PowerMgmt` | `proxmox_virtual_environment_vm`: create, configure, start, and destroy guests |
+| `VM.GuestAgent.Audit` | Reading guest IP addresses through the QEMU guest agent |
+| `VM.Backup` | `proxmox_backup_job` over the guests in each pool |
+| `Pool.Allocate`, `Pool.Audit` | `proxmox_virtual_environment_pool` and pool membership |
+| `Datastore.AllocateSpace`, `Datastore.AllocateTemplate`, `Datastore.Audit` | VM disks, the cloud-init drive, the downloaded Rocky image, and `import_from` |
+| `SDN.Use`, `SDN.Audit` | Attaching NICs to `vmbr0` |
+| `Sys.Audit`, `Sys.Modify`, `Sys.AccessNetwork` | Cluster backup jobs and `proxmox_download_file` (download-url) |
+
+`Sys.Modify` on `/` is the broadest privilege left, and backup jobs cannot be created without it.
+
+Create the role on a new node:
+
+```
+pveum role add Terraform --privs "Datastore.AllocateSpace,Datastore.AllocateTemplate,Datastore.Audit,Pool.Allocate,Pool.Audit,SDN.Audit,SDN.Use,Sys.AccessNetwork,Sys.Audit,Sys.Modify,VM.Allocate,VM.Audit,VM.Backup,VM.Config.CDROM,VM.Config.CPU,VM.Config.Cloudinit,VM.Config.Disk,VM.Config.HWType,VM.Config.Memory,VM.Config.Network,VM.Config.Options,VM.GuestAgent.Audit,VM.PowerMgmt"
+```
+
 ## Terraform Documentation
 
 <!-- BEGIN_TF_DOCS -->
