@@ -60,6 +60,10 @@
       KexAlgorithms sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org
   notify: Restart sshd
 
+- name: Configure login users
+  ansible.builtin.import_tasks: users.yml
+  tags: [users, config]
+
 - name: Configure automatic security updates
   tags: [updates, config]
   ansible.builtin.copy:

@@ -1,0 +1,12 @@
+---
+# Personal login accounts on every host the base role manages. These are for
+# looking around (logs, status, dig), not for changing anything: no sudo, and
+# the SELinux mapping keeps them out of root even if sudo were granted by
+# mistake. Changes go through hlac; the ansible account is the break-glass.
+#
+# key_file is a public key in keys/ at the repo root.
+protonet_login_users:
+  - name: "d0c"
+    seuser: "staff_u"
+    groups: ["systemd-journal"]
+    key_file: "d0c.pub"

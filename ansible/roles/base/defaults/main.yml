@@ -25,6 +25,10 @@ base_resolvers: >-
 base_resolver_options: ["timeout:1", "attempts:2"]
 base_search_domains: "{{ protonet_search_domains }}"
 
+# Personal login accounts. Keys are read from keys/ at the repo root.
+base_login_users: "{{ protonet_login_users }}"
+base_keys_dir: "{{ playbook_dir }}/../../keys"
+
 # Applied by service roles, not here.
 base_firewall_services:
   - ssh
