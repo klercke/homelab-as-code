@@ -16,6 +16,12 @@ kea_api_port: 8000
 kea_api_user: "kea-ha"
 kea_api_password: "{{ kea_ca_password }}"
 kea_api_secret_file: kea-api-secret
+
+# OpenTofu's API client (KEA_DHCP4_HTTP_USERNAME/PASSWORD in .envrc), kept
+# separate from kea-ha so the HA peers' credentials never leave the Kea hosts.
+kea_hlac_user: "hlac"
+kea_hlac_password: "{{ kea_hlac_api_password }}"
+kea_hlac_secret_file: kea-api-secret-hlac
 kea_api_vlan: "home-management"  # All hosts on this VLAN can reach Kea's API
 kea_api_static_allowed:
   - 10.0.10.213/32  # Thor
