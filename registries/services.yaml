@@ -80,6 +80,10 @@ role_services:
     - name: "DNS (TCP)"
       protocol: "tcp"
       ports: [53]
+    - name: "Recursor API"
+      protocol: "tcp"
+      ports: [8082]
+      description: "Webserver and metrics. Scraped by monitoring01."
     - name: "node_exporter"
       protocol: "tcp"
       ports: [9100]
@@ -112,6 +116,10 @@ role_services:
       protocol: "tcp"
       ports: [443]
       description: "TLS termination for all public_services."
+    - name: "Caddy metrics"
+      protocol: "tcp"
+      ports: [9180]
+      description: "Prometheus metrics. Scraped by monitoring01."
     - name: "node_exporter"
       protocol: "tcp"
       ports: [9100]
