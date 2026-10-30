@@ -8,7 +8,7 @@
 
     # Clients get the recursors as option 6. Sorted so recursor01 is always
     # listed first: clients try the first server and wait out a timeout before
-    # falling back, and the 02 peer is the one that gets powered off.
+    # falling back.
     - name: Build resolver list from inventory
       ansible.builtin.set_fact:
         kea_resolvers: >-
