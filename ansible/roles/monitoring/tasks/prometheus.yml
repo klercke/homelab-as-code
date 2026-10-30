@@ -1,5 +1,6 @@
 ---
 - name: Create prometheus user
+  tags: [install]
   ansible.builtin.user:
     name: prometheus
     system: true
@@ -7,6 +8,7 @@
     create_home: false
 
 - name: Download Prometheus
+  tags: [install]
   ansible.builtin.get_url:
     url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
     dest: "/var/cache/prometheus-{{ prometheus_version }}.tar.gz"
@@ -14,6 +16,7 @@
     mode: "0644"
 
 - name: Install Prometheus binaries
+  tags: [install]
   ansible.builtin.unarchive:
     src: "/var/cache/prometheus-{{ prometheus_version }}.tar.gz"
     dest: /usr/local/bin
@@ -29,12 +32,14 @@
   notify: Restart prometheus
 
 - name: Restore SELinux context on binaries
+  tags: [install]
   ansible.builtin.command:
     cmd: restorecon -v /usr/local/bin/prometheus /usr/local/bin/promtool
   register: _prom_con
   changed_when: _prom_con.stdout | length > 0
 
 - name: Create Prometheus directories
+  tags: [config]
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -48,6 +53,7 @@
     - "{{ monitoring_data_dir }}/prometheus"
 
 - name: Write prometheus.yml
+  tags: [config]
   ansible.builtin.template:
     src: prometheus.yml.j2
     dest: /etc/prometheus/prometheus.yml
@@ -58,6 +64,7 @@
   notify: Reload prometheus
 
 - name: Install Prometheus rules
+  tags: [config]
   ansible.builtin.copy:
     src: prometheus/rules/
     dest: /etc/prometheus/rules/
@@ -68,6 +75,7 @@
   notify: Reload prometheus
 
 - name: Write file_sd target lists
+  tags: [config]
   ansible.builtin.template:
     src: targets.yml.j2
     dest: "/etc/prometheus/targets/{{ item.key }}.yml"
@@ -82,6 +90,7 @@
     job: "{{ item.value }}"
 
 - name: Install Prometheus unit
+  tags: [config]
   ansible.builtin.template:
     src: prometheus.service.j2
     dest: /etc/systemd/system/prometheus.service
@@ -91,6 +100,7 @@
     - Restart prometheus
 
 - name: Enable Prometheus
+  tags: [service]
   ansible.builtin.systemd_service:
     name: prometheus
     enabled: true

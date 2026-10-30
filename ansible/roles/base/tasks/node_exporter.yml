@@ -1,5 +1,6 @@
 ---
 - name: Create node_exporter user
+  tags: [install]
   ansible.builtin.user:
     name: node_exporter
     system: true
@@ -7,6 +8,7 @@
     create_home: false
 
 - name: Download node_exporter
+  tags: [install]
   ansible.builtin.get_url:
     url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
     dest: "/var/cache/node_exporter-{{ node_exporter_version }}.tar.gz"
@@ -14,6 +16,7 @@
     mode: "0644"
 
 - name: Install node_exporter
+  tags: [install]
   ansible.builtin.unarchive:
     src: "/var/cache/node_exporter-{{ node_exporter_version }}.tar.gz"
     dest: /usr/local/bin
@@ -28,12 +31,14 @@
   notify: Restart node_exporter
 
 - name: Restore SELinux context
+  tags: [install]
   ansible.builtin.command:
     cmd: restorecon -v /usr/local/bin/node_exporter
   register: _ne_con
   changed_when: _ne_con.stdout | length > 0
 
 - name: Install node_exporter unit
+  tags: [config]
   ansible.builtin.copy:
     dest: /etc/systemd/system/node_exporter.service
     mode: "0644"
@@ -66,6 +71,7 @@
     - Restart node_exporter
 
 - name: Create textfile collector directory
+  tags: [config]
   ansible.builtin.file:
     path: /var/lib/node_exporter/textfile
     state: directory
@@ -74,6 +80,7 @@
     mode: "0755"
 
 - name: Open node_exporter port
+  tags: [firewall]
   ansible.posix.firewalld:
     rich_rule: >-
       rule family=ipv4 source address={{ node_exporter_allowed_cidr }}
@@ -83,6 +90,7 @@
     state: enabled
 
 - name: Enable node_exporter
+  tags: [service]
   ansible.builtin.systemd_service:
     name: node_exporter
     enabled: true

@@ -2,6 +2,7 @@
   hosts: tag_role_recursor
   pre_tasks:
     - name: Build reverse zone list from registry
+      tags: [always]
       ansible.builtin.set_fact:
         recursor_reverse_zones: >-
           {{ (hlac.reverse_zones_v4.values() | list
@@ -9,12 +10,14 @@
 
     # Internal and reverse zones are forwarded to the authoritative servers
     - name: Build authoritative target list from inventory
+      tags: [always]
       ansible.builtin.set_fact:
         recursor_auth_targets: >-
           {{ groups['tag_role_pdns'] | default([]) | sort
              | map('extract', hostvars, 'ansible_host') | list }}
 
     - name: Verify authoritative servers were discovered
+      tags: [always]
       ansible.builtin.assert:
         that: recursor_auth_targets | length > 0
         fail_msg: "No tag_role_pdns hosts in inventory; the recursor would forward internal zones nowhere."

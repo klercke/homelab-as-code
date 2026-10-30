@@ -1,22 +1,26 @@
 - name: Install PowerDNS recursor vendor repo
+  tags: [install]
   ansible.builtin.get_url:
     url: "https://repo.powerdns.com/repo-files/el-rec-{{ recursor_repo_track }}.repo"
     dest: "/etc/yum.repos.d/powerdns-rec-{{ recursor_repo_track }}.repo"
     mode: "0644"
 
 - name: Install pdns-recursor
+  tags: [install]
   ansible.builtin.dnf:
     name: pdns-recursor
     state: present
 
 # Ensures no legacy configurations are used. This is deprecated as of 5.2
 - name: Remove legacy recursor.conf
+  tags: [config]
   ansible.builtin.file:
     path: "{{ recursor_config_dir }}/recursor.conf"
     state: absent
   notify: Restart recursor
 
 - name: Write recursor.yml
+  tags: [config]
   ansible.builtin.template:
     src: recursor.yml.j2
     dest: "{{ recursor_config_dir }}/recursor.yml"
@@ -26,11 +30,13 @@
   notify: Restart recursor
 
 - name: Validate recursor config
+  tags: [config]
   ansible.builtin.command:
     cmd: pdns_recursor --config-dir={{ recursor_config_dir }} --config=check
   changed_when: false
 
 - name: Open DNS to site
+  tags: [firewall]
   ansible.posix.firewalld:
     rich_rule: "rule family=ipv4 source address=10.0.0.0/16 port port=53 protocol={{ item }} accept"
     permanent: true
@@ -39,6 +45,7 @@
   loop: [tcp, udp]
 
 - name: Open DNS to site over IPv6
+  tags: [firewall]
   ansible.posix.firewalld:
     rich_rule: "rule family=ipv6 source address={{ item[0] }} port port=53 protocol={{ item[1] }} accept"
     permanent: true
@@ -47,11 +54,13 @@
   loop: "{{ recursor_allow_from_v6 | product(['tcp', 'udp']) | list }}"
 
 - name: Enable recursor
+  tags: [service]
   ansible.builtin.systemd_service:
     name: pdns-recursor
     enabled: true
 
 - name: Install Recursor auto-update units
+  tags: [updates, config]
   ansible.builtin.template:
     src: "{{ item }}.j2"
     dest: "/etc/systemd/system/{{ item }}"
@@ -62,6 +71,7 @@
   notify: Reload systemd
 
 - name: Enable Recursor update timer
+  tags: [updates, service]
   ansible.builtin.systemd_service:
     name: recursor-update.timer
     enabled: true
@@ -69,12 +79,14 @@
     daemon_reload: true
 
 - name: Create systemd drop-in directory
+  tags: [config]
   ansible.builtin.file:
     path: /etc/systemd/system/pdns-recursor.service.d
     state: directory
     mode: "0755"
 
 - name: Install restart limit drop-in
+  tags: [config]
   ansible.builtin.template:
     src: restart-limits.conf.j2
     dest: /etc/systemd/system/pdns-recursor.service.d/10-restart-limits.conf

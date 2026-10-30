@@ -1,5 +1,6 @@
 ---
 - name: Install Grafana repo
+  tags: [install]
   ansible.builtin.yum_repository:
     name: grafana
     description: "Grafana OSS"
@@ -10,16 +11,19 @@
     enabled: true
 
 - name: Install Grafana
+  tags: [install]
   ansible.builtin.dnf:
     name: grafana
     state: present
 
 - name: Install jq for dashboard normalisation
+  tags: [install]
   ansible.builtin.dnf:
     name: jq
     state: present
 
 - name: Point Grafana at the data volume
+  tags: [config]
   ansible.builtin.file:
     path: "{{ monitoring_data_dir }}/grafana"
     state: directory
@@ -28,6 +32,7 @@
     mode: "0750"
 
 - name: Configure Grafana
+  tags: [config]
   ansible.builtin.template:
     src: grafana.ini.j2
     dest: /etc/grafana/grafana.ini
@@ -38,6 +43,7 @@
   notify: Restart grafana
 
 - name: Provision datasources
+  tags: [config]
   ansible.builtin.template:
     src: grafana-datasources.yml.j2
     dest: /etc/grafana/provisioning/datasources/protonet.yml
@@ -47,6 +53,7 @@
   notify: Restart grafana
 
 - name: Create dashboard directory
+  tags: [config]
   ansible.builtin.file:
     path: /var/lib/grafana/dashboards
     state: directory
@@ -55,6 +62,7 @@
     mode: "0755"
 
 - name: Create community dashboard directory
+  tags: [config]
   ansible.builtin.file:
     path: /var/lib/grafana/dashboards/Community
     state: directory
@@ -63,6 +71,7 @@
     mode: "0755"
 
 - name: Fetch community dashboards
+  tags: [install]
   ansible.builtin.get_url:
     url: "https://grafana.com/api/dashboards/{{ item.id }}/revisions/latest/download"
     dest: "/var/cache/dashboard-{{ item.name }}.json"
@@ -74,6 +83,7 @@
 # jq renders to stdout and copy writes the file, so the dashboard (and the
 # Grafana restart) only changes when the rendered JSON actually differs.
 - name: Normalise dashboards for file provisioning
+  tags: [config]
   ansible.builtin.command:
     cmd: >-
       jq --arg name {{ item.name | quote }}
@@ -87,6 +97,7 @@
     label: "{{ item.name }}"
 
 - name: Install normalised dashboards
+  tags: [config]
   ansible.builtin.copy:
     content: "{{ item.stdout }}\n"
     dest: "/var/lib/grafana/dashboards/Community/{{ item.item.name }}.json"
@@ -99,6 +110,7 @@
   notify: Restart grafana
 
 - name: Open UI ports
+  tags: [firewall]
   ansible.posix.firewalld:
     rich_rule: >-
       rule family=ipv4 source address={{ item.0 }}
@@ -109,6 +121,7 @@
   loop: "{{ monitoring_ui_allowed | product([grafana_port, prometheus_port]) | list }}"
 
 - name: Allow caddy01 to reach Grafana
+  tags: [firewall]
   ansible.posix.firewalld:
     rich_rule: >-
       rule family=ipv4 source address={{ hostvars['caddy01'].ansible_host }}/32
@@ -118,6 +131,7 @@
     state: enabled
 
 - name: Enable Grafana
+  tags: [service]
   ansible.builtin.systemd_service:
     name: grafana-server
     enabled: true

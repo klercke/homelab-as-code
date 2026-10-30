@@ -1,5 +1,6 @@
 ---
 - name: Install zram-tools
+  tags: [install]
   ansible.builtin.apt:
     name: zram-tools
     state: present
@@ -7,6 +8,7 @@
     cache_valid_time: 3600
 
 - name: Configure zram swap
+  tags: [config]
   ansible.builtin.template:
     src: zramswap.j2
     dest: /etc/default/zramswap
@@ -16,6 +18,7 @@
   notify: Restart zramswap
 
 - name: Enable zram swap
+  tags: [service]
   ansible.builtin.systemd_service:
     name: zramswap
     enabled: true
