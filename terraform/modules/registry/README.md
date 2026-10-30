@@ -60,6 +60,7 @@ No resources.
 | <a name="output_host_ipv6"></a> [host\_ipv6](#output\_host\_ipv6) | Hostname -> bare IPv6 address. Only hosts with ipv6: true are present. |
 | <a name="output_host_records_v4"></a> [host\_records\_v4](#output\_host\_records\_v4) | Hostname -> { fqdn, ipv4, ptr\_name, rev\_zone }. |
 | <a name="output_host_records_v6"></a> [host\_records\_v6](#output\_host\_records\_v6) | Hostname -> { fqdn, ipv6, ptr\_name, rev\_zone }. Only hosts with ipv6: true are present. |
+| <a name="output_host_services"></a> [host\_services](#output\_host\_services) | Services on every host in hosts.yaml. Already folded into vm\_services. |
 | <a name="output_host_site"></a> [host\_site](#output\_host\_site) | Hostname -> site key. |
 | <a name="output_host_token_v6"></a> [host\_token\_v6](#output\_host\_token\_v6) | Hostname -> SLAAC interface identifier token (::<host\_octet in hex>). Only hosts with ipv6: true are present. |
 | <a name="output_host_vmid"></a> [host\_vmid](#output\_host\_vmid) | Hostname -> Proxmox VMID. |

@@ -1,7 +1,10 @@
 ---
 # ProtoNet service registry.
 #
-# Two sections, different cardinality:
+# Three sections, different cardinality:
+#
+#   host_services   what every host in hosts.yaml listens on, because the base
+#                   role installs it everywhere (SSH, node_exporter).
 #
 #   role_services   what a role listens on. Projected into NetBox as a service
 #                   on every host or device with that role. Covers everything,
@@ -20,6 +23,16 @@
 #
 # All string values are quoted deliberately: see README.md.
 
+host_services:
+  - name: "SSH"
+    protocol: "tcp"
+    ports: [22]
+    description: "Ansible and admin access."
+  - name: "node_exporter"
+    protocol: "tcp"
+    ports: [9100]
+    description: "Prometheus host metrics."
+
 role_services:
   postgres:
     - name: "PostgreSQL"
@@ -30,30 +43,18 @@ role_services:
       protocol: "tcp"
       ports: [9187]
       description: "Prometheus Postgres metrics."
-    - name: "node_exporter"
-      protocol: "tcp"
-      ports: [9100]
-      description: "Prometheus host metrics."
 
   netbox:
     - name: "HTTP"
       protocol: "tcp"
       ports: [80]
       description: "Native web UI."
-    - name: "node_exporter"
-      protocol: "tcp"
-      ports: [9100]
-      description: "Prometheus host metrics."
 
   valkey:
     - name: "Valkey"
       protocol: "tcp"
       ports: [6379]
       description: "NetBox cache and RQ task queue."
-    - name: "node_exporter"
-      protocol: "tcp"
-      ports: [9100]
-      description: "Prometheus host metrics."
 
   pdns:
     - name: "DNS"
@@ -67,10 +68,6 @@ role_services:
       protocol: "tcp"
       ports: [8081]
       description: "Zone and record management. Terraform targets pdns01 only."
-    - name: "node_exporter"
-      protocol: "tcp"
-      ports: [9100]
-      description: "Prometheus host metrics."
 
   recursor:
     - name: "DNS"
@@ -84,10 +81,6 @@ role_services:
       protocol: "tcp"
       ports: [8082]
       description: "Webserver and metrics. Scraped by monitoring01."
-    - name: "node_exporter"
-      protocol: "tcp"
-      ports: [9100]
-      description: "Prometheus host metrics."
 
   kea:
     - name: "DHCP"
@@ -102,10 +95,6 @@ role_services:
       protocol: "tcp"
       ports: [8001]
       description: "Peer communication. Separate port from the control socket."
-    - name: "node_exporter"
-      protocol: "tcp"
-      ports: [9100]
-      description: "Prometheus host metrics."
 
   caddy:
     - name: "HTTP"
@@ -120,10 +109,6 @@ role_services:
       protocol: "tcp"
       ports: [9180]
       description: "Prometheus metrics. Scraped by monitoring01."
-    - name: "node_exporter"
-      protocol: "tcp"
-      ports: [9100]
-      description: "Prometheus host metrics."
 
   llm:
     - name: "LiteLLM"
@@ -134,10 +119,6 @@ role_services:
       protocol: "tcp"
       ports: [8080]
       description: "Chat UI. Talks only to LiteLLM."
-    - name: "node_exporter"
-      protocol: "tcp"
-      ports: [9100]
-      description: "Prometheus host metrics."
 
   monitoring:
     - name: "Prometheus"
@@ -148,10 +129,6 @@ role_services:
       protocol: "tcp"
       ports: [3000]
       description: "Dashboards. Reached through caddy01 as grafana.int.ptxe.dev."
-    - name: "node_exporter"
-      protocol: "tcp"
-      ports: [9100]
-      description: "Prometheus host metrics."
 
   hypervisor:
     - name: "Proxmox VE"
