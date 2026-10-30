@@ -54,6 +54,26 @@
   no_log: true
   run_once: true
 
+- name: Check the hlac API password is in SOPS
+  tags: [config]
+  ansible.builtin.assert:
+    that: kea_hlac_api_password is defined
+    fail_msg: >-
+      kea_hlac_api_password is missing from secrets/platform.sops.yaml.
+      Add it with sops set before running this role.
+    quiet: true
+
+- name: Write hlac API auth secret file
+  tags: [config]
+  ansible.builtin.copy:
+    content: "{{ kea_hlac_user }}:{{ kea_hlac_password }}\n"
+    dest: "/etc/kea/{{ kea_hlac_secret_file }}"
+    owner: root
+    group: kea
+    mode: "0640"
+  no_log: true
+  notify: Restart kea-dhcp4
+
 - name: Write API auth secret file
   tags: [config]
   ansible.builtin.copy:
