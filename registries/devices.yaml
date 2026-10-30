@@ -56,6 +56,12 @@ device_roles:
   appliance:
     name: "Appliance"
     color: "eb77db"  # #eb77db
+  backup:
+    name: "Backup"
+    color: "009688"  # #009688
+  management:
+    name: "Management"
+    color: "673ab7"  # #673ab7
 
 device_types:
   protectli-fw4b:
@@ -149,6 +155,15 @@ device_types:
   generic-workstation:
     manufacturer: "Generic"
     model: "Desktop Workstation"
+    u_height: 0
+    full_depth: false
+    library: false
+
+  # A guest built by hand outside hlac (on jotunheim today). Registered so its
+  # name resolves and its address stays reserved; nothing manages it.
+  unmanaged-vm:
+    manufacturer: "Generic"
+    model: "Unmanaged VM"
     u_height: 0
     full_depth: false
     library: false
@@ -284,8 +299,22 @@ devices:
     description: "Mini PC sitting in rack running HAOS."
 
   immich:
-    device_type: "generic-workstation"
+    device_type: "unmanaged-vm"
     role: "appliance"
     site: "home"
     mgmt_ip: "10.0.20.21"
     description: "Immich. Hand-built LXC (CT 102) on jotunheim, outside hlac. Registered so its address is reserved."
+
+  pbs:
+    device_type: "unmanaged-vm"
+    role: "backup"
+    site: "home"
+    mgmt_ip: "10.10.10.123"
+    description: "Proxmox Backup Server. Hand-built VM 122 on jotunheim, outside hlac. pve01's backup storage."
+
+  pdm:
+    device_type: "unmanaged-vm"
+    role: "management"
+    site: "home"
+    mgmt_ip: "10.0.60.100"
+    description: "Proxmox Datacenter Manager. Hand-built VM 125 on jotunheim, outside hlac."
