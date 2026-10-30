@@ -88,14 +88,20 @@
     name: firewalld
     state: absent
 
-- name: Ensure self resolves before DNS exists
-  ansible.builtin.lineinfile:
-    path: /etc/hosts
-    regexp: "^{{ ansible_host }}\\s"
-    line: "{{ ansible_host }} {{ inventory_hostname }}.protonet.internal {{ inventory_hostname }}"
+# Tagged so they can be rerun on their own, e.g. just base --tags dns
+- name: Configure resolvers
+  ansible.builtin.include_tasks:
+    file: resolvers.yml
+    apply:
+      tags: [dns]
+  tags: [dns]
 
 - name: Configure IPv6
-  ansible.builtin.include_tasks: ipv6.yml
+  ansible.builtin.include_tasks:
+    file: ipv6.yml
+    apply:
+      tags: [ipv6]
+  tags: [ipv6]
   vars:
     _ipv6: "{{ hlac.hosts[inventory_hostname] }}"
   when: hlac.hosts[inventory_hostname].token_v6 is not none

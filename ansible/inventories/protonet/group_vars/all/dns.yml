@@ -1,0 +1,9 @@
+---
+# DNS search list for every ProtoNet client, most specific first. Kea hands it
+# out as DHCP options 15/119 and the base role sets it on every host. Keep the
+# DNSSL in OPNsense's router advertisements in the same order.
+protonet_search_domains:
+  - "prd.hme.protonet.internal"
+  - "hme.protonet.internal"
+  - "protonet.internal"
+  - "int.ptxe.dev"

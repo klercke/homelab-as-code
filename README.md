@@ -29,3 +29,4 @@ These are features that I intend to add in the future.
 - [ ] Every host creates an alias in the firewall
 - [ ] Kubernetes for workloads
 - [ ] CI/CD to lint and deploy
+- [ ] Automatically generate diagrams from registry

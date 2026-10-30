@@ -14,6 +14,17 @@ base_timezone: America/New_York
 # Host firewall. See note below before changing.
 base_firewalld_enabled: true
 
+# Resolvers: the first two recursors from the registry, then a public fallback
+# for when none answers (a fresh build, or both recursors down). glibc reads at
+# most three nameservers. Matches bootstrap_resolver in terraform/substrate.
+base_fallback_resolver: "9.9.9.9"
+base_resolvers: >-
+  {{ (hlac.hosts | dict2items | selectattr('value.role', 'equalto', 'recursor')
+      | map(attribute='key') | sort | map('extract', hlac.hosts, 'ipv4') | list)[:2]
+     + [base_fallback_resolver] }}
+base_resolver_options: ["timeout:1", "attempts:2"]
+base_search_domains: "{{ protonet_search_domains }}"
+
 # Applied by service roles, not here.
 base_firewall_services:
   - ssh

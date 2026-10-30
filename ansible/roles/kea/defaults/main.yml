@@ -24,10 +24,8 @@ kea_api_static_allowed:
 kea_resolvers: []
 
 # First entry is also sent as domain-name (option 15) for clients that ignore
-# domain-search (option 119). prd.hme first so short host names resolve.
-kea_search_domains:
-  - "prd.hme.protonet.internal"
-  - "protonet.internal"
+# domain-search (option 119). Defined once in group_vars/all/dns.yml.
+kea_search_domains: "{{ protonet_search_domains }}"
 
 # Timestamped copies of kea-dhcp4.conf kept in /etc/kea after changes
 kea_config_backups_kept: 5
