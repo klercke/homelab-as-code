@@ -71,13 +71,31 @@
   loop_control:
     label: "{{ item.name }}"
 
+# jq renders to stdout and copy writes the file, so the dashboard (and the
+# Grafana restart) only changes when the rendered JSON actually differs.
 - name: Normalise dashboards for file provisioning
-  ansible.builtin.shell:
-    cmd: "jq --arg name '{{ item.name }}' 'del(.__inputs) | del(.__requires) | .uid = (\"community-\" + $name) | walk(if type == \"object\" and .type? == \"prometheus\" and has(\"uid\") then .uid = \"prometheus\" else . end)' /var/cache/dashboard-{{ item.name }}.json > /var/lib/grafana/dashboards/Community/{{ item.name }}.json"
-  become: true
+  ansible.builtin.command:
+    cmd: >-
+      jq --arg name {{ item.name | quote }}
+      'del(.__inputs) | del(.__requires) | .uid = ("community-" + $name)
+      | walk(if type == "object" and .type? == "prometheus" and has("uid") then .uid = "prometheus" else . end)'
+      /var/cache/dashboard-{{ item.name }}.json
+  register: monitoring_dashboards_rendered
+  changed_when: false
   loop: "{{ grafana_dashboards }}"
   loop_control:
     label: "{{ item.name }}"
+
+- name: Install normalised dashboards
+  ansible.builtin.copy:
+    content: "{{ item.stdout }}\n"
+    dest: "/var/lib/grafana/dashboards/Community/{{ item.item.name }}.json"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ monitoring_dashboards_rendered.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
   notify: Restart grafana
 
 - name: Open UI ports
