@@ -30,3 +30,4 @@ These are features that I intend to add in the future.
 - [ ] Kubernetes for workloads
 - [ ] CI/CD to lint and deploy
 - [ ] Automatically generate diagrams from registry
+- [ ] HA Postgres

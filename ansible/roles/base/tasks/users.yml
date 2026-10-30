@@ -1,0 +1,33 @@
+# Personal login users from protonet_login_users. Accounts are created without
+# a password (locked), so SSH keys are the only way in. Removing an entry from
+# the list does not delete the account; do that by hand.
+
+- name: Create login users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ item.groups | default([]) }}"
+    append: true
+    shell: /bin/bash
+  loop: "{{ base_login_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+# exclusive keeps the file to the key in the repo, so a key added by hand on
+# the host is removed on the next run.
+- name: Install login user SSH keys
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ lookup('ansible.builtin.file', base_keys_dir ~ '/' ~ item.key_file) }}"
+    exclusive: true
+  loop: "{{ base_login_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Map login users to their SELinux user
+  community.general.selogin:
+    login: "{{ item.name }}"
+    seuser: "{{ item.seuser }}"
+    state: present
+  loop: "{{ base_login_users }}"
+  loop_control:
+    label: "{{ item.name }} -> {{ item.seuser }}"
