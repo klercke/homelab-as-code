@@ -47,8 +47,11 @@ No resources.
 | Name | Description |
 |------|-------------|
 | <a name="output_backend_records_v4"></a> [backend\_records\_v4](#output\_backend\_records\_v4) | Host or device name -> { fqdn, ipv4, ptr\_name, rev\_zone }. Valid public\_service backends. |
+| <a name="output_device_ipv6"></a> [device\_ipv6](#output\_device\_ipv6) | Device name -> bare management IPv6 address. Only devices with mgmt\_iid\_v6 are present. |
 | <a name="output_device_mgmt_cidr_v4"></a> [device\_mgmt\_cidr\_v4](#output\_device\_mgmt\_cidr\_v4) | Device name -> management IP with prefix length. |
+| <a name="output_device_mgmt_cidr_v6"></a> [device\_mgmt\_cidr\_v6](#output\_device\_mgmt\_cidr\_v6) | Device name -> management IPv6 address with prefix length. Only devices with mgmt\_iid\_v6 are present. |
 | <a name="output_device_records_v4"></a> [device\_records\_v4](#output\_device\_records\_v4) | Device name -> { fqdn, ipv4, ptr\_name, rev\_zone }. |
+| <a name="output_device_records_v6"></a> [device\_records\_v6](#output\_device\_records\_v6) | Device name -> { fqdn, ipv6, ptr\_name, rev\_zone }. Only devices with mgmt\_iid\_v6 are present. |
 | <a name="output_device_roles"></a> [device\_roles](#output\_device\_roles) | Raw device role registry, keyed by role slug. |
 | <a name="output_device_services"></a> [device\_services](#output\_device\_services) | Flattened services for physical devices keyed target/name/protocol. |
 | <a name="output_device_types"></a> [device\_types](#output\_device\_types) | Raw device type registry, keyed by type slug. |

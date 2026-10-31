@@ -71,8 +71,10 @@ resource "local_file" "derived_network" {
           device_type = d.device_type
           status      = try(d.status, "active")
           vlan        = try(module.registry.device_vlan[k], null)
-          ipv4        = try(d.mgmt_ip, null)
+          ipv4        = try(d.mgmt_ip_v4, null)
           cidr_v4     = try(module.registry.device_mgmt_cidr_v4[k], null)
+          ipv6        = try(module.registry.device_ipv6[k], null)
+          cidr_v6     = try(module.registry.device_mgmt_cidr_v6[k], null)
           fqdn        = try(module.registry.device_records_v4[k].fqdn, null)
         }
       }

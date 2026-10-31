@@ -122,6 +122,16 @@ check "ipv6_hosts_on_ipv6_vlans" {
   }
 }
 
+check "ipv6_devices_on_ipv6_vlans" {
+  assert {
+    condition = alltrue([
+      for k, d in local.devices :
+      contains(keys(local.vlan_prefix_v6), try(local.device_vlan[k], "")) if try(d.mgmt_iid_v6, null) != null
+    ])
+    error_message = "A device in devices.yaml has mgmt_iid_v6 but no mgmt_ip_v4 on a VLAN with an IPv6 prefix."
+  }
+}
+
 check "memory_min_within_memory" {
   assert {
     condition = alltrue([
@@ -137,7 +147,7 @@ check "host_ips_clear_of_devices" {
   assert {
     condition = length(setintersection(
       toset(values(local.host_ipv4)),
-      toset([for k, d in local.devices : d.mgmt_ip if try(d.mgmt_ip, null) != null])
+      toset([for k, d in local.devices : d.mgmt_ip_v4 if try(d.mgmt_ip_v4, null) != null])
     )) == 0
     error_message = "A host in hosts.yaml derives an address already used by a device in devices.yaml."
   }
@@ -190,7 +200,7 @@ check "dhcp_v4_dynamic_below_reservations" {
 check "device_mgmt_ip_resolves" {
   assert {
     condition     = alltrue([for k, vk in local.device_vlan : vk != null])
-    error_message = "A device mgmt_ip does not fall inside any VLAN prefix at that device's site."
+    error_message = "A device mgmt_ip_v4 does not fall inside any VLAN prefix at that device's site."
   }
 }
 

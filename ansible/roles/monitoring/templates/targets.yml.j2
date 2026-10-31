@@ -16,9 +16,9 @@
 {% endfor %}
 {% if job_name == 'node' %}
 {% for dname, d in hlac.devices | dictsort %}
-#{% if d.mgmt_ip is defined and d.role in ['hypervisor'] %}
+#{% if d.ipv4 is not none and d.role in ['hypervisor'] %}
 #- targets:
-#    - "{{ d.mgmt_ip }}:{{ job.port }}"
+#    - "{{ d.ipv4 }}:{{ job.port }}"
 #  labels:
 #    instance: "{{ dname }}"
 #    role: "{{ d.role }}"
