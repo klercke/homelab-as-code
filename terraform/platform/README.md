@@ -82,6 +82,7 @@ This module contains services that build on the substrate, but are still upstrea
 | [powerdns_record.ptr](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_record.ptr_v6](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_record.service](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
+| [powerdns_record.service_v6](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_zone.doh_canary](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
 | [powerdns_zone.forward](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |
 | [powerdns_zone.public_internal](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/zone) | resource |

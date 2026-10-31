@@ -111,6 +111,18 @@ resource "powerdns_record" "service" {
   records = [module.registry.host_records_v4[var.internal_proxy_host].ipv4]
 }
 
+# AAAA for the same names, only while the proxy host has IPv6. Caddy listens on
+# every address, so clients that prefer IPv6 reach it directly.
+resource "powerdns_record" "service_v6" {
+  for_each = contains(keys(module.registry.host_records_v6), var.internal_proxy_host) ? module.registry.public_services : {}
+
+  zone    = powerdns_zone.public_internal.name
+  name    = "${each.key}.${local.int_service_domain}"
+  type    = "AAAA"
+  ttl     = 300
+  records = [module.registry.host_records_v6[var.internal_proxy_host].ipv6]
+}
+
 # Firefox DoH canary
 # https://support.mozilla.org/kb/canary-domain-use-application-dnsnet
 resource "powerdns_zone" "doh_canary" {
