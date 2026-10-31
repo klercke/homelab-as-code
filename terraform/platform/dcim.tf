@@ -14,7 +14,7 @@ locals {
 
   # Devices with recorded management IPs
   managed_devices = {
-    for k, d in local.dev : k => d if try(d.mgmt_ip, null) != null
+    for k, d in local.dev : k => d if try(d.mgmt_ip_v4, null) != null
   }
 
   # Devices that have other devices slotted into them
@@ -166,4 +166,25 @@ resource "netbox_device_primary_ip" "this" {
 
   device_id     = netbox_device.this[each.key].id
   ip_address_id = netbox_ip_address.device_mgmt[each.key].id
+}
+
+# Only devices with mgmt_iid_v6. hlac does not configure the address; the device
+# must already use it.
+resource "netbox_ip_address" "device_mgmt_v6" {
+  for_each = module.registry.device_mgmt_cidr_v6
+
+  ip_address   = each.value
+  status       = "active"
+  dns_name     = trimsuffix(module.registry.device_records_v6[each.key].fqdn, ".")
+  interface_id = netbox_device_interface.mgmt[each.key].id
+  object_type  = "dcim.interface"
+  tags         = [netbox_tag.hlac.name]
+}
+
+resource "netbox_device_primary_ip" "v6" {
+  for_each = module.registry.device_mgmt_cidr_v6
+
+  device_id          = netbox_device.this[each.key].id
+  ip_address_id      = netbox_ip_address.device_mgmt_v6[each.key].id
+  ip_address_version = 6
 }

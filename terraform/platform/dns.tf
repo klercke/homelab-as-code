@@ -63,9 +63,9 @@ resource "powerdns_record" "ptr" {
   records = [each.value.fqdn]
 }
 
-# AAAA and PTR records for hosts with ipv6: true
+# AAAA and PTR records for hosts with ipv6: true and devices with mgmt_iid_v6
 resource "powerdns_record" "aaaa" {
-  for_each = module.registry.host_records_v6
+  for_each = local.dns_records_v6
 
   zone    = powerdns_zone.forward.name
   name    = each.value.fqdn
@@ -75,7 +75,7 @@ resource "powerdns_record" "aaaa" {
 }
 
 resource "powerdns_record" "ptr_v6" {
-  for_each = module.registry.host_records_v6
+  for_each = local.dns_records_v6
 
   zone    = powerdns_zone.reverse_v6[each.value.rev_zone].name
   name    = each.value.ptr_name

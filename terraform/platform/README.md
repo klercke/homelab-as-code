@@ -39,11 +39,13 @@ This module contains services that build on the substrate, but are still upstrea
 | [netbox_device_interface.mgmt](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_interface) | resource |
 | [netbox_device_interface_primary_mac_address.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_interface_primary_mac_address) | resource |
 | [netbox_device_primary_ip.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_primary_ip) | resource |
+| [netbox_device_primary_ip.v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_primary_ip) | resource |
 | [netbox_device_role.physical](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_role) | resource |
 | [netbox_device_role.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_role) | resource |
 | [netbox_device_type.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_type) | resource |
 | [netbox_interface.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/interface) | resource |
 | [netbox_ip_address.device_mgmt](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
+| [netbox_ip_address.device_mgmt_v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
 | [netbox_ip_address.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
 | [netbox_ip_address.v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
 | [netbox_ip_range.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_range) | resource |

@@ -154,6 +154,38 @@ locals {
     )), 1, 4)))
   }
 
+  # Devices are not configured by hlac, so a device's IPv6 address is whatever
+  # it already uses: mgmt_iid_v6 is its interface ID (the low 64 bits), and the
+  # /64 comes from the VLAN, so a prefix change follows without editing devices.
+  _device_v6 = {
+    for k, vk in local.device_vlan : k => vk
+    if try(local.devices[k].mgmt_iid_v6, null) != null && contains(keys(local.vlan_prefix_v6), vk)
+  }
+
+  # The schema allows only "::" plus one to four groups, so expanding the
+  # interface ID is left-padding to four groups of four nibbles.
+  _device_iid_groups = {
+    for k, _ in local._device_v6 : k => split(":", trimprefix(local.devices[k].mgmt_iid_v6, "::"))
+  }
+  _device_v6_full = {
+    for k, vk in local._device_v6 : k => join("", concat(
+      [substr(local._v6_full["vlan/${vk}"], 0, 16)],
+      [for i in range(4 - length(local._device_iid_groups[k])) : "0000"],
+      [for g in local._device_iid_groups[k] : format("%04x", parseint(g, 16))],
+    ))
+  }
+
+  # cidrhost on a /128 returns the address in canonical (compressed) form.
+  device_ipv6 = {
+    for k, n in local._device_v6_full :
+    k => cidrhost(format("%s/128", join(":", regexall("....", n))), 0)
+  }
+
+  device_mgmt_cidr_v6 = {
+    for k, _ in local._device_v6 :
+    k => "${local.device_ipv6[k]}/${var.vlan_prefix_v6_bits}"
+  }
+
   # Fully expanded 32-nibble forms of IPv6 addresses and VLAN prefixes, needed
   # for ip6.arpa names. Splits on "::", pads the missing groups with zeros, then
   # zero-pads every group to four hex digits.
@@ -193,6 +225,15 @@ locals {
     }
   }
 
+  device_records_v6 = {
+    for k, vk in local._device_v6 : k => {
+      fqdn     = "${k}.${var.env}.${local.sites[local.devices[k].site].slug}.${var.domain}"
+      ipv6     = local.device_ipv6[k]
+      ptr_name = format("%s.ip6.arpa.", join(".", reverse(regexall(".", local._device_v6_full[k]))))
+      rev_zone = local.reverse_zones_v6[vk]
+    }
+  }
+
   host_records_v4 = {
     for name, h in local.hosts : name => {
       fqdn     = "${name}.${var.env}.${local.sites[local.host_site[name]].slug}.${var.domain}"
@@ -208,14 +249,14 @@ locals {
     for k, d in local.devices : k => one([
       for vk, v in local.vlans : vk
       if v.site == d.site && cidrhost(local.vlan_prefix_v4[vk], 0) == cidrhost(
-        "${d.mgmt_ip}/${split("/", local.vlan_prefix_v4[vk])[1]}", 0
+        "${d.mgmt_ip_v4}/${split("/", local.vlan_prefix_v4[vk])[1]}", 0
       )
-    ]) if try(d.mgmt_ip, null) != null
+    ]) if try(d.mgmt_ip_v4, null) != null
   }
 
   device_mgmt_cidr_v4 = {
     for k, vk in local.device_vlan :
-    k => "${local.devices[k].mgmt_ip}/${split("/", local.vlan_prefix_v4[vk])[1]}"
+    k => "${local.devices[k].mgmt_ip_v4}/${split("/", local.vlan_prefix_v4[vk])[1]}"
   }
 
   # Devices with MACs specified get reservations
@@ -223,7 +264,7 @@ locals {
     for k, d in local.devices : k => {
       hostname  = k
       mac       = lower(d.mac)
-      ip        = d.mgmt_ip
+      ip        = d.mgmt_ip_v4
       subnet_id = local.vlan_id[local.device_vlan[k]]
     } if try(d.mac, null) != null
   }
@@ -232,8 +273,8 @@ locals {
   device_records_v4 = {
     for k, vk in local.device_vlan : k => {
       fqdn     = "${k}.${var.env}.${local.sites[local.devices[k].site].slug}.${var.domain}"
-      ipv4     = local.devices[k].mgmt_ip
-      ptr_name = "${join(".", reverse(split(".", local.devices[k].mgmt_ip)))}.in-addr.arpa."
+      ipv4     = local.devices[k].mgmt_ip_v4
+      ptr_name = "${join(".", reverse(split(".", local.devices[k].mgmt_ip_v4)))}.in-addr.arpa."
       rev_zone = local.reverse_zones_v4[vk]
     }
   }

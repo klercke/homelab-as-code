@@ -175,7 +175,8 @@ devices:
     site: "home"
     rack: "rack01"
     position: 32
-    mgmt_ip: "10.0.60.1"
+    mgmt_ip_v4: "10.0.60.1"
+    mgmt_iid_v6: "::1"
     description: "OPNsense firewall and router. Sits on a 1U shelf."
 
   sw01:
@@ -184,7 +185,8 @@ devices:
     site: "home"
     rack: "rack01"
     position: 31
-    mgmt_ip: "10.0.60.11"
+    mgmt_ip_v4: "10.0.60.11"
+    mgmt_iid_v6: "::b"
     description: "Core switch."
 
   patch01:
@@ -226,7 +228,8 @@ devices:
     site: "home"
     rack: "rack01"
     position: 6
-    mgmt_ip: "10.0.60.20"
+    mgmt_ip_v4: "10.0.60.20"
+    mgmt_iid_v6: "::14"
     description: "Primary Proxmox VE host. Custom build."
 
   jotunheim:
@@ -235,7 +238,7 @@ devices:
     site: "home"
     rack: "rack01"
     position: 5
-    mgmt_ip: "10.10.10.58"
+    mgmt_ip_v4: "10.10.10.58"
     status: "decommissioning"
     description: "Secondary Proxmox VE host, runs PBS and PDM."
 
@@ -245,7 +248,7 @@ devices:
     site: "home"
     rack: "rack01"
     position: 4
-    mgmt_ip: "10.0.20.50"
+    mgmt_ip_v4: "10.0.20.50"
     mac: "d0:50:99:df:03:eb"
     description: "Recycled Siris running TrueNAS Core."
 
@@ -261,7 +264,7 @@ devices:
     device_type: "datto-ap840e"
     role: "access-point"
     site: "home"
-    mgmt_ip: "10.0.60.22"
+    mgmt_ip_v4: "10.0.60.22"
     description: "Primary AP."
 
   noct01:
@@ -271,14 +274,14 @@ devices:
     parent: "shelf01"
     bay: 1
     mac: "e4:5f:01:6a:08:dd"
-    mgmt_ip: "10.0.20.32"
+    mgmt_ip_v4: "10.0.20.32"
     description: "PoE-powered Pi running NOCT server."
 
   thor:
     device_type: "generic-workstation"
     role: "workstation"
     site: "home"
-    mgmt_ip: "10.0.10.213"
+    mgmt_ip_v4: "10.0.10.213"
     mac: "1a:4b:24:a0:f1:bf"
     description: "Primary desktop. Reserved for for use in firewall rules."
 
@@ -287,7 +290,7 @@ devices:
     role: "appliance"
     site: "home"
     mac: "e4:5f:01:da:bd:a3"
-    mgmt_ip: "10.0.30.200"
+    mgmt_ip_v4: "10.0.30.200"
     description: "Pi sitting upstairs with SDR connected for ADS-B collection."
 
   homeassistant:
@@ -295,26 +298,26 @@ devices:
     role: "appliance"
     site: "home"
     mac: "00:23:24:b9:72:d1"
-    mgmt_ip: "10.0.20.31"
+    mgmt_ip_v4: "10.0.20.31"
     description: "Mini PC sitting in rack running HAOS."
 
   immich:
     device_type: "unmanaged-vm"
     role: "appliance"
     site: "home"
-    mgmt_ip: "10.0.20.21"
+    mgmt_ip_v4: "10.0.20.21"
     description: "Immich. Hand-built LXC (CT 102) on jotunheim, outside hlac. Registered so its address is reserved."
 
   pbs:
     device_type: "unmanaged-vm"
     role: "backup"
     site: "home"
-    mgmt_ip: "10.10.10.123"
+    mgmt_ip_v4: "10.10.10.123"
     description: "Proxmox Backup Server. Hand-built VM 122 on jotunheim, outside hlac. pve01's backup storage."
 
   pdm:
     device_type: "unmanaged-vm"
     role: "management"
     site: "home"
-    mgmt_ip: "10.0.60.100"
+    mgmt_ip_v4: "10.0.60.100"
     description: "Proxmox Datacenter Manager. Hand-built VM 125 on jotunheim, outside hlac."

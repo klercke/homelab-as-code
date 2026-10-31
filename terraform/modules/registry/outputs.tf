@@ -158,6 +158,21 @@ output "device_mgmt_cidr_v4" {
   value       = local.device_mgmt_cidr_v4
 }
 
+output "device_ipv6" {
+  description = "Device name -> bare management IPv6 address. Only devices with mgmt_iid_v6 are present."
+  value       = local.device_ipv6
+}
+
+output "device_mgmt_cidr_v6" {
+  description = "Device name -> management IPv6 address with prefix length. Only devices with mgmt_iid_v6 are present."
+  value       = local.device_mgmt_cidr_v6
+}
+
+output "device_records_v6" {
+  description = "Device name -> { fqdn, ipv6, ptr_name, rev_zone }. Only devices with mgmt_iid_v6 are present."
+  value       = local.device_records_v6
+}
+
 output "reservations" {
   description = "Device name -> Kea DHCPv4 reservation. Only contains devices with a specified MAC."
   value       = local.reservations

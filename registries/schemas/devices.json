@@ -154,7 +154,12 @@
           "status": {
             "enum": ["offline", "active", "planned", "staged", "failed", "inventory", "decommissioning"]
           },
-          "mgmt_ip": { "$ref": "#/$defs/ipv4" },
+          "mgmt_ip_v4": { "$ref": "#/$defs/ipv4" },
+          "mgmt_iid_v6": {
+            "type": "string",
+            "pattern": "^::[0-9a-f]{1,4}(:[0-9a-f]{1,4}){0,3}$",
+            "description": "Interface ID (low 64 bits) of the device's management IPv6 address, lowercase, e.g. \"::1\". The /64 comes from the mgmt_ip_v4 VLAN. Set only once the device actually uses the address; hlac does not configure devices."
+          },
           "mac": {
             "type": "string",
             "pattern": "^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$",
@@ -183,7 +188,11 @@
           },
           {
             "if": { "required": ["mac"] },
-            "then": { "required": ["mgmt_ip"] }
+            "then": { "required": ["mgmt_ip_v4"] }
+          },
+          {
+            "if": { "required": ["mgmt_iid_v6"] },
+            "then": { "required": ["mgmt_ip_v4"] }
           }
         ]
       }
