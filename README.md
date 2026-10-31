@@ -25,9 +25,12 @@ Operations should always be done in the following order:
 
 These are features that I intend to add in the future.
 
-- [ ] Full IPv6 support
+- [x] IPv6 for clients, DNS, public services, and VMs
+- [ ] IPv6 for backends (drop IPv4 between services)
 - [ ] Every host creates an alias in the firewall
 - [ ] Kubernetes for workloads
 - [ ] CI/CD to lint and deploy
 - [ ] Automatically generate diagrams from registry
 - [ ] HA Postgres
+- [ ] Identity Provider
+- [ ] Firewall/switch management(?)
