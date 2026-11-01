@@ -45,3 +45,7 @@ role name *args:
 plan:
     direnv exec terraform/substrate tofu -chdir=terraform/substrate plan
     direnv exec terraform/platform tofu -chdir=terraform/platform plan
+
+# Publish a new public service from services.yaml
+service: substrate platform
+    just role caddy --tags config

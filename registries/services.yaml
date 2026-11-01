@@ -200,3 +200,7 @@ public_services:
     backend: "llm01"
     port: 8080
     description: "Open WebUI chat."
+  immich:
+    backend: "immich"
+    port: 2283
+    description: "Immich web UI."
