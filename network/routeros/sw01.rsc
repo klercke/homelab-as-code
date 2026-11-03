@@ -7,29 +7,29 @@
 /system ntp client set enabled=yes servers=0.pool.ntp.org,1.pool.ntp.org
 
 /interface ethernet
-set [find default-name=ether1] disabled=yes comment="pp01-01 fw01:lan-trunk"
-set [find default-name=ether2] disabled=yes comment="pp01-02 fw01:lan-legacy"
+set [find default-name=ether1] disabled=yes comment="patch01-01 fw01:lan-trunk"
+set [find default-name=ether2] disabled=yes comment="patch01-02 fw01:lan-legacy"
 set [find default-name=ether3] disabled=yes
 set [find default-name=ether4] disabled=yes
-set [find default-name=ether5] disabled=no comment="pp01-05 pve01:nic0"
-set [find default-name=ether6] disabled=yes comment="pp01-06 pve01:nic1"
-set [find default-name=ether7] disabled=yes comment="pp01-07 pve02:port0"
-set [find default-name=ether8] disabled=yes comment="pp01-08 pve02:port1"
+set [find default-name=ether5] disabled=no comment="patch01-05 pve01:nic0"
+set [find default-name=ether6] disabled=yes comment="patch01-06 pve01:nic1"
+set [find default-name=ether7] disabled=yes comment="patch01-07 pve02:port0"
+set [find default-name=ether8] disabled=yes comment="patch01-08 pve02:port1"
 set [find default-name=ether9] disabled=yes
 set [find default-name=ether10] disabled=yes
 set [find default-name=ether11] disabled=yes
 set [find default-name=ether12] disabled=yes
-set [find default-name=ether13] disabled=no comment="pp01-13 nas01:nic0"
-set [find default-name=ether14] disabled=no comment="pp01-14 nas01:nic1"
-set [find default-name=ether15] disabled=yes comment="pp01-15 pbs01:nic0"
-set [find default-name=ether16] disabled=yes comment="pp01-16 pbs01:nic1"
-set [find default-name=ether17] disabled=yes comment="pp01-17 pve01:bmc"
-set [find default-name=ether18] disabled=yes comment="pp01-18 pve02:bmc"
-set [find default-name=ether19] disabled=yes comment="pp01-19 pbs01:bmc"
-set [find default-name=ether20] disabled=yes comment="pp01-20 nas01:bmc"
+set [find default-name=ether13] disabled=no comment="patch01-13 nas01:nic0"
+set [find default-name=ether14] disabled=no comment="patch01-14 nas01:nic1"
+set [find default-name=ether15] disabled=no comment="patch01-15 pbs01:eth0"
+set [find default-name=ether16] disabled=yes comment="patch01-16 pbs01:eth1"
+set [find default-name=ether17] disabled=yes comment="patch01-17 pve01:bmc"
+set [find default-name=ether18] disabled=yes comment="patch01-18 pve02:bmc"
+set [find default-name=ether19] disabled=yes comment="patch01-19 pbs01:bmc"
+set [find default-name=ether20] disabled=yes comment="patch01-20 nas01:bmc"
 set [find default-name=ether21] disabled=yes
 set [find default-name=ether22] disabled=yes
-set [find default-name=ether23] disabled=no comment="pp01-23 homeassistant:eth0"
+set [find default-name=ether23] disabled=no comment="patch01-23 homeassistant:eth0"
 set [find default-name=ether24] disabled=yes
 set [find default-name=ether25] disabled=yes comment="laptop01:eth0"
 set [find default-name=ether26] disabled=yes
@@ -84,7 +84,7 @@ add bridge=bridge1 interface=ether2 pvid=1 frame-types=admit-only-untagged-and-p
 add bridge=bridge1 interface=ether5 pvid=160 comment="pve01:nic0"
 add bridge=bridge1 interface=ether7 pvid=160 comment="pve02:port0"
 add bridge=bridge1 interface=bond-nas01 pvid=120 frame-types=admit-only-untagged-and-priority-tagged edge=yes comment="nas01"
-add bridge=bridge1 interface=ether15 pvid=120 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="pbs01:nic0"
+add bridge=bridge1 interface=ether15 pvid=120 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="pbs01:eth0"
 add bridge=bridge1 interface=ether17 pvid=160 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="pve01:bmc"
 add bridge=bridge1 interface=ether18 pvid=160 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="pve02:bmc"
 add bridge=bridge1 interface=ether19 pvid=160 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="pbs01:bmc"
