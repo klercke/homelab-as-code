@@ -9,7 +9,7 @@
 # through `direnv exec` in that directory instead of relying on the shell.
 
 # Role playbooks, in dependency order
-roles := "postgres valkey netbox powerdns recursor kea monitoring llm caddy"
+roles := "postgres valkey netbox powerdns recursor kea monitoring llm caddy pbs"
 
 default:
     @just --list
@@ -49,3 +49,9 @@ plan:
 # Publish a new public service from services.yaml
 service: substrate platform
     just role caddy --tags config
+
+# Build an unattended installer ISO for a physical host
+# just iso pbs01 /path/to/pbs.io OR
+# just iso pbs01 /path/to/pbs.io --burn
+iso host source_iso *args:
+    scripts/build-installer-iso.sh {{ args }} {{ host }} {{ source_iso }}

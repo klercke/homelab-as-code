@@ -169,19 +169,24 @@
       in
         pkgs.mkShell {
           inherit shellHook;
-          buildInputs =
+          buildInputs = with pkgs;
             [
-              pkgs.python313
-              pkgs.opentofu
-              pkgs.terraform-docs
-              pkgs.tflint
-              pkgs.sops
-              pkgs.age
-              pkgs.openssl
-              pkgs.ansible
-              pkgs.check-jsonschema
-              pkgs.kea # for perfdhcp
-              pkgs.just
+              python313
+              opentofu
+              terraform-docs
+              tflint
+              sops
+              age
+              openssl
+              ansible
+              check-jsonschema
+              kea # for perfdhcp
+              just
+              proxmox-auto-install-assistant
+              xorriso
+              gettext
+              mkpasswd
+              caligula
             ]
             ++ enabledPackages;
         };
