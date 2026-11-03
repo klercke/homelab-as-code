@@ -1,0 +1,41 @@
+---
+# Same layout as the stanza the PVE installer and web UI write, so the web
+# UI keeps showing and editing it.
+- name: Read the interfaces file
+  tags: [config]
+  ansible.builtin.slurp:
+    src: "{{ proxmox_interfaces_file }}"
+  register: _proxmox_ifaces
+
+- name: Add the IPv6 stanza
+  tags: [config]
+  ansible.builtin.blockinfile:
+    path: "{{ proxmox_interfaces_file }}"
+    marker: "# {mark} hlac ipv6"
+    block: |
+      iface {{ proxmox_ipv6_iface }} inet6 static
+              address {{ proxmox_ipv6_cidr }}
+              accept_ra 2
+              autoconf 0
+  when: >-
+    (_proxmox_ifaces.content | b64decode)
+    is not search('(?m)^iface ' ~ (proxmox_ipv6_iface | regex_escape) ~ ' inet6 ')
+  notify: Reload networking
+
+# Once the stanza exists, whether written above or by hand, keep its options
+# right.
+- name: Set the IPv6 options
+  tags: [config]
+  community.general.interfaces_file:
+    dest: "{{ proxmox_interfaces_file }}"
+    iface: "{{ proxmox_ipv6_iface }}"
+    address_family: inet6
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  loop:
+    - { key: address, value: "{{ proxmox_ipv6_cidr }}" }
+    - { key: accept_ra, value: "2" }
+    - { key: autoconf, value: "0" }
+  loop_control:
+    label: "{{ item.key }}"
+  notify: Reload networking

@@ -38,3 +38,4 @@ These are features that I intend to add in the future.
 - [ ] Logs and SNMP into monitoring server
 - [ ] Show connections in Netbox
 - [ ] Proxmox answer files
+- [ ] Rebuild all "legacy" lab hosts in code

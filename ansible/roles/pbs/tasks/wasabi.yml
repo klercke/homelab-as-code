@@ -1,0 +1,193 @@
+---
+# Needs wasabi_access_key and wasabi_secret_key, which the playbook loads
+# from secrets/infra.sops.yaml.
+- name: Read S3 endpoints
+  tags: [config]
+  ansible.builtin.command:
+    cmd: proxmox-backup-manager s3 endpoint list --output-format json
+  register: _pbs_s3
+  changed_when: false
+
+- name: Set the Wasabi endpoint
+  tags: [config]
+  vars:
+    _have: "{{ _pbs_s3.stdout | from_json | selectattr('id', 'eq', pbs_wasabi_endpoint_id) | first | default({}) }}"
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - s3
+      - endpoint
+      - "{{ 'update' if _have else 'create' }}"
+      - "{{ pbs_wasabi_endpoint_id }}"
+      - --endpoint
+      - "{{ pbs_wasabi_endpoint }}"
+      - --region
+      - "{{ pbs_wasabi_region }}"
+      - --path-style
+      - "true"
+      - --access-key
+      - "{{ wasabi_access_key }}"
+      - --secret-key
+      - "{{ wasabi_secret_key }}"
+  # The secret key is never listed back, so a rotated secret needs
+  # -e pbs_wasabi_rotate=true to push it.
+  when: >-
+    not _have
+    or (pbs_wasabi_rotate | default(false) | bool)
+    or _have.get('endpoint') != pbs_wasabi_endpoint
+    or _have.get('region') != pbs_wasabi_region
+    or _have.get('access-key') != wasabi_access_key
+  changed_when: true
+  no_log: true
+
+- name: Create the cache dataset
+  tags: [config]
+  ansible.builtin.command:
+    argv:
+      - zfs
+      - create
+      - -o
+      - "mountpoint={{ pbs_wasabi_cache_path }}"
+      - -o
+      - "quota={{ pbs_wasabi_cache_quota }}"
+      - "{{ pbs_wasabi_cache_dataset }}"
+    creates: "{{ pbs_wasabi_cache_path }}"
+
+- name: Read datastores
+  tags: [config]
+  ansible.builtin.command:
+    cmd: proxmox-backup-manager datastore list --output-format json
+  register: _pbs_datastores
+  changed_when: false
+
+# reuse-datastore keeps the chunks already in the bucket. overwrite-in-use
+# takes over the in-use marker the old PBS left behind, which is only safe
+# because that server is shut down.
+- name: Attach the Wasabi datastore
+  tags: [config]
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - datastore
+      - create
+      - "{{ pbs_wasabi_datastore }}"
+      - "{{ pbs_wasabi_cache_path }}"
+      - --backend
+      - "type=s3,client={{ pbs_wasabi_endpoint_id }},bucket={{ pbs_wasabi_bucket }}"
+      - --reuse-datastore
+      - "true"
+      - --overwrite-in-use
+      - "true"
+  when: >-
+    _pbs_datastores.stdout | from_json
+    | selectattr('name', 'eq', pbs_wasabi_datastore) | list | length == 0
+  changed_when: true
+
+- name: Read Wasabi datastore settings
+  tags: [config]
+  ansible.builtin.command:
+    cmd: "proxmox-backup-manager datastore show {{ pbs_wasabi_datastore }} --output-format json"
+  register: _pbs_wasabi_ds
+  changed_when: false
+
+- name: Set the Wasabi garbage collection schedule
+  tags: [config]
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - datastore
+      - update
+      - "{{ pbs_wasabi_datastore }}"
+      - --gc-schedule
+      - "{{ pbs_wasabi_gc_schedule }}"
+  when: (_pbs_wasabi_ds.stdout | from_json).get('gc-schedule') != pbs_wasabi_gc_schedule
+  changed_when: true
+
+# Legacy mode mails on its own rules and ignores the notification matchers.
+- name: Route the Wasabi datastore notifications through the matchers
+  tags: [config]
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - datastore
+      - update
+      - "{{ pbs_wasabi_datastore }}"
+      - --notification-mode
+      - notification-system
+  when: (_pbs_wasabi_ds.stdout | from_json).get('notification-mode') != 'notification-system'
+  changed_when: true
+
+- name: Read prune jobs for Wasabi
+  tags: [config]
+  ansible.builtin.command:
+    cmd: proxmox-backup-manager prune-job list --output-format json
+  register: _pbs_wasabi_prune
+  changed_when: false
+
+- name: Set the Wasabi prune job
+  tags: [config]
+  vars:
+    _id: "{{ pbs_wasabi_datastore }}-prune"
+    _have: "{{ _pbs_wasabi_prune.stdout | from_json | selectattr('id', 'eq', _id) | first | default({}) }}"
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - prune-job
+      - "{{ 'update' if _have else 'create' }}"
+      - "{{ _id }}"
+      - --store
+      - "{{ pbs_wasabi_datastore }}"
+      - --schedule
+      - "{{ pbs_wasabi_prune_schedule }}"
+      - --keep-daily
+      - "{{ pbs_wasabi_keep_daily }}"
+      - --keep-weekly
+      - "{{ pbs_wasabi_keep_weekly }}"
+      - --keep-monthly
+      - "{{ pbs_wasabi_keep_monthly }}"
+  when: >-
+    not _have
+    or _have.get('schedule') != pbs_wasabi_prune_schedule
+    or _have.get('keep-daily', 0) | int != pbs_wasabi_keep_daily
+    or _have.get('keep-weekly', 0) | int != pbs_wasabi_keep_weekly
+    or _have.get('keep-monthly', 0) | int != pbs_wasabi_keep_monthly
+  changed_when: true
+
+- name: Read sync jobs
+  tags: [config]
+  ansible.builtin.command:
+    cmd: proxmox-backup-manager sync-job list --output-format json
+  register: _pbs_sync_jobs
+  changed_when: false
+
+# No --remote makes this a local sync between datastores on this host.
+# encrypted-only keeps unencrypted snapshots off Wasabi: PVE encrypts on
+# the client, and this server never sees the key.
+- name: Set the local to Wasabi sync job
+  tags: [config]
+  vars:
+    _id: "{{ pbs_local_datastore }}-to-{{ pbs_wasabi_datastore }}"
+    _have: "{{ _pbs_sync_jobs.stdout | from_json | selectattr('id', 'eq', _id) | first | default({}) }}"
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - sync-job
+      - "{{ 'update' if _have else 'create' }}"
+      - "{{ _id }}"
+      - --store
+      - "{{ pbs_wasabi_datastore }}"
+      - --remote-store
+      - "{{ pbs_local_datastore }}"
+      - --schedule
+      - "{{ pbs_wasabi_sync_schedule }}"
+      - --remove-vanished
+      - "false"
+      - --encrypted-only
+      - "true"
+  when: >-
+    not _have
+    or _have.get('schedule') != pbs_wasabi_sync_schedule
+    or _have.get('remote-store') != pbs_local_datastore
+    or (_have.get('remove-vanished', false) | bool)
+    or not (_have.get('encrypted-only', false) | bool)
+  changed_when: true

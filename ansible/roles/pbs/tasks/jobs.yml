@@ -1,0 +1,105 @@
+---
+- name: Read datastore settings
+  tags: [config]
+  ansible.builtin.command:
+    cmd: "proxmox-backup-manager datastore show {{ pbs_local_datastore }} --output-format json"
+  register: _pbs_ds
+  changed_when: false
+
+- name: Set the garbage collection schedule
+  tags: [config]
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - datastore
+      - update
+      - "{{ pbs_local_datastore }}"
+      - --gc-schedule
+      - "{{ pbs_local_gc_schedule }}"
+  when: (_pbs_ds.stdout | from_json).get('gc-schedule') != pbs_local_gc_schedule
+  changed_when: true
+
+# Legacy mode mails on its own rules and ignores the notification matchers.
+- name: Route the local datastore notifications through the matchers
+  tags: [config]
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - datastore
+      - update
+      - "{{ pbs_local_datastore }}"
+      - --notification-mode
+      - notification-system
+  when: (_pbs_ds.stdout | from_json).get('notification-mode') != 'notification-system'
+  changed_when: true
+
+- name: Read prune jobs
+  tags: [config]
+  ansible.builtin.command:
+    cmd: proxmox-backup-manager prune-job list --output-format json
+  register: _pbs_prune_jobs
+  changed_when: false
+
+- name: Set the prune job
+  tags: [config]
+  vars:
+    _id: "{{ pbs_local_datastore }}-prune"
+    _have: "{{ _pbs_prune_jobs.stdout | from_json | selectattr('id', 'eq', _id) | first | default({}) }}"
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - prune-job
+      - "{{ 'update' if _have else 'create' }}"
+      - "{{ _id }}"
+      - --store
+      - "{{ pbs_local_datastore }}"
+      - --schedule
+      - "{{ pbs_local_prune_schedule }}"
+      - --keep-last
+      - "{{ pbs_local_keep_last }}"
+      - --keep-daily
+      - "{{ pbs_local_keep_daily }}"
+      - --keep-weekly
+      - "{{ pbs_local_keep_weekly }}"
+      - --keep-monthly
+      - "{{ pbs_local_keep_monthly }}"
+  when: >-
+    not _have
+    or _have.get('schedule') != pbs_local_prune_schedule
+    or _have.get('keep-last', 0) | int != pbs_local_keep_last
+    or _have.get('keep-daily', 0) | int != pbs_local_keep_daily
+    or _have.get('keep-weekly', 0) | int != pbs_local_keep_weekly
+    or _have.get('keep-monthly', 0) | int != pbs_local_keep_monthly
+  changed_when: true
+
+- name: Read verify jobs
+  tags: [config]
+  ansible.builtin.command:
+    cmd: proxmox-backup-manager verify-job list --output-format json
+  register: _pbs_verify_jobs
+  changed_when: false
+
+- name: Set the verify job
+  tags: [config]
+  vars:
+    _id: "{{ pbs_local_datastore }}-verify"
+    _have: "{{ _pbs_verify_jobs.stdout | from_json | selectattr('id', 'eq', _id) | first | default({}) }}"
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - verify-job
+      - "{{ 'update' if _have else 'create' }}"
+      - "{{ _id }}"
+      - --store
+      - "{{ pbs_local_datastore }}"
+      - --schedule
+      - "{{ pbs_local_verify_schedule }}"
+      - --ignore-verified
+      - "true"
+      - --outdated-after
+      - "{{ pbs_local_verify_outdated_after }}"
+  when: >-
+    not _have
+    or _have.get('schedule') != pbs_local_verify_schedule
+    or _have.get('outdated-after', 0) | int != pbs_local_verify_outdated_after
+  changed_when: true

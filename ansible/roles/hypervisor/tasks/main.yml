@@ -23,3 +23,6 @@
     name: zramswap
     enabled: true
     state: started
+
+- name: PBS storages
+  ansible.builtin.import_tasks: pbs.yml

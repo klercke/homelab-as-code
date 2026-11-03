@@ -1,0 +1,16 @@
+---
+- name: Package repositories
+  ansible.builtin.import_tasks: repos.yml
+
+- name: Local datastore
+  ansible.builtin.import_tasks: datastore.yml
+
+- name: Wasabi datastore
+  ansible.builtin.import_tasks: wasabi.yml
+  when: pbs_wasabi_enabled | bool
+
+- name: Datastore jobs
+  ansible.builtin.import_tasks: jobs.yml
+
+- name: Access for PVE hosts
+  ansible.builtin.import_tasks: access.yml

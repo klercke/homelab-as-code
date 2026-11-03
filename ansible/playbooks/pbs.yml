@@ -1,0 +1,37 @@
+---
+# Backup servers come from the device inventory that terraform/substrate
+# generates (inventories/protonet/devices.yml). The hand-built PBS VM on
+# jotunheim is an unmanaged-vm and never appears there.
+- name: Proxmox Backup Server
+  hosts: device_role_backup
+  gather_facts: false
+  vars:
+    ansible_user: "{{ pbs_ssh_user | default('root') }}"
+    # Data disk serials per host, from lsblk -d -o NAME,SERIAL.
+    pbs_disk_serials:
+      pbs01:
+        - "200616A0015D"
+        - "200604A00F4A"
+        - "200616A00357"
+    pbs_local_disk_serials: "{{ pbs_disk_serials[inventory_hostname] }}"
+  pre_tasks:
+    - name: Load infra secrets
+      tags: [always]
+      community.sops.load_vars:
+        file: "{{ playbook_dir }}/../../secrets/infra.sops.yaml"
+      no_log: true
+      when: pbs_wasabi_enabled | default(false) | bool
+
+    # A fresh PBS install may not ship Python, which Ansible needs.
+    - name: Install Python for Ansible
+      tags: [always]
+      ansible.builtin.raw: test -e /usr/bin/python3 || (apt-get update && apt-get install -y python3)
+      register: _pbs_python
+      changed_when: "'Setting up python3' in _pbs_python.stdout"
+
+    - name: Gather facts
+      tags: [always]
+      ansible.builtin.setup:
+  roles:
+    - proxmox
+    - pbs

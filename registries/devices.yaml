@@ -137,6 +137,13 @@ device_types:
     full_depth: true
     library: false
 
+  datto-siris-s4-custom:
+    manufacturer: "Datto"
+    model: "Siris S4 (custom)"
+    u_height: 0
+    full_depth: false
+    library: false
+
   liebert-gxt4-1000rt120:
     manufacturer: "Vertiv"
     model: "Liebert GXT4-1000RT120"
@@ -307,6 +314,14 @@ devices:
     site: "home"
     mgmt_ip_v4: "10.0.20.21"
     description: "Immich. Hand-built LXC (CT 102) on jotunheim, outside hlac. Registered so its address is reserved."
+
+  pbs01:
+    device_type: "datto-siris-s4-custom"
+    role: "backup"
+    site: "home"
+    mgmt_ip_v4: "10.0.20.49"
+    mgmt_iid_v6: "::31"
+    description: "Recycled Siris S4 running Proxmox Backup Server."
 
   pbs:
     device_type: "unmanaged-vm"

@@ -1,0 +1,24 @@
+---
+# PVE and PBS manage the same matcher through different CLIs.
+- name: Read the default notification matcher
+  tags: [config]
+  ansible.builtin.command:
+    argv: "{{ _cli.show_argv }}"
+  vars:
+    _cli: "{{ _proxmox_notify_cli }}"
+  register: _proxmox_matcher
+  changed_when: false
+
+- name: Notify only on the chosen severities
+  tags: [config]
+  vars:
+    # Returned as a list or a comma-separated string depending on version.
+    _raw: "{{ (_proxmox_matcher.stdout | from_json).get('match-severity', []) }}"
+    _have: "{{ ([_raw] if _raw is string else _raw) | join(',') | split(',') | reject('eq', '') | list }}"
+    _cli: "{{ _proxmox_notify_cli }}"
+  ansible.builtin.command:
+    argv: >-
+      {{ _cli.set_argv + (['--match-severity'] | product(proxmox_notify_severities)
+         | flatten | list) }}
+  when: (_have | sort) != (proxmox_notify_severities | sort)
+  changed_when: true

@@ -1,0 +1,117 @@
+---
+# Needs pbs_encryption_key and pbs01_<host>_token, which the playbook loads
+# from secrets/infra.sops.yaml.
+- name: Read storages
+  tags: [config]
+  ansible.builtin.command:
+    cmd: pvesh get /storage --output-format json
+  register: _hv_storages
+  changed_when: false
+
+- name: Read stored PBS secrets
+  tags: [config]
+  ansible.builtin.slurp:
+    src: "/etc/pve/priv/storage/{{ item.0.id }}.{{ item.1 }}"
+  loop: "{{ hypervisor_pbs_storages | product(['pw', 'enc']) | list }}"
+  loop_control:
+    label: "{{ item.0.id }}.{{ item.1 }}"
+  register: _hv_pbs_secrets
+  failed_when: false
+  no_log: true
+
+# server and datastore are fixed once a PBS storage exists, so pointing a
+# storage somewhere else means removing and re-adding it. Removing only
+# drops the config entry; the backups stay on the server.
+- name: Remove PBS storages that point elsewhere
+  tags: [config]
+  vars:
+    _have: "{{ _hv_storages.stdout | from_json | selectattr('storage', 'eq', item.id) | first | default({}) }}"
+  ansible.builtin.command:
+    argv: [pvesm, remove, "{{ item.id }}"]
+  loop: "{{ hypervisor_pbs_storages }}"
+  loop_control:
+    label: "{{ item.id }}"
+  when:
+    - _have | length > 0
+    - _have.get('server') != hypervisor_pbs_server or _have.get('datastore') != item.datastore
+  register: _hv_pbs_removed
+  changed_when: true
+
+# pvesm reads --encryption-key from a file, so the key sits on disk, root
+# only, for as long as the storages are being written.
+- name: Add or update PBS storages
+  tags: [config]
+  block:
+    - name: Write the client encryption key
+      ansible.builtin.copy:
+        content: "{{ pbs_encryption_key | trim }}"
+        dest: "{{ hypervisor_pbs_key_file }}"
+        owner: root
+        group: root
+        mode: "0600"
+      changed_when: false
+      no_log: true
+
+    - name: Run pvesm
+      tags: [config]
+      vars:
+        _removed: "{{ _hv_pbs_removed.results | selectattr('changed', 'defined') | selectattr('changed') | map(attribute='item.id') | list }}"
+        _have: >-
+          {{ {} if item.id in _removed else
+             (_hv_storages.stdout | from_json | selectattr('storage', 'eq', item.id) | first | default({})) }}
+        _pw: >-
+          {{ _hv_pbs_secrets.results
+             | selectattr('item', 'eq', [item, 'pw']) | map(attribute='content', default='')
+             | first | default('') | b64decode | trim }}
+        _enc: >-
+          {{ _hv_pbs_secrets.results
+             | selectattr('item', 'eq', [item, 'enc']) | map(attribute='content', default='')
+             | first | default('') | b64decode }}
+        _token: "{{ lookup('vars', 'pbs01_' ~ inventory_hostname ~ '_token') }}"
+        _head: >-
+          {{ ['pvesm', 'set', item.id] if _have else
+             ['pvesm', 'add', 'pbs', item.id,
+              '--server', hypervisor_pbs_server,
+              '--datastore', item.datastore,
+              '--content', 'backup'] }}
+      ansible.builtin.command:
+        argv: >-
+          {{ _head + [
+               '--username', hypervisor_pbs_user ~ '!' ~ inventory_hostname,
+               '--fingerprint', hypervisor_pbs_fingerprint,
+               '--password', _token,
+               '--encryption-key', hypervisor_pbs_key_file,
+               '--disable', '0'] }}
+      loop: "{{ hypervisor_pbs_storages }}"
+      loop_control:
+        label: "{{ item.id }}"
+      when: >-
+        not _have
+        or _have.get('username') != hypervisor_pbs_user ~ '!' ~ inventory_hostname
+        or _have.get('fingerprint') != hypervisor_pbs_fingerprint
+        or (_have.get('disable', 0) | int) == 1
+        or _pw != _token
+        or _enc == ''
+        or (_enc | from_json) != (pbs_encryption_key | from_json)
+      register: _hv_pbs_set
+      failed_when: false
+      changed_when: true
+      no_log: true
+
+    # Only pvesm's error text is shown, with the secrets masked: a failed
+    # result shown whole would print its argv, token and all.
+    - name: Show pvesm errors
+      vars:
+        _errs: "{{ _hv_pbs_set.results | selectattr('rc', 'defined') | rejectattr('rc', 'eq', 0) | list }}"
+        _token: "{{ lookup('vars', 'pbs01_' ~ inventory_hostname ~ '_token') }}"
+      ansible.builtin.fail:
+        msg: >-
+          {% for r in _errs %}{{ r.item.id }}: {{ r.stderr | replace(_token, '<token>')
+          | replace(pbs_encryption_key | trim, '<key>') }} {% endfor %}
+      when: _errs | length > 0
+  always:
+    - name: Remove the client encryption key file
+      ansible.builtin.file:
+        path: "{{ hypervisor_pbs_key_file }}"
+        state: absent
+      changed_when: false
