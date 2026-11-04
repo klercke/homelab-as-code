@@ -16,3 +16,4 @@ proxmox_notify_severities:
   - "warning"
   - "error"
   - "unknown"
+proxmox_notify_comment: "Mail warnings, errors and system mail to root. Managed by hlac."

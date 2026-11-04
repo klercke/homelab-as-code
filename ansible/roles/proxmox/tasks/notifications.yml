@@ -22,3 +22,34 @@
          | flatten | list) }}
   when: (_have | sort) != (proxmox_notify_severities | sort)
   changed_when: true
+
+# PBS ships default-matcher with invert-match and a type=prune rule ("all but
+# successful prunes"). Left in place, they invert the severity filter above
+# into "all but failed prunes", so drop every rule but the severity one.
+- name: Drop other rules from the default matcher
+  tags: [config]
+  vars:
+    _m: "{{ _proxmox_matcher.stdout | from_json }}"
+    _cli: "{{ _proxmox_notify_cli }}"
+    _drop: >-
+      {{ (['invert-match'] if (_m.get('invert-match', false) | bool) else [])
+         + (['match-field'] if _m.get('match-field') else [])
+         + (['match-calendar'] if _m.get('match-calendar') else []) }}
+  ansible.builtin.command:
+    argv: >-
+      {{ _cli.set_argv + (
+           (['--delete'] | product(_drop) | flatten | list)
+           if _cli.delete_style == 'repeat' else
+           ['--delete', _drop | join(',')]) }}
+  when: _drop | length > 0
+  changed_when: true
+
+# PBS's built-in comment still describes the rules dropped above.
+- name: Describe the default matcher
+  tags: [config]
+  vars:
+    _cli: "{{ _proxmox_notify_cli }}"
+  ansible.builtin.command:
+    argv: "{{ _cli.set_argv + ['--comment', proxmox_notify_comment] }}"
+  when: (_proxmox_matcher.stdout | from_json).get('comment', '') != proxmox_notify_comment
+  changed_when: true

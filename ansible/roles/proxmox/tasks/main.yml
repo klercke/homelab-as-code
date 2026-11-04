@@ -37,7 +37,9 @@
   vars:
     _proxmox_notify_cli: >-
       {{ {'show_argv': ['pvesh', 'get', '/cluster/notifications/matchers/default-matcher', '--output-format', 'json'],
-          'set_argv': ['pvesh', 'set', '/cluster/notifications/matchers/default-matcher']}
+          'set_argv': ['pvesh', 'set', '/cluster/notifications/matchers/default-matcher'],
+          'delete_style': 'comma'}
          if 'pveproxy.service' in ansible_facts.services else
          {'show_argv': ['proxmox-backup-manager', 'notification', 'matcher', 'show', 'default-matcher', '--output-format', 'json'],
-          'set_argv': ['proxmox-backup-manager', 'notification', 'matcher', 'update', 'default-matcher']} }}
+          'set_argv': ['proxmox-backup-manager', 'notification', 'matcher', 'update', 'default-matcher'],
+          'delete_style': 'repeat'} }}
