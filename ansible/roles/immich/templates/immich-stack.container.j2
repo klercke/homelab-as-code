@@ -1,0 +1,18 @@
+# Managed by Ansible. Local changes will be overwritten.
+[Unit]
+Description=Immich stacker
+Wants=network-online.target immich-server.service
+After=network-online.target immich-server.service
+
+[Container]
+Image={{ immich_stack_image }}
+ContainerName=immich-stack
+Network=host
+EnvironmentFile={{ immich_config_dir }}/stack.env
+
+[Service]
+Restart=always
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

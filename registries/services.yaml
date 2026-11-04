@@ -120,6 +120,16 @@ role_services:
       ports: [8080]
       description: "Chat UI. Talks only to LiteLLM."
 
+  immich:
+    - name: "Immich"
+      protocol: "tcp"
+      ports: [2283]
+      description: "Web UI and API. Reached through caddy01 as immich.int.ptxe.dev."
+    - name: "Immich public proxy"
+      protocol: "tcp"
+      ports: [3000]
+      description: "Public share links, served as images.ptxe.dev."
+
   monitoring:
     - name: "Prometheus"
       protocol: "tcp"
@@ -201,6 +211,6 @@ public_services:
     port: 8080
     description: "Open WebUI chat."
   immich:
-    backend: "immich"
+    backend: "immich01"
     port: 2283
     description: "Immich web UI."

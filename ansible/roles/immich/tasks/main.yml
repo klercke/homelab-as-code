@@ -1,0 +1,153 @@
+---
+- name: Install packages
+  tags: [install]
+  ansible.builtin.dnf:
+    name:
+      - podman
+      - nfs-utils
+    state: present
+
+# Lets containers read and write the NFS share without relabelling it.
+- name: Allow containers to use NFS
+  tags: [install]
+  ansible.posix.seboolean:
+    name: virt_use_nfs
+    state: true
+    persistent: true
+
+- name: Mount the media share
+  tags: [install]
+  ansible.posix.mount:
+    path: "{{ immich_media_location }}"
+    src: "{{ immich_nfs_src }}"
+    fstype: nfs
+    opts: "{{ immich_nfs_opts }}"
+    state: mounted
+
+- name: Create config and data directories
+  tags: [config]
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  loop:
+    - "{{ immich_config_dir }}"
+    - "{{ immich_postgres_data_dir }}"
+    - "{{ immich_ml_cache_dir }}"
+
+- name: Write the Postgres environment
+  tags: [config]
+  ansible.builtin.template:
+    src: postgres.env.j2
+    dest: "{{ immich_config_dir }}/postgres.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart immich-postgres
+
+- name: Write the Immich environment
+  tags: [config]
+  ansible.builtin.template:
+    src: immich.env.j2
+    dest: "{{ immich_config_dir }}/immich.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart immich-server
+
+- name: Write the public proxy environment
+  tags: [config]
+  ansible.builtin.template:
+    src: public-proxy.env.j2
+    dest: "{{ immich_config_dir }}/public-proxy.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart immich-public-proxy
+
+- name: Write the immich-stack environment
+  tags: [config]
+  ansible.builtin.template:
+    src: stack.env.j2
+    dest: "{{ immich_config_dir }}/stack.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart immich-stack
+
+# Pull outside systemd: the server and ML images are large, and pulling as
+# part of unit start can run past TimeoutStartSec.
+- name: Pull container images
+  tags: [install]
+  ansible.builtin.shell:
+    cmd: podman image exists "{{ item }}" && echo present || podman pull --quiet "{{ item }}"
+  loop:
+    - "{{ immich_postgres_image }}"
+    - "{{ immich_server_image }}"
+    - "{{ immich_ml_image }}"
+    - "{{ immich_public_proxy_image }}"
+    - "{{ immich_stack_image }}"
+  register: _immich_pull
+  changed_when: "'present' not in _immich_pull.stdout"
+  async: 3600
+  poll: 15
+
+- name: Install quadlets
+  tags: [config]
+  ansible.builtin.template:
+    src: "{{ item }}.container.j2"
+    dest: "/etc/containers/systemd/{{ item }}.container"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - immich-postgres
+    - immich-ml
+    - immich-server
+    - immich-public-proxy
+    - immich-stack
+  notify:
+    - Restart immich-postgres
+    - Restart immich-ml
+    - Restart immich-server
+    - Restart immich-public-proxy
+    - Restart immich-stack
+
+- name: Allow the reverse proxy to the web UI
+  tags: [firewall]
+  ansible.posix.firewalld:
+    rich_rule: "rule family=ipv4 source address={{ item }}/32 port port={{ immich_port }} protocol=tcp accept"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ immich_allowed_hosts }}"
+
+- name: Allow the public proxy's fronts
+  tags: [firewall]
+  ansible.posix.firewalld:
+    rich_rule: "rule family=ipv4 source address={{ item }}/32 port port={{ immich_public_proxy_port }} protocol=tcp accept"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ immich_public_proxy_allowed_hosts }}"
+
+# Quadlet units are generated, so they can't be enabled; WantedBy in the
+# .container file handles boot. This only starts them the first time.
+- name: Start services
+  tags: [service]
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: started
+    daemon_reload: true
+  loop:
+    - immich-postgres
+    - immich-ml
+    - immich-server
+    - immich-public-proxy
+    - immich-stack

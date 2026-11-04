@@ -308,12 +308,26 @@ devices:
     mgmt_ip_v4: "10.0.20.31"
     description: "Mini PC sitting in rack running HAOS."
 
-  immich:
+  nginx-tmp:
     device_type: "unmanaged-vm"
     role: "appliance"
     site: "home"
-    mgmt_ip_v4: "10.0.20.21"
-    description: "Immich. Hand-built LXC (CT 102) on jotunheim, outside hlac. Registered so its address is reserved."
+    mgmt_ip_v4: "10.0.20.24"
+    description: "Nginx Proxy Manager in Docker. Hand-built legacy LXC, IP reserved."
+
+  pelican-panel:
+    device_type: "unmanaged-vm"
+    role: "appliance"
+    site: "home"
+    mgmt_ip_v4: "10.0.20.40"
+    description: "Pelican web UI. Hand-built legacy LXC, IP reserved."
+
+  pelican-wings:
+    device_type: "unmanaged-vm"
+    role: "appliance"
+    site: "home"
+    mgmt_ip_v4: "10.0.20.41"
+    description: "Pelican game servers. Hand-built legacy LXC, IP reserved."
 
   pbs01:
     device_type: "datto-siris-s4-custom"

@@ -13,6 +13,7 @@
 | kea | Applies the Kea role |
 | caddy | Applies the Caddy role |
 | monitoring | Applies the monitoring role |
+| immich | Applies the immich role |
 | pbs | Applies the pbs role to physical backup servers from the device registry |
 
 ## Roles
@@ -28,6 +29,7 @@
 | kea | Installs and configures ISC Kea. |
 | caddy | Installs and configures Caddy reverse proxy for TLS termination for `public_services`.
 | monitoring | Installs Grafana and Prometheus and configures them to scrape other hosts. |
+| immich | Runs Immich and its add-ons as Podman quadlets, with its own Postgres, Valkey from valkey01, and the media library mounted from the NAS. |
 | pbs | Configures Proxmox Backup Server: repositories, the local datastore pool, prune/GC/verify schedules, and API tokens for PVE hosts. |
 | proxmox | Shared by every Proxmox product host (PVE, PBS). Skips the web UI subscription dialog. |
 
