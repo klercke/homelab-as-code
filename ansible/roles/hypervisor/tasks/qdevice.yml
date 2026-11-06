@@ -1,0 +1,57 @@
+---
+# pvecm qdevice setup copies certificates to the qnetd host as root over
+# SSH. The primary's root key is trusted on that host only for the setup and
+# removed afterwards: a hypervisor shouldn't hold standing root on the
+# backup server.
+- name: Read quorum state
+  tags: [cluster]
+  ansible.builtin.command:
+    cmd: pvecm status
+  register: _hv_quorum
+  changed_when: false
+
+- name: Register the QDevice
+  when: "'Qdevice' not in _hv_quorum.stdout"
+  tags: [cluster]
+  vars:
+    _qnetd_ip: "{{ hlac.devices[hypervisor_qdevice_host].ipv4 }}"
+  block:
+    - name: Read the primary's root SSH key
+      ansible.builtin.slurp:
+        src: /root/.ssh/id_rsa.pub
+      register: _hv_root_key
+
+    - name: Trust the primary's root key on the qnetd host
+      ansible.posix.authorized_key:
+        user: root
+        key: "{{ _hv_root_key.content | b64decode }}"
+        comment: "hlac qdevice setup"
+        state: present
+      delegate_to: "{{ hypervisor_qdevice_host }}"
+
+    - name: Check whether the qnetd host's SSH key is known
+      ansible.builtin.command:
+        argv: [ssh-keygen, -F, "{{ _qnetd_ip }}"]
+      register: _hv_qnetd_known
+      failed_when: false
+      changed_when: false
+
+    - name: Learn the qnetd host's SSH key
+      ansible.builtin.shell:
+        cmd: ssh-keyscan -T 10 {{ _qnetd_ip | quote }} >> /root/.ssh/known_hosts
+      when: _hv_qnetd_known.rc != 0
+      changed_when: true
+
+    - name: Set up the QDevice
+      ansible.builtin.command:
+        argv: [pvecm, qdevice, setup, "{{ _qnetd_ip }}"]
+      changed_when: true
+
+  always:
+    - name: Withdraw the primary's root key from the qnetd host
+      ansible.posix.authorized_key:
+        user: root
+        key: "{{ _hv_root_key.content | b64decode }}"
+        state: absent
+      delegate_to: "{{ hypervisor_qdevice_host }}"
+      when: _hv_root_key.content is defined

@@ -14,3 +14,7 @@
 
 - name: Access for PVE hosts
   ansible.builtin.import_tasks: access.yml
+
+- name: Corosync QDevice daemon
+  ansible.builtin.import_tasks: qnetd.yml
+  when: pbs_qnetd_enabled | bool

@@ -30,3 +30,12 @@ hypervisor_pbs_key_file: "/root/.hlac-pbs-client.enc"
 # (pve01's vmpool is on its own disks).
 hypervisor_vmpool_name: "vmpool"
 hypervisor_vmpool_serials: []
+
+# The PVE cluster. The primary node creates it; every other hypervisor joins
+# it. Joining authenticates to the primary as root@pam (API tokens cannot
+# join), with the password from SOPS as pve_root_password.
+hypervisor_cluster_name: "protonet"
+hypervisor_cluster_primary: "pve01"
+
+# Third quorum vote, from corosync-qnetd on the backup server (pbs role).
+hypervisor_qdevice_host: "pbs01"

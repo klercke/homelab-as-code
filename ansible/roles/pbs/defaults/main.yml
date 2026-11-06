@@ -44,3 +44,7 @@ pbs_wasabi_keep_monthly: 12
 # Wasabi pulls from the local datastore. Snapshots pruned locally stay
 # offsite until the wasabi prune job drops them.
 pbs_wasabi_sync_schedule: "hourly"
+
+# Third quorum vote for the two-node PVE cluster. The nodes are registered
+# once with pvecm qdevice setup; this only installs and runs the daemon.
+pbs_qnetd_enabled: true
