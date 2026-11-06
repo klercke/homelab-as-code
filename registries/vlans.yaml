@@ -101,5 +101,10 @@ vlans:
     name: "Management"
     description: "Hypervisors, switches, APs, and out-of-band management."
     status: "active"
+    # Everything here is statically addressed. The small pool only exists so
+    # new gear that boots on DHCP (a BMC, a fresh AP) can be reached long
+    # enough to give it its static address.
     dhcp_v4:
-      enabled: false
+      enabled: true
+      dynamic_start: 100
+      dynamic_end: 109

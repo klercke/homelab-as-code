@@ -159,6 +159,13 @@ device_types:
     full_depth: false
     library: true
 
+  generic-bmc:
+    manufacturer: "Generic"
+    model: "Baseboard Management Controller"
+    u_height: 0
+    full_depth: false
+    library: false
+
   generic-workstation:
     manufacturer: "Generic"
     model: "Desktop Workstation"
@@ -248,6 +255,14 @@ devices:
     mgmt_ip_v4: "10.0.60.21"
     mgmt_iid_v6: "::15"
     description: "Second Proxmox VE node, clustered with pve01. Disks need to be replaced."
+
+  # A BMC's static address is ideally its host's octet + 100.
+  pve02-bmc:
+    device_type: "generic-bmc"
+    role: "management"
+    site: "home"
+    mgmt_ip_v4: "10.0.60.121"
+    description: "Supermicro IPMI for pve02."
 
   nas01:
     device_type: "datto-siris-s4p10"

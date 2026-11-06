@@ -13,7 +13,7 @@ set [find default-name=ether3] disabled=yes
 set [find default-name=ether4] disabled=yes
 set [find default-name=ether5] disabled=no comment="patch01-05 pve01:nic0"
 set [find default-name=ether6] disabled=yes comment="patch01-06 pve01:nic1"
-set [find default-name=ether7] disabled=yes comment="patch01-07 pve02:port0"
+set [find default-name=ether7] disabled=no comment="patch01-07 pve02:port0"
 set [find default-name=ether8] disabled=yes comment="patch01-08 pve02:port1"
 set [find default-name=ether9] disabled=yes
 set [find default-name=ether10] disabled=yes
@@ -24,14 +24,14 @@ set [find default-name=ether14] disabled=no comment="patch01-14 nas01:nic1"
 set [find default-name=ether15] disabled=no comment="patch01-15 pbs01:eth0"
 set [find default-name=ether16] disabled=yes comment="patch01-16 pbs01:eth1"
 set [find default-name=ether17] disabled=yes comment="patch01-17 pve01:bmc"
-set [find default-name=ether18] disabled=yes comment="patch01-18 pve02:bmc"
+set [find default-name=ether18] disabled=no comment="patch01-18 pve02:bmc"
 set [find default-name=ether19] disabled=yes comment="patch01-19 pbs01:bmc"
 set [find default-name=ether20] disabled=yes comment="patch01-20 nas01:bmc"
-set [find default-name=ether21] disabled=yes
+set [find default-name=ether21] disabled=no comment="patch01-21 laptop01:eth0"
 set [find default-name=ether22] disabled=yes
 set [find default-name=ether23] disabled=no comment="patch01-23 homeassistant:eth0"
 set [find default-name=ether24] disabled=yes
-set [find default-name=ether25] disabled=yes comment="laptop01:eth0"
+set [find default-name=ether25] disabled=yes
 set [find default-name=ether26] disabled=yes
 set [find default-name=ether27] disabled=yes
 set [find default-name=ether28] disabled=yes
@@ -90,13 +90,13 @@ add bridge=bridge1 interface=ether18 pvid=160 frame-types=admit-only-untagged-an
 add bridge=bridge1 interface=ether19 pvid=160 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="pbs01:bmc"
 add bridge=bridge1 interface=ether20 pvid=160 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="nas01:bmc"
 add bridge=bridge1 interface=ether23 pvid=120 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="homeassistant:eth0"
-add bridge=bridge1 interface=ether25 pvid=110 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="laptop01:eth0"
+add bridge=bridge1 interface=ether21 pvid=110 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="laptop01:eth0"
 add bridge=bridge1 interface=sfp-sfpplus1 pvid=1 comment="sw02:sfp1"
 add bridge=bridge1 interface=sfp-sfpplus2 pvid=110 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="thor:sfp0"
 
 /interface bridge vlan
 add bridge=bridge1 vlan-ids=1 untagged=ether2,sfp-sfpplus1 comment="LAN"
-add bridge=bridge1 vlan-ids=110 tagged=ether1,ether5,ether7,sfp-sfpplus1 untagged=ether25,sfp-sfpplus2 comment="CLIENTS"
+add bridge=bridge1 vlan-ids=110 tagged=ether1,ether5,ether7,sfp-sfpplus1 untagged=ether21,sfp-sfpplus2 comment="CLIENTS"
 add bridge=bridge1 vlan-ids=120 tagged=ether1,ether5,ether7,sfp-sfpplus1 untagged=bond-nas01,ether15,ether23 comment="SERVERS"
 add bridge=bridge1 vlan-ids=130 tagged=ether1,ether5,ether7,sfp-sfpplus1 comment="IOT"
 add bridge=bridge1 vlan-ids=140 tagged=ether1,ether5,ether7,sfp-sfpplus1 comment="LAB"
