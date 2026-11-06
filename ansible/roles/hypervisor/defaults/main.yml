@@ -6,13 +6,16 @@ hypervisor_zram_algo: "zstd"
 hypervisor_zram_percent: 25
 hypervisor_zram_priority: 100
 
-# PBS storages. Each host signs in with its own token on the pbs role's
-# service user; the token secret comes from SOPS as pbs01_<host>_token.
-# Every host shares one client encryption key (pbs_encryption_key in SOPS),
-# so guests that move between hosts keep deduplicating.
+# PBS storages. storage.cfg is shared across the cluster, so the storages
+# are written once per cluster, with one token on the pbs role's service
+# user: pve01's, which already owns the existing backup groups. Its secret
+# comes from SOPS as pbs01_<token>_token. One client encryption key
+# (pbs_encryption_key) keeps guests deduplicating wherever they run.
 hypervisor_pbs_server: "pbs01.prd.hme.protonet.internal"
 hypervisor_pbs_fingerprint: "64:c4:60:80:24:f7:a6:8c:94:9b:30:3e:a8:0f:57:be:0e:f7:34:d8:48:41:bd:30:b2:28:8e:23:b7:b7:ce:77"
 hypervisor_pbs_user: "pve@pbs"
+hypervisor_pbs_token_name: "pve01"
+hypervisor_pbs_config_host: "pve01"
 hypervisor_pbs_storages:
   - id: "pbs-local"
     datastore: "local"
@@ -20,3 +23,10 @@ hypervisor_pbs_storages:
     datastore: "wasabi"
 # Scratch path for the client key while pvesm reads it; removed afterwards.
 hypervisor_pbs_key_file: "/root/.hlac-pbs-client.enc"
+
+# Guest pool. On hosts that list serials, the role builds a ZFS mirror on a
+# new partition after the installer's rpool on each disk. It only ever
+# creates the pool; it never touches a host where the pool already exists
+# (pve01's vmpool is on its own disks).
+hypervisor_vmpool_name: "vmpool"
+hypervisor_vmpool_serials: []

@@ -5,6 +5,13 @@
   hosts: device_role_hypervisor
   vars:
     ansible_user: "{{ hypervisor_ssh_user | default('root') }}"
+    # Disks to build vmpool on, from lsblk -d -o NAME,SERIAL. Only hosts
+    # without their own guest disks need an entry.
+    hypervisor_vmpool_disk_serials:
+      pve02:
+        - "2212E61FD5A7"
+        - "2212E61FD411"
+    hypervisor_vmpool_serials: "{{ hypervisor_vmpool_disk_serials.get(inventory_hostname, []) }}"
   pre_tasks:
     - name: Load infra secrets
       tags: [always]

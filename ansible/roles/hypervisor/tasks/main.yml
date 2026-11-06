@@ -1,4 +1,7 @@
 ---
+- name: Package repositories
+  ansible.builtin.import_tasks: repos.yml
+
 - name: Install zram-tools
   tags: [install]
   ansible.builtin.apt:
@@ -24,5 +27,11 @@
     enabled: true
     state: started
 
+- name: Guest pool
+  ansible.builtin.import_tasks: vmpool.yml
+
+# Cluster-wide config: written from one named node, not whichever host the
+# play happens to reach first (a node not yet in the cluster would get it).
 - name: PBS storages
   ansible.builtin.import_tasks: pbs.yml
+  when: inventory_hostname == hypervisor_pbs_config_host

@@ -67,7 +67,7 @@
           {{ _hv_pbs_secrets.results
              | selectattr('item', 'eq', [item, 'enc']) | map(attribute='content', default='')
              | first | default('') | b64decode }}
-        _token: "{{ lookup('vars', 'pbs01_' ~ inventory_hostname ~ '_token') }}"
+        _token: "{{ lookup('vars', 'pbs01_' ~ hypervisor_pbs_token_name ~ '_token') }}"
         _head: >-
           {{ ['pvesm', 'set', item.id] if _have else
              ['pvesm', 'add', 'pbs', item.id,
@@ -77,7 +77,7 @@
       ansible.builtin.command:
         argv: >-
           {{ _head + [
-               '--username', hypervisor_pbs_user ~ '!' ~ inventory_hostname,
+               '--username', hypervisor_pbs_user ~ '!' ~ hypervisor_pbs_token_name,
                '--fingerprint', hypervisor_pbs_fingerprint,
                '--password', _token,
                '--encryption-key', hypervisor_pbs_key_file,
@@ -87,7 +87,7 @@
         label: "{{ item.id }}"
       when: >-
         not _have
-        or _have.get('username') != hypervisor_pbs_user ~ '!' ~ inventory_hostname
+        or _have.get('username') != hypervisor_pbs_user ~ '!' ~ hypervisor_pbs_token_name
         or _have.get('fingerprint') != hypervisor_pbs_fingerprint
         or (_have.get('disable', 0) | int) == 1
         or _pw != _token
@@ -103,7 +103,7 @@
     - name: Show pvesm errors
       vars:
         _errs: "{{ _hv_pbs_set.results | selectattr('rc', 'defined') | rejectattr('rc', 'eq', 0) | list }}"
-        _token: "{{ lookup('vars', 'pbs01_' ~ inventory_hostname ~ '_token') }}"
+        _token: "{{ lookup('vars', 'pbs01_' ~ hypervisor_pbs_token_name ~ '_token') }}"
       ansible.builtin.fail:
         msg: >-
           {% for r in _errs %}{{ r.item.id }}: {{ r.stderr | replace(_token, '<token>')

@@ -1,0 +1,46 @@
+---
+# A fresh PVE install ships the enterprise PVE and Ceph repositories, which
+# fail apt updates without a subscription. Ceph isn't used here.
+- name: Disable the enterprise repository
+  tags: [install]
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/pve-enterprise.sources
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      Types: deb
+      URIs: https://enterprise.proxmox.com/debian/pve
+      Suites: {{ ansible_distribution_release }}
+      Components: pve-enterprise
+      Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+      Enabled: no
+
+- name: Disable the Ceph repository
+  tags: [install]
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/ceph.sources
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      Types: deb
+      URIs: https://enterprise.proxmox.com/debian/ceph-squid
+      Suites: {{ ansible_distribution_release }}
+      Components: enterprise
+      Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+      Enabled: no
+
+- name: Enable the no-subscription repository
+  tags: [install]
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/pve-no-subscription.sources
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      Types: deb
+      URIs: http://download.proxmox.com/debian/pve
+      Suites: {{ ansible_distribution_release }}
+      Components: pve-no-subscription
+      Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
