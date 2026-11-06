@@ -1,0 +1,29 @@
+[global]
+keyboard = "en-us"
+country = "us"
+fqdn = "pve02.prd.hme.protonet.internal"
+mailto = "${ROOT_MAILTO}"
+timezone = "America/New_York"
+root-password-hashed = "${ROOT_PASSWORD_HASH}"
+root-ssh-keys = [
+  "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMlg7RCLSsR+yQA4EckheXWKXHiHLduZ3mBqwrSwvnmX protonet-admin",
+]
+reboot-on-error = false
+
+# Management VLAN, untagged on sw01 ether7 (pvid 160). enp5s0f0 is
+# patch01-07; enp5s0f1 (ether8) stays unused for now.
+[network]
+source = "from-answer"
+cidr = "10.0.60.21/24"
+dns = "10.0.20.16"
+gateway = "10.0.60.1"
+filter.ID_NET_NAME_MAC = "*002590f175ee"
+
+# rpool takes the first 128 GB of each MX500. The rest is left unpartitioned
+# for vmpool, the guest pool, so pve02 matches pve01's vmdata storage. When
+# dedicated drives arrive, vmpool moves onto them with zpool replace.
+[disk-setup]
+filesystem = "zfs"
+zfs.raid = "raid1"
+zfs.hdsize = 128
+filter.ID_MODEL = "CT1000MX500SSD1"
