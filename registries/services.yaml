@@ -169,12 +169,6 @@ role_services:
       ports: [8007]
       description: "Web UI and API. pve01's backup storage."
 
-  management:
-    - name: "Proxmox Datacenter Manager"
-      protocol: "tcp"
-      ports: [8443]
-      description: "Web UI and API."
-
   firewall:
     - name: "HTTPS"
       protocol: "tcp"

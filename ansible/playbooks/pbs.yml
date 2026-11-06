@@ -1,7 +1,6 @@
 ---
 # Backup servers come from the device inventory that terraform/substrate
-# generates (inventories/protonet/devices.yml). The hand-built PBS VM on
-# jotunheim is an unmanaged-vm and never appears there.
+# generates (inventories/protonet/devices.yml).
 - name: Proxmox Backup Server
   hosts: device_role_backup
   gather_facts: false

@@ -166,7 +166,7 @@ device_types:
     full_depth: false
     library: false
 
-  # A guest built by hand outside hlac (on jotunheim today). Registered so its
+  # A guest built by hand outside hlac. Registered so its
   # name resolves and its address stays reserved; nothing manages it.
   unmanaged-vm:
     manufacturer: "Generic"
@@ -239,15 +239,15 @@ devices:
     mgmt_iid_v6: "::14"
     description: "Primary Proxmox VE host. Custom build."
 
-  jotunheim:
+  pve02:
     device_type: "hyve-zeus"
     role: "hypervisor"
     site: "home"
     rack: "rack01"
     position: 5
-    mgmt_ip_v4: "10.10.10.58"
-    status: "decommissioning"
-    description: "Secondary Proxmox VE host, runs PBS and PDM."
+    mgmt_ip_v4: "10.0.60.21"
+    mgmt_iid_v6: "::15"
+    description: "Second Proxmox VE node, clustered with pve01. Disks need to be replaced."
 
   nas01:
     device_type: "datto-siris-s4p10"
@@ -308,6 +308,13 @@ devices:
     mgmt_ip_v4: "10.0.20.31"
     description: "Mini PC sitting in rack running HAOS."
 
+  paperless:
+    device_type: "unmanaged-vm"
+    role: "appliance"
+    site: "home"
+    mgmt_ip_v4: "10.0.20.25"
+    description: "Paperless-ngx. Hand-built LXC (CT 123 on pve01), IP reserved."
+
   nginx-tmp:
     device_type: "unmanaged-vm"
     role: "appliance"
@@ -336,17 +343,3 @@ devices:
     mgmt_ip_v4: "10.0.20.49"
     mgmt_iid_v6: "::31"
     description: "Recycled Siris S4 running Proxmox Backup Server."
-
-  pbs:
-    device_type: "unmanaged-vm"
-    role: "backup"
-    site: "home"
-    mgmt_ip_v4: "10.10.10.123"
-    description: "Proxmox Backup Server. Hand-built VM 122 on jotunheim, outside hlac. pve01's backup storage."
-
-  pdm:
-    device_type: "unmanaged-vm"
-    role: "management"
-    site: "home"
-    mgmt_ip_v4: "10.0.60.100"
-    description: "Proxmox Datacenter Manager. Hand-built VM 125 on jotunheim, outside hlac."
