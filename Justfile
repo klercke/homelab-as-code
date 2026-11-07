@@ -15,7 +15,7 @@ default:
     @just --list
 
 # Run the whole pipeline in order
-apply: hypervisors substrate base platform playbooks inventory
+apply: hypervisors substrate base platform firewall playbooks inventory
 
 # 0. Proxmox hosts themselves (zram)
 hypervisors *args:
@@ -33,6 +33,10 @@ base *args:
 platform:
     direnv exec terraform/platform tofu -chdir=terraform/platform apply
 
+# 3b. Host and role aliases on fw01
+firewall:
+    direnv exec terraform/firewall tofu -chdir=terraform/firewall apply
+
 # 4. Every role playbook, in order
 playbooks:
     for r in {{ roles }}; do just role "$r" || exit 1; done
@@ -49,6 +53,7 @@ role name *args:
 plan:
     direnv exec terraform/substrate tofu -chdir=terraform/substrate plan
     direnv exec terraform/platform tofu -chdir=terraform/platform plan
+    direnv exec terraform/firewall tofu -chdir=terraform/firewall plan
     direnv exec terraform/inventory tofu -chdir=terraform/inventory plan
 
 # Publish a new public service from services.yaml

@@ -18,7 +18,7 @@ Ansible documentation is within the `ansible/` directory.
 Operations should always be done in the following order:
 1. Apply Terraform substrate
 2. Run Ansible base playbook
-3. Apply Terraform platform
+3. Apply Terraform platform, then Terraform firewall
 4. Run Ansible role playbooks
 5. Apply Terraform inventory
 
@@ -28,9 +28,10 @@ These are features that I intend to add in the future.
 
 - [x] IPv6 for clients, DNS, public services, and VMs
 - [ ] IPv6 for backends (drop IPv4 between services)
-- [ ] Every host creates an alias in the firewall
+- [x] Every host creates an alias in the firewall
 - [ ] Kubernetes for workloads
 - [ ] CI/CD to lint and deploy
+  -  [ ] Renovate or similar
 - [ ] Automatically generate diagrams from registry
 - [ ] HA Postgres
 - [ ] Identity Provider
