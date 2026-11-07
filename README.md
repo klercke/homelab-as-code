@@ -50,3 +50,7 @@ These are features that I intend to add in the future.
 - [ ] HA for high-crit VMs
 - [ ] Scheduled test restores?
 - [ ] Cross-node ZFS replication
+- [ ] Automatic drift scanning, detection, and alerting
+- [x] Netbird peers
+- [ ] Netbird management in code
+- [ ] Move existing VMs to `vmdata`
