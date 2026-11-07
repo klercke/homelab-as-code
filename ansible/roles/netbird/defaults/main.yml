@@ -1,0 +1,11 @@
+---
+netbird_repo_url: "https://pkgs.netbird.io/yum/"
+netbird_repo_key: "https://pkgs.netbird.io/yum/repodata/repomd.xml.key"
+
+netbird_interface: "wt0"
+netbird_wireguard_port: 51820
+
+# A routing peer only forwards.
+# It keeps the base role's resolvers and does not install routes that other
+# peers advertise.
+netbird_up_args: "--disable-dns --disable-client-routes"

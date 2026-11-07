@@ -134,6 +134,12 @@ role_services:
       ports: [3001]
       description: "Uploads for public share links, served as images.ptxe.dev."
 
+  netbird:
+    - name: "Wireguard"
+      protocol: "udp"
+      ports: [51820]
+      description: "Wireguard port used for Netbird-managed tunnels."
+
   monitoring:
     - name: "Prometheus"
       protocol: "tcp"

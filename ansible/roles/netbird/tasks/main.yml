@@ -1,0 +1,74 @@
+---
+- name: Add the NetBird repository
+  tags: [install]
+  ansible.builtin.yum_repository:
+    name: netbird
+    description: NetBird
+    baseurl: "{{ netbird_repo_url }}"
+    gpgkey: "{{ netbird_repo_key }}"
+    gpgcheck: false
+    repo_gpgcheck: true
+
+- name: Install NetBird
+  tags: [install]
+  ansible.builtin.dnf:
+    name: netbird
+    state: present
+
+- name: Forward IPv4 between the tunnel and the LAN
+  tags: [config]
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    sysctl_file: /etc/sysctl.d/90-netbird.conf
+    state: present
+    reload: true
+
+# Peer traffic arriving on the tunnel is filtered by NetBird's own ACLs, which
+# are set per user in the dashboard.
+- name: Trust the NetBird interface
+  tags: [firewall]
+  ansible.posix.firewalld:
+    zone: trusted
+    interface: "{{ netbird_interface }}"
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Allow direct WireGuard connections
+  tags: [firewall]
+  ansible.posix.firewalld:
+    port: "{{ netbird_wireguard_port }}/udp"
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Install the NetBird service
+  tags: [service]
+  ansible.builtin.command: netbird service install
+  args:
+    creates: /etc/systemd/system/netbird.service
+
+- name: Enable NetBird
+  tags: [service]
+  ansible.builtin.systemd_service:
+    name: netbird
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Read NetBird status
+  tags: [service]
+  ansible.builtin.command: netbird status --json
+  register: netbird_status
+  changed_when: false
+  retries: 5
+  delay: 3
+  until: netbird_status.rc == 0
+
+- name: Log in with the setup key
+  tags: [service]
+  ansible.builtin.command: "netbird up --setup-key {{ netbird_setup_key }} {{ netbird_up_args }}"
+  when: not (netbird_status.stdout | from_json).management.connected
+  changed_when: true
+  no_log: true
