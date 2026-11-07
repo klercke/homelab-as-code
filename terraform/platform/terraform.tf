@@ -2,11 +2,6 @@ terraform {
   required_version = "~> 1.10"
 
   required_providers {
-    netbox = {
-      source  = "e-breuninger/netbox"
-      version = "~> 5.7"
-    }
-
     powerdns = {
       source  = "pan-net/powerdns"
       version = "~> 1.5"
@@ -41,14 +36,6 @@ terraform {
       enforced = true
     }
   }
-}
-
-provider "netbox" {
-  # api_token comes from NETBOX_API_TOKEN
-  server_url           = "http://10.0.20.11"
-  allow_insecure_https = false
-
-  request_timeout = 60
 }
 
 provider "powerdns" {
