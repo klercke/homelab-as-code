@@ -9,13 +9,3 @@ variable "internal_proxy_host" {
   type        = string
   default     = "caddy01"
 }
-
-variable "site_location" {
-  description = "Per-site location information. Supplied via SOPS."
-  type = map(object({
-    latitude         = optional(number)
-    longitude        = optional(number)
-    physical_address = optional(string)
-  }))
-  default = {}
-}

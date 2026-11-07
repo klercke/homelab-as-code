@@ -15,7 +15,7 @@ default:
     @just --list
 
 # Run the whole pipeline in order
-apply: hypervisors substrate base platform playbooks
+apply: hypervisors substrate base platform playbooks inventory
 
 # 0. Proxmox hosts themselves (zram)
 hypervisors *args:
@@ -29,7 +29,7 @@ substrate:
 base *args:
     cd ansible && direnv exec . ansible-playbook playbooks/base.yml {{ args }}
 
-# 3. NetBox, DNS records, and Kea reservations
+# 3. DNS records and Kea reservations
 platform:
     direnv exec terraform/platform tofu -chdir=terraform/platform apply
 
@@ -37,14 +37,19 @@ platform:
 playbooks:
     for r in {{ roles }}; do just role "$r" || exit 1; done
 
+# 5. Record everything in NetBox
+inventory:
+    direnv exec terraform/inventory tofu -chdir=terraform/inventory apply
+
 # Run one role playbook
 role name *args:
     cd ansible && direnv exec . ansible-playbook playbooks/{{ name }}.yml {{ args }}
 
-# Preview both Terraform layers without changing anything
+# Preview every Terraform layer without changing anything
 plan:
     direnv exec terraform/substrate tofu -chdir=terraform/substrate plan
     direnv exec terraform/platform tofu -chdir=terraform/platform plan
+    direnv exec terraform/inventory tofu -chdir=terraform/inventory plan
 
 # Publish a new public service from services.yaml
 service: substrate platform

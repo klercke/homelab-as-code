@@ -4,7 +4,6 @@ locals {
   int_service_domain = "int.ptxe.dev."
   nameservers        = ["ns1.${local.domain}", "ns2.${local.domain}"]
 
-  host_site     = module.registry.host_site
   reverse_zones = module.registry.reverse_zones_v4
   host_records  = module.registry.host_records_v4
 
