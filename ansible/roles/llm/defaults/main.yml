@@ -44,7 +44,7 @@ llm_embed_cache_dir: /var/lib/llm-embed
 # Hard cap so a runaway batch can't push LiteLLM or Open WebUI out of memory
 llm_embed_memory_limit: "1g"
 
-# Muninn's persona, injected by LiteLLM (files/persona.py). Each key alias
+# Huginn's persona, injected by LiteLLM (files/persona.py). Each key alias
 # maps to prompt files from prompts/ in hlac (`system`, sent to every model)
 # and to SOPS secrets in platform.sops.yaml (`personal`, sent to local models
 # only), concatenated in order. Personal context never lands in the public

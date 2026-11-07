@@ -1,6 +1,6 @@
 # Managed by Ansible. Local changes will be overwritten.
 #
-# LiteLLM pre-call hook that gives every client the same persona (Muninn).
+# LiteLLM pre-call hook that gives every client the same persona (Huginn).
 # Prompts are assembled by the llm role from prompts/ in hlac into
 # persona.json next to this file. The calling key's alias picks the surface;
 # keys with no surface pass through untouched.

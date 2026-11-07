@@ -29,7 +29,7 @@ model_list:
 litellm_settings:
   # Clients send params some backends reject; drop them instead of erroring
   drop_params: true
-  # Muninn's persona for every client key; see files/persona.py
+  # Huginn's persona for every client key; see files/persona.py
   callbacks: persona.proxy_handler_instance
 
 general_settings:

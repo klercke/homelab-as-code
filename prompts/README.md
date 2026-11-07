@@ -1,4 +1,4 @@
-# Muninn's prompts
+# Huginn's prompts
 
 The persona every client gets, injected by LiteLLM on llm01.
 It is the same in Open WebUI, OpenCode, voice, or anything else that talks to the gateway.
