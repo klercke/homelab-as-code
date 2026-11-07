@@ -37,5 +37,14 @@ These are features that I intend to add in the future.
 - [ ] More Grafana dashboards
 - [ ] Logs and SNMP into monitoring server
 - [ ] Show connections in Netbox
-- [ ] Proxmox answer files
+- [x] Proxmox answer files
 - [ ] Rebuild all "legacy" lab hosts in code
+- [ ] Proxmox Datacenter Manager
+- [ ] Public ingress edge (replaces nginx-tmp)
+- [x] Encrypted offsite backups
+- [x] PVE cluster
+- [ ] SMART alerts
+- [ ] Backup age alerts
+- [ ] HA for high-crit VMs
+- [ ] Scheduled test restores?
+- [ ] Cross-node ZFS replication
