@@ -1,0 +1,79 @@
+---
+- name: Check the data disk serials are set
+  tags: [install]
+  ansible.builtin.assert:
+    that: pbs_local_disk_serials | length > 0
+    fail_msg: "pbs_local_disk_serials is empty. Set it for {{ inventory_hostname }} in playbooks/pbs.yml."
+
+- name: Read disks
+  tags: [install]
+  ansible.builtin.command:
+    cmd: lsblk -J -d -o NAME,SERIAL
+  register: _pbs_lsblk
+  changed_when: false
+
+- name: Map data disk serials to device names
+  tags: [install]
+  ansible.builtin.set_fact:
+    _pbs_local_disks: >-
+      {{ (_pbs_lsblk.stdout | from_json).blockdevices
+         | selectattr('serial', 'in', pbs_local_disk_serials)
+         | map(attribute='name') | list }}
+
+- name: Check every data disk is present
+  tags: [install]
+  ansible.builtin.assert:
+    that: _pbs_local_disks | length == pbs_local_disk_serials | length
+    fail_msg: >-
+      Found {{ _pbs_local_disks | length }} of
+      {{ pbs_local_disk_serials | length }} data disks by serial.
+
+- name: Check for the datastore pool
+  tags: [install]
+  ansible.builtin.command:
+    cmd: "zpool list -H -o name {{ pbs_local_datastore }}"
+  register: _pbs_pool
+  changed_when: false
+  failed_when: false
+
+- name: Create the datastore pool
+  tags: [install]
+  when: _pbs_pool.rc != 0
+  block:
+    - name: Read data disk partitions
+      ansible.builtin.command:
+        cmd: "lsblk -J -o NAME /dev/{{ item }}"
+      loop: "{{ _pbs_local_disks }}"
+      register: _pbs_parts
+      changed_when: false
+
+    # Never wipe automatically. A disk with partitions might hold something
+    # that matters; clear it by hand (wipefs -a) once that is ruled out.
+    - name: Refuse disks that are not empty
+      ansible.builtin.assert:
+        that: >-
+          _pbs_parts.results
+          | map(attribute='stdout') | map('from_json')
+          | map(attribute='blockdevices') | map('first')
+          | selectattr('children', 'defined') | list | length == 0
+        fail_msg: "A data disk has partitions. Check it and wipe it by hand if it is really free."
+
+    - name: Create the pool and its datastore
+      ansible.builtin.command:
+        argv:
+          - proxmox-backup-manager
+          - disk
+          - zpool
+          - create
+          - "{{ pbs_local_datastore }}"
+          - --devices
+          - "{{ _pbs_local_disks | join(',') }}"
+          - --raidlevel
+          - "{{ pbs_local_raidlevel }}"
+          - --ashift
+          - "12"
+          - --compression
+          - lz4
+          - --add-datastore
+          - "true"
+      changed_when: true

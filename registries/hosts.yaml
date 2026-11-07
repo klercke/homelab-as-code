@@ -174,7 +174,7 @@ hosts:
 
   llm01:
     vlan: "home-servers"
-    host_octet: 22  # .21 is immich (CT 102 on jotunheim, see devices.yaml)
+    host_octet: 22
     layer: "l1"  # Really l2 (a workload); moves when a workloads module exists
     role: "llm"
     crit: 4
@@ -184,4 +184,18 @@ hosts:
     memory_min: 4096
     disk: 32
     description: "LiteLLM gateway and Open WebUI. Routes to GPU workers and cloud models."
+    ipv6: true
+
+  immich01:
+    vlan: "home-servers"
+    host_octet: 23
+    layer: "l1"  # Really l2 (a workload); moves when a workloads module exists
+    role: "immich"
+    crit: 3
+    node: "pve01"
+    cores: 4
+    memory: 4096
+    memory_min: 3072
+    disk: 32
+    description: "Immich photo library. Media lives on the NAS; the database is local."
     ipv6: true

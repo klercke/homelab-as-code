@@ -1,0 +1,23 @@
+# Managed by Ansible. Local changes will be overwritten.
+[Unit]
+Description=Immich server
+Wants=network-online.target immich-postgres.service immich-ml.service
+After=network-online.target immich-postgres.service immich-ml.service
+# Never start against an empty mount point: Immich would see a missing
+# library rather than fail.
+RequiresMountsFor={{ immich_media_location }}
+
+[Container]
+Image={{ immich_server_image }}
+ContainerName=immich-server
+Network=host
+EnvironmentFile={{ immich_config_dir }}/immich.env
+# No relabel: the share is NFS. The virt_use_nfs boolean lets containers use it.
+Volume={{ immich_media_location }}:{{ immich_media_location }}
+
+[Service]
+Restart=always
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,76 @@
+---
+# Cluster membership through each node's own pvecm and pvesh, as root over
+# SSH like the rest of the role. Nothing runs on the controller.
+- name: Read cluster state
+  tags: [cluster]
+  ansible.builtin.command:
+    cmd: pvesh get /cluster/status --output-format json
+  register: _hv_cluster_status
+  changed_when: false
+
+- name: Check cluster membership
+  tags: [cluster]
+  ansible.builtin.set_fact:
+    _hv_cluster_name: >-
+      {{ (_hv_cluster_status.stdout | from_json)
+         | selectattr('type', 'eq', 'cluster') | map(attribute='name') | first | default('') }}
+
+- name: Refuse a node that belongs to another cluster
+  tags: [cluster]
+  ansible.builtin.assert:
+    that: _hv_cluster_name in ['', hypervisor_cluster_name]
+    fail_msg: "{{ inventory_hostname }} is in cluster {{ _hv_cluster_name }}, not {{ hypervisor_cluster_name }}."
+
+# Corosync runs on the management address.
+- name: Create the cluster on the primary node
+  tags: [cluster]
+  ansible.builtin.command:
+    argv:
+      - pvecm
+      - create
+      - "{{ hypervisor_cluster_name }}"
+      - --link0
+      - "{{ hlac.devices[inventory_hostname].ipv4 }}"
+  when:
+    - inventory_hostname == hypervisor_cluster_primary
+    - _hv_cluster_name == ''
+  changed_when: true
+
+- name: Read the primary's join information
+  tags: [cluster]
+  ansible.builtin.command:
+    cmd: pvesh get /cluster/config/join --output-format json
+  delegate_to: "{{ hypervisor_cluster_primary }}"
+  run_once: true
+  register: _hv_join_info
+  changed_when: false
+  when: groups['device_role_hypervisor'] | length > 1
+
+# The same call the web UI's join dialog makes. It authenticates to the
+# primary as root@pam, which API tokens cannot do.
+- name: Join the cluster
+  tags: [cluster]
+  vars:
+    _primary_ip: "{{ hlac.devices[hypervisor_cluster_primary].ipv4 }}"
+    _fingerprint: >-
+      {{ (_hv_join_info.stdout | from_json).nodelist
+         | selectattr('pve_addr', 'eq', _primary_ip)
+         | map(attribute='pve_fp') | first }}
+  ansible.builtin.command:
+    argv:
+      - pvesh
+      - create
+      - /cluster/config/join
+      - --hostname
+      - "{{ _primary_ip }}"
+      - --fingerprint
+      - "{{ _fingerprint }}"
+      - --password
+      - "{{ pve_root_password }}"
+      - --link0
+      - "{{ hlac.devices[inventory_hostname].ipv4 }}"
+  when:
+    - inventory_hostname != hypervisor_cluster_primary
+    - _hv_cluster_name == ''
+  changed_when: true
+  no_log: true

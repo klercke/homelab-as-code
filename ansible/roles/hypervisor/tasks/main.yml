@@ -1,4 +1,7 @@
 ---
+- name: Package repositories
+  ansible.builtin.import_tasks: repos.yml
+
 - name: Install zram-tools
   tags: [install]
   ansible.builtin.apt:
@@ -23,3 +26,30 @@
     name: zramswap
     enabled: true
     state: started
+
+# The QDevice client. qdevice.yml registers the cluster with the qnetd host.
+- name: Install corosync-qdevice
+  tags: [install]
+  ansible.builtin.apt:
+    name: corosync-qdevice
+    state: present
+
+- name: Cluster
+  ansible.builtin.import_tasks: cluster.yml
+
+# A QDevice only helps an even number of nodes; with two it is what keeps
+# the survivor quorate when one goes down.
+- name: QDevice
+  ansible.builtin.import_tasks: qdevice.yml
+  when:
+    - inventory_hostname == hypervisor_cluster_primary
+    - groups['device_role_hypervisor'] | length == 2
+
+- name: Guest pool
+  ansible.builtin.import_tasks: vmpool.yml
+
+# Cluster-wide config: written from one named node, not whichever host the
+# play happens to reach first (a node not yet in the cluster would get it).
+- name: PBS storages
+  ansible.builtin.import_tasks: pbs.yml
+  when: inventory_hostname == hypervisor_pbs_config_host

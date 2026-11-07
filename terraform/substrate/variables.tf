@@ -23,7 +23,7 @@ variable "bootstrap_resolver" {
 variable "pbs_storage" {
   description = "The name of the PBS datastore to use for backups."
   type        = string
-  default     = "pbs-wasabi"
+  default     = "pbs-local"
 }
 
 variable "ansible_inventory_name" {

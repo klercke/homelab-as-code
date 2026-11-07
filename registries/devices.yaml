@@ -137,6 +137,13 @@ device_types:
     full_depth: true
     library: false
 
+  datto-siris-s4-custom:
+    manufacturer: "Datto"
+    model: "Siris S4 (custom)"
+    u_height: 0
+    full_depth: false
+    library: false
+
   liebert-gxt4-1000rt120:
     manufacturer: "Vertiv"
     model: "Liebert GXT4-1000RT120"
@@ -152,6 +159,13 @@ device_types:
     full_depth: false
     library: true
 
+  generic-bmc:
+    manufacturer: "Generic"
+    model: "Baseboard Management Controller"
+    u_height: 0
+    full_depth: false
+    library: false
+
   generic-workstation:
     manufacturer: "Generic"
     model: "Desktop Workstation"
@@ -159,7 +173,7 @@ device_types:
     full_depth: false
     library: false
 
-  # A guest built by hand outside hlac (on jotunheim today). Registered so its
+  # A guest built by hand outside hlac. Registered so its
   # name resolves and its address stays reserved; nothing manages it.
   unmanaged-vm:
     manufacturer: "Generic"
@@ -232,15 +246,23 @@ devices:
     mgmt_iid_v6: "::14"
     description: "Primary Proxmox VE host. Custom build."
 
-  jotunheim:
+  pve02:
     device_type: "hyve-zeus"
     role: "hypervisor"
     site: "home"
     rack: "rack01"
     position: 5
-    mgmt_ip_v4: "10.10.10.58"
-    status: "decommissioning"
-    description: "Secondary Proxmox VE host, runs PBS and PDM."
+    mgmt_ip_v4: "10.0.60.21"
+    mgmt_iid_v6: "::15"
+    description: "Second Proxmox VE node, clustered with pve01. Disks need to be replaced."
+
+  # A BMC's static address is ideally its host's octet + 100.
+  pve02-bmc:
+    device_type: "generic-bmc"
+    role: "management"
+    site: "home"
+    mgmt_ip_v4: "10.0.60.121"
+    description: "Supermicro IPMI for pve02."
 
   nas01:
     device_type: "datto-siris-s4p10"
@@ -301,23 +323,38 @@ devices:
     mgmt_ip_v4: "10.0.20.31"
     description: "Mini PC sitting in rack running HAOS."
 
-  immich:
+  paperless:
     device_type: "unmanaged-vm"
     role: "appliance"
     site: "home"
-    mgmt_ip_v4: "10.0.20.21"
-    description: "Immich. Hand-built LXC (CT 102) on jotunheim, outside hlac. Registered so its address is reserved."
+    mgmt_ip_v4: "10.0.20.25"
+    description: "Paperless-ngx. Hand-built LXC (CT 123 on pve01), IP reserved."
 
-  pbs:
+  nginx-tmp:
     device_type: "unmanaged-vm"
+    role: "appliance"
+    site: "home"
+    mgmt_ip_v4: "10.0.20.24"
+    description: "Nginx Proxy Manager in Docker. Hand-built legacy LXC, IP reserved."
+
+  pelican-panel:
+    device_type: "unmanaged-vm"
+    role: "appliance"
+    site: "home"
+    mgmt_ip_v4: "10.0.20.40"
+    description: "Pelican web UI. Hand-built legacy LXC, IP reserved."
+
+  pelican-wings:
+    device_type: "unmanaged-vm"
+    role: "appliance"
+    site: "home"
+    mgmt_ip_v4: "10.0.20.41"
+    description: "Pelican game servers. Hand-built legacy LXC, IP reserved."
+
+  pbs01:
+    device_type: "datto-siris-s4-custom"
     role: "backup"
     site: "home"
-    mgmt_ip_v4: "10.10.10.123"
-    description: "Proxmox Backup Server. Hand-built VM 122 on jotunheim, outside hlac. pve01's backup storage."
-
-  pdm:
-    device_type: "unmanaged-vm"
-    role: "management"
-    site: "home"
-    mgmt_ip_v4: "10.0.60.100"
-    description: "Proxmox Datacenter Manager. Hand-built VM 125 on jotunheim, outside hlac."
+    mgmt_ip_v4: "10.0.20.49"
+    mgmt_iid_v6: "::31"
+    description: "Recycled Siris S4 running Proxmox Backup Server."

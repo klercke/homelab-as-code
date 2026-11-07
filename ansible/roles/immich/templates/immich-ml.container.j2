@@ -1,0 +1,19 @@
+# Managed by Ansible. Local changes will be overwritten.
+[Unit]
+Description=Immich machine learning
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image={{ immich_ml_image }}
+ContainerName=immich-ml
+Network=host
+Environment=TZ={{ immich_timezone }}
+Volume={{ immich_ml_cache_dir }}:/cache:Z
+
+[Service]
+Restart=always
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

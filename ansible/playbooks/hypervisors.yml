@@ -1,26 +1,23 @@
 ---
-# Proxmox hosts aren't in the dynamic inventory (it only sees hlac-tagged
-# guests), so build the group from the device registry in hlac.json.
-- name: Find hypervisors
-  hosts: localhost
-  gather_facts: false
-  tasks:
-    - name: Add active hypervisors from the registry
-      tags: [always]
-      ansible.builtin.add_host:
-        name: "{{ item.key }}"
-        groups: hypervisors
-        ansible_host: "{{ item.value.ipv4 }}"
-        ansible_user: "{{ hypervisor_ssh_user | default('root') }}"
-      loop: "{{ hlac.devices | dict2items }}"
-      loop_control:
-        label: "{{ item.key }}"
-      when:
-        - item.value.role == 'hypervisor'
-        - item.value.status == 'active'
-        - item.value.ipv4 is not none
-
+# Proxmox hosts come from the device inventory that terraform/substrate
+# generates (inventories/protonet/devices.yml), not the Proxmox dynamic one.
 - name: Hypervisor configuration
-  hosts: hypervisors
+  hosts: device_role_hypervisor
+  vars:
+    ansible_user: "{{ hypervisor_ssh_user | default('root') }}"
+    # Disks to build vmpool on, from lsblk -d -o NAME,SERIAL. Only hosts
+    # without their own guest disks need an entry.
+    hypervisor_vmpool_disk_serials:
+      pve02:
+        - "2212E61FD5A7"
+        - "2212E61FD411"
+    hypervisor_vmpool_serials: "{{ hypervisor_vmpool_disk_serials.get(inventory_hostname, []) }}"
+  pre_tasks:
+    - name: Load infra secrets
+      tags: [always]
+      community.sops.load_vars:
+        file: "{{ playbook_dir }}/../../secrets/infra.sops.yaml"
+      no_log: true
   roles:
+    - proxmox
     - hypervisor

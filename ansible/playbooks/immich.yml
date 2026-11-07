@@ -1,0 +1,12 @@
+---
+- name: Immich photo library
+  hosts: tag_role_immich
+  pre_tasks:
+    - name: Load platform secrets
+      tags: [always]
+      community.sops.load_vars:
+        file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
+      no_log: true
+
+  roles:
+    - immich

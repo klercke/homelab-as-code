@@ -1,0 +1,18 @@
+# Managed by Ansible. Local changes will be overwritten.
+[Unit]
+Description=Immich public share proxy
+Wants=network-online.target immich-server.service
+After=network-online.target immich-server.service
+
+[Container]
+Image={{ immich_public_proxy_image }}
+ContainerName=immich-public-proxy
+Network=host
+EnvironmentFile={{ immich_config_dir }}/public-proxy.env
+
+[Service]
+Restart=always
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

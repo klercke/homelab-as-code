@@ -1,0 +1,50 @@
+---
+# Datastore pool on the data disks. Disks are picked by serial number, never
+# by sdX: device names move between boots, and creating a pool on the wrong
+# disk is not recoverable. The playbook supplies the serials per host.
+pbs_local_datastore: "local"
+pbs_local_disk_serials: []
+pbs_local_raidlevel: "raidz"
+
+# Schedules use PBS calendar-event syntax.
+pbs_local_gc_schedule: "daily"
+pbs_local_prune_schedule: "daily"
+pbs_local_keep_last: 3
+pbs_local_keep_daily: 7
+pbs_local_keep_weekly: 4
+pbs_local_keep_monthly: 3
+pbs_local_verify_schedule: "sat 03:00"
+pbs_local_verify_outdated_after: 30
+
+# Service user for PVE hosts, one API token per host. The user and each
+# token get DatastoreBackup, so a host can back up and restore only its own
+# backup groups.
+pbs_pve_user: "pve@pbs"
+pbs_pve_tokens:
+  - "pve01"
+
+# Offsite copy on Wasabi. The bucket already holds the datastore the old PBS
+# VM wrote, so it is reused, not created. Only one PBS may use an S3
+# datastore at a time: keep this off until the old server is shut down.
+pbs_wasabi_enabled: true
+pbs_wasabi_datastore: "wasabi"
+pbs_wasabi_endpoint_id: "wasabi"
+pbs_wasabi_endpoint: "s3.us-east-2.wasabisys.com"
+pbs_wasabi_region: "us-east-2"
+pbs_wasabi_bucket: "ptxe-pve-backups"
+# Local chunk cache, a dataset on the local pool with a quota.
+pbs_wasabi_cache_dataset: "{{ pbs_local_datastore }}/wasabi-cache"
+pbs_wasabi_cache_path: "/mnt/wasabi-cache"
+pbs_wasabi_cache_quota: "100G"
+pbs_wasabi_gc_schedule: "weekly"
+pbs_wasabi_prune_schedule: "daily"
+pbs_wasabi_keep_daily: 30
+pbs_wasabi_keep_weekly: 52
+pbs_wasabi_keep_monthly: 12
+# Wasabi pulls from the local datastore. Snapshots pruned locally stay
+# offsite until the wasabi prune job drops them.
+pbs_wasabi_sync_schedule: "hourly"
+
+# Third quorum vote for the two-node PVE cluster. The nodes are registered
+# once with pvecm qdevice setup; this only installs and runs the daemon.
+pbs_qnetd_enabled: true

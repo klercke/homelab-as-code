@@ -1,0 +1,119 @@
+---
+- name: Read users
+  tags: [config]
+  ansible.builtin.command:
+    cmd: proxmox-backup-manager user list --output-format json
+  register: _pbs_users
+  changed_when: false
+
+- name: Create the PVE service user
+  tags: [config]
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - user
+      - create
+      - "{{ pbs_pve_user }}"
+      - --comment
+      - "PVE hosts back up here. Managed by hlac."
+  when: pbs_pve_user not in (_pbs_users.stdout | from_json | map(attribute='userid'))
+  changed_when: true
+
+- name: Read API tokens
+  tags: [config]
+  ansible.builtin.command:
+    cmd: "proxmox-backup-manager user list-tokens {{ pbs_pve_user }} --output-format json"
+  register: _pbs_tokens
+  changed_when: false
+
+- name: Create missing API tokens
+  tags: [config]
+  ansible.builtin.command:
+    cmd: "proxmox-backup-manager user generate-token {{ pbs_pve_user }} {{ item }}"
+  loop: "{{ pbs_pve_tokens }}"
+  when: (pbs_pve_user ~ '!' ~ item) not in (_pbs_tokens.stdout | from_json | map(attribute='tokenid'))
+  register: _pbs_new_tokens
+  changed_when: _pbs_new_tokens.rc == 0
+  failed_when: false
+  no_log: true
+
+# stdout holds the secret, so only stderr is shown on failure.
+- name: Report token creation failures
+  tags: [config]
+  ansible.builtin.fail:
+    msg: "Creating token {{ item.item }} failed: {{ item.stderr }}"
+  loop: "{{ _pbs_new_tokens.results | selectattr('rc', 'defined') | rejectattr('rc', 'eq', 0) | list }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+# The secret is only ever shown at creation. Store it in SOPS straight away;
+# if it is lost, delete the token and rerun the role. The command prints
+# "Result: " followed by JSON.
+- name: Show new token secrets once
+  tags: [config]
+  vars:
+    _token: "{{ item.stdout | regex_replace('^Result:\\s*', '') | from_json }}"
+  ansible.builtin.debug:
+    msg: >-
+      New token {{ _token.tokenid }}: {{ _token.value }}
+      Store it in SOPS now; it cannot be shown again.
+  loop: "{{ _pbs_new_tokens.results | selectattr('rc', 'defined') | selectattr('rc', 'eq', 0) | list }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Read ACLs
+  tags: [config]
+  ansible.builtin.command:
+    cmd: proxmox-backup-manager acl list --output-format json
+  register: _pbs_acls
+  changed_when: false
+
+# A token's effective rights are the intersection of its own ACL and its
+# user's, so both need DatastoreBackup on the datastore.
+- name: Grant DatastoreBackup on the datastore
+  tags: [config]
+  vars:
+    _path: "/datastore/{{ pbs_local_datastore }}"
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - acl
+      - update
+      - "{{ _path }}"
+      - DatastoreBackup
+      - --auth-id
+      - "{{ item }}"
+  loop: "{{ [pbs_pve_user] + (pbs_pve_tokens | map('regex_replace', '^', pbs_pve_user ~ '!') | list) }}"
+  when: >-
+    _pbs_acls.stdout | from_json
+    | selectattr('path', 'eq', _path)
+    | selectattr('ugid', 'eq', item)
+    | selectattr('roleid', 'eq', 'DatastoreBackup')
+    | list | length == 0
+  changed_when: true
+
+# Wasabi is filled by the sync job, not by PVE, so hosts only read it, to
+# restore when the local pool is gone. DatastoreReader sees every group.
+- name: Grant DatastoreReader on the Wasabi datastore
+  tags: [config]
+  vars:
+    _path: "/datastore/{{ pbs_wasabi_datastore }}"
+  ansible.builtin.command:
+    argv:
+      - proxmox-backup-manager
+      - acl
+      - update
+      - "{{ _path }}"
+      - DatastoreReader
+      - --auth-id
+      - "{{ item }}"
+  loop: "{{ [pbs_pve_user] + (pbs_pve_tokens | map('regex_replace', '^', pbs_pve_user ~ '!') | list) }}"
+  when:
+    - pbs_wasabi_enabled | bool
+    - >-
+      _pbs_acls.stdout | from_json
+      | selectattr('path', 'eq', _path)
+      | selectattr('ugid', 'eq', item)
+      | selectattr('roleid', 'eq', 'DatastoreReader')
+      | list | length == 0
+  changed_when: true

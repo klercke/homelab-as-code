@@ -1,0 +1,103 @@
+---
+- name: Check for the guest pool
+  tags: [config]
+  ansible.builtin.command:
+    argv: [zpool, list, -H, -o, name, "{{ hypervisor_vmpool_name }}"]
+  register: _hv_vmpool
+  failed_when: false
+  changed_when: false
+
+- name: Build the guest pool
+  when:
+    - _hv_vmpool.rc != 0
+    - hypervisor_vmpool_serials | length > 0
+  tags: [config]
+  block:
+    - name: Read disks
+      ansible.builtin.command:
+        cmd: lsblk -J -d -o NAME,SERIAL
+      register: _hv_disks
+      changed_when: false
+
+    - name: Map serials to disks
+      ansible.builtin.set_fact:
+        _hv_vmpool_disks: >-
+          {{ (_hv_disks.stdout | from_json).blockdevices
+             | selectattr('serial', 'in', hypervisor_vmpool_serials)
+             | map(attribute='name') | map('regex_replace', '^', '/dev/') | list }}
+
+    - name: Refuse unless every serial is present
+      ansible.builtin.assert:
+        that: _hv_vmpool_disks | length == hypervisor_vmpool_serials | length
+        fail_msg: "Expected disks {{ hypervisor_vmpool_serials }}, found {{ _hv_vmpool_disks }}."
+
+    # The installer leaves partitions 1-3 (BIOS boot, ESP, rpool). Partition
+    # 4 is either absent (create it), ours from an earlier run (reuse it), or
+    # something else (stop). Read the GPT itself: the kernel may not know about
+    # a partition yet while the disk is in use.
+    - name: Read partition 4
+      ansible.builtin.command:
+        argv: [sgdisk, -i, "4", "{{ item }}"]
+      loop: "{{ _hv_vmpool_disks }}"
+      register: _hv_part4
+      changed_when: false
+      failed_when: _hv_part4.rc != 0 and 'does not exist' not in _hv_part4.stdout
+
+    - name: Refuse a partition 4 that is not ours
+      ansible.builtin.assert:
+        that: >-
+          'does not exist' in item.stdout
+          or ("Partition name: '" ~ hypervisor_vmpool_name ~ "'") in item.stdout
+        fail_msg: "{{ item.item }} already has a partition 4 that vmpool did not create."
+      loop: "{{ _hv_part4.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Partition the free space
+      ansible.builtin.command:
+        argv: [sgdisk, "-n4:0:0", "-t4:BF01", "-c4:{{ hypervisor_vmpool_name }}", "{{ item.item }}"]
+      loop: "{{ _hv_part4.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: "'does not exist' in item.stdout"
+      changed_when: true
+
+    # rpool is on these disks, so the kernel won't reread the whole table.
+    # partx (util-linux, always installed) adds the new partition alone.
+    - name: Tell the kernel about the new partitions
+      ansible.builtin.command:
+        argv: [partx, --update, "{{ item }}"]
+      loop: "{{ _hv_vmpool_disks }}"
+      changed_when: false
+
+    - name: Wait for the partition links
+      ansible.builtin.command:
+        cmd: udevadm settle
+      changed_when: false
+
+    # by-id paths survive device renames between boots.
+    - name: Find the partitions by id
+      ansible.builtin.find:
+        paths: /dev/disk/by-id
+        file_type: link
+        patterns: "{{ hypervisor_vmpool_serials | map('regex_replace', '^(.*)$', 'ata-*_\\1-part4') | list }}"
+      register: _hv_vmpool_parts
+
+    - name: Refuse unless both partitions are found
+      ansible.builtin.assert:
+        that: _hv_vmpool_parts.files | length == hypervisor_vmpool_serials | length
+        fail_msg: "Found {{ _hv_vmpool_parts.files | map(attribute='path') | list }}."
+
+    - name: Create the pool
+      ansible.builtin.command:
+        argv: >-
+          {{ ['zpool', 'create', '-o', 'ashift=12', '-O', 'compression=lz4',
+              '-O', 'atime=off', '-O', 'xattr=sa', hypervisor_vmpool_name, 'mirror']
+             + (_hv_vmpool_parts.files | map(attribute='path') | sort | list) }}
+      changed_when: true
+
+    # vmdata in storage.cfg points at vmpool/data on every node.
+    - name: Create the guest dataset
+      ansible.builtin.command:
+        argv: [zfs, create, "{{ hypervisor_vmpool_name }}/data"]
+      changed_when: true

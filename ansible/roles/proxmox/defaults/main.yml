@@ -1,0 +1,19 @@
+---
+proxmox_widget_toolkit_js: "/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
+
+# Static IPv6 on the management interface, from the device registry
+# (hlac.devices.<host>.cidr_v6). The router advertisement still supplies the
+# default route (accept_ra 2), but SLAAC addresses are off (autoconf 0), so
+# the host has exactly the address DNS points at.
+proxmox_ipv6_cidr: "{{ hlac.devices[inventory_hostname].cidr_v6 | default(none) }}"
+proxmox_ipv6_iface: "{{ ansible_facts.default_ipv4.interface }}"
+proxmox_interfaces_file: "/etc/network/interfaces"
+
+# Severities the default notification matcher passes on. Successful jobs are
+# info and stay quiet. unknown covers mail sent to root by other daemons
+# (ZFS ZED, smartd), which PVE and PBS forward with that severity.
+proxmox_notify_severities:
+  - "warning"
+  - "error"
+  - "unknown"
+proxmox_notify_comment: "Mail warnings, errors and system mail to root. Managed by hlac."

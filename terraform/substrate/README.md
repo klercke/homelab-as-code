@@ -20,11 +20,24 @@ It holds only what the resources in this module need, so a leaked token cannot m
 
 `Sys.Modify` on `/` is the broadest privilege left, and backup jobs cannot be created without it.
 
+Pointing a backup job at a storage also needs `Datastore.Allocate` on that storage.
+Moving a job from one storage to another needs it on both, so grant the old one for the change and revoke it afterwards (`pveum acl delete /storage/OLD --roles PVEDatastoreAdmin --users terraform@pve`).
+That privilege also lets a holder reconfigure or remove the storage, so it is granted only on the backup target, through the built-in `PVEDatastoreAdmin` role, not added to `Terraform` on `/`.
+
 Create the role on a new node:
 
 ```
 pveum role add Terraform --privs "Datastore.AllocateSpace,Datastore.AllocateTemplate,Datastore.Audit,Pool.Allocate,Pool.Audit,SDN.Audit,SDN.Use,Sys.AccessNetwork,Sys.Audit,Sys.Modify,VM.Allocate,VM.Audit,VM.Backup,VM.Config.CDROM,VM.Config.CPU,VM.Config.Cloudinit,VM.Config.Disk,VM.Config.HWType,VM.Config.Memory,VM.Config.Network,VM.Config.Options,VM.GuestAgent.Audit,VM.PowerMgmt"
 ```
+
+Then grant the backup target to the user:
+
+```
+pveum acl modify /storage/pbs-local --roles PVEDatastoreAdmin --users terraform@pve
+```
+
+The `provider` token has privilege separation off, so it carries the user's rights and needs no grant of its own.
+A token with privilege separation on gets only what both it and its user hold, and would need the same grant with `--tokens 'terraform@pve!provider'`.
 
 ## Terraform Documentation
 
@@ -55,6 +68,7 @@ pveum role add Terraform --privs "Datastore.AllocateSpace,Datastore.AllocateTemp
 | Name | Type |
 |------|------|
 | [local_file.derived_network](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
+| [local_file.devices_inventory](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [proxmox_backup_job.crit1](https://registry.terraform.io/providers/bpg/proxmox/0.111.1/docs/resources/backup_job) | resource |
 | [proxmox_backup_job.crit2](https://registry.terraform.io/providers/bpg/proxmox/0.111.1/docs/resources/backup_job) | resource |
 | [proxmox_backup_job.crit3](https://registry.terraform.io/providers/bpg/proxmox/0.111.1/docs/resources/backup_job) | resource |
@@ -70,7 +84,7 @@ pveum role add Terraform --privs "Datastore.AllocateSpace,Datastore.AllocateTemp
 | <a name="input_ansible_inventory_name"></a> [ansible\_inventory\_name](#input\_ansible\_inventory\_name) | The name of the inventory that Ansible will use after this module applies. | `string` | `"protonet"` | no |
 | <a name="input_bootstrap_resolver"></a> [bootstrap\_resolver](#input\_bootstrap\_resolver) | The DNS resolver to use before the substrate is built. | `string` | `"9.9.9.9"` | no |
 | <a name="input_datastore_id"></a> [datastore\_id](#input\_datastore\_id) | The name of the datastore VM disks should be deployed in. | `string` | `"local-zfs"` | no |
-| <a name="input_pbs_storage"></a> [pbs\_storage](#input\_pbs\_storage) | The name of the PBS datastore to use for backups. | `string` | `"pbs-wasabi"` | no |
+| <a name="input_pbs_storage"></a> [pbs\_storage](#input\_pbs\_storage) | The name of the PBS datastore to use for backups. | `string` | `"pbs-local"` | no |
 | <a name="input_rocky9_image_sha256"></a> [rocky9\_image\_sha256](#input\_rocky9\_image\_sha256) | The SHA256 sum of the Rocky9 image. | `string` | n/a | yes |
 | <a name="input_rocky9_image_url"></a> [rocky9\_image\_url](#input\_rocky9\_image\_url) | The URL for the Rocky9 image. | `string` | n/a | yes |
 

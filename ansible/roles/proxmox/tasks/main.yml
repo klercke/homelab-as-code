@@ -1,0 +1,45 @@
+---
+# Every Proxmox web UI pops up "No valid subscription" at login. The check
+# lives in proxmox-widget-toolkit, shared by PVE, PBS and PDM, so making it
+# call straight through removes the dialog everywhere. A toolkit upgrade
+# restores the dialog until this role runs again.
+- name: Read services
+  tags: [config]
+  ansible.builtin.service_facts:
+
+- name: Skip the subscription dialog in the web UI
+  tags: [config]
+  ansible.builtin.replace:
+    path: "{{ proxmox_widget_toolkit_js }}"
+    regexp: 'checked_command: function\s*\(orig_cmd\)\s*\{(?!\s*orig_cmd\(\);\s*return;)'
+    replace: "checked_command: function (orig_cmd) { orig_cmd(); return;"
+  notify: Restart Proxmox web proxies
+
+# replace reports ok both when the file is already patched (by this role or
+# an older hand edit) and when the code it looks for has moved, so confirm
+# the patch is really there.
+- name: Check the subscription dialog is skipped
+  tags: [config]
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -Pzq
+      - 'checked_command: function\s*\(orig_cmd\)\s*\{\s*orig_cmd\(\);\s*return;'
+      - "{{ proxmox_widget_toolkit_js }}"
+  changed_when: false
+
+- name: Static IPv6 address
+  ansible.builtin.import_tasks: ipv6.yml
+  when: proxmox_ipv6_cidr is truthy
+
+- name: Failure-only notifications
+  ansible.builtin.import_tasks: notifications.yml
+  vars:
+    _proxmox_notify_cli: >-
+      {{ {'show_argv': ['pvesh', 'get', '/cluster/notifications/matchers/default-matcher', '--output-format', 'json'],
+          'set_argv': ['pvesh', 'set', '/cluster/notifications/matchers/default-matcher'],
+          'delete_style': 'comma'}
+         if 'pveproxy.service' in ansible_facts.services else
+         {'show_argv': ['proxmox-backup-manager', 'notification', 'matcher', 'show', 'default-matcher', '--output-format', 'json'],
+          'set_argv': ['proxmox-backup-manager', 'notification', 'matcher', 'update', 'default-matcher'],
+          'delete_style': 'repeat'} }}

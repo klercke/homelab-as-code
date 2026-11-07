@@ -43,3 +43,6 @@ ansible/inventories/**/hosts
 # Direnv
 .direnv/
 .envrc
+
+# Backups
+*.backup

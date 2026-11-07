@@ -1,0 +1,56 @@
+---
+# immich-server and immich-machine-learning always run the same release.
+# Bump this only after reading the release notes: some releases need a
+# matching Postgres image below. Quadlets never pull on their own, so this
+# tag is the only upgrade path.
+immich_version: "v3.3.5"
+immich_server_image: "ghcr.io/immich-app/immich-server:{{ immich_version }}"
+immich_ml_image: "ghcr.io/immich-app/immich-machine-learning:{{ immich_version }}"
+
+# Immich's own Postgres image ships the VectorChord and pgvector versions it
+# supports, so the extension is never maintained by hand. PG16 and VectorChord
+# 1.1.1 match the database migrated from the old LXC.
+immich_postgres_image: "ghcr.io/immich-app/postgres:16-vectorchord1.1.1-pgvector0.8.5"
+
+# Add-ons. Pin both to a release tag before the first deploy.
+immich_public_proxy_image: "docker.io/alangrainger/immich-public-proxy:3.0.2"
+immich_stack_image: "docker.io/majorfi/immich-stack:latest"
+
+immich_port: 2283
+immich_ml_port: 3003
+immich_public_proxy_port: 3000
+
+immich_config_dir: /etc/immich
+immich_postgres_data_dir: /var/lib/immich/postgres
+immich_ml_cache_dir: /var/lib/immich/model-cache
+
+# The library, thumbnails and encoded video live on the NAS. The database
+# stores absolute paths under this location, so it is mounted at the same
+# path on the VM and inside the container.
+immich_media_location: /mnt/immich
+immich_nfs_src: "10.0.20.50:/mnt/storage1/immich"
+immich_nfs_opts: "vers=3,hard,_netdev"
+
+immich_db_name: "immich"
+immich_db_user: "immich"
+
+# Valkey database 0 and 1 belong to NetBox.
+immich_redis_host: "{{ hlac.hosts.valkey01.ipv4 }}"
+immich_redis_port: 6379
+immich_redis_dbindex: 2
+
+immich_timezone: "America/New_York"
+
+immich_public_base_url: "https://images.ptxe.dev"
+
+# immich-stack groups bursts and RAW+JPEG pairs. Empty criteria means its
+# defaults.
+immich_stack_run_mode: "cron"
+immich_stack_cron_interval: 86400
+
+# Only the reverse proxies reach the services directly.
+immich_allowed_hosts:
+  - 10.0.20.19 # caddy01
+immich_public_proxy_allowed_hosts:
+  - 10.0.20.19 # caddy01
+  - 10.0.20.24 # nginx-tmp, serving images.ptxe.dev until edge01 exists

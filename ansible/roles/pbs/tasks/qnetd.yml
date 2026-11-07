@@ -1,0 +1,13 @@
+---
+- name: Install corosync-qnetd
+  tags: [install]
+  ansible.builtin.apt:
+    name: corosync-qnetd
+    state: present
+
+- name: Run corosync-qnetd
+  tags: [service]
+  ansible.builtin.systemd_service:
+    name: corosync-qnetd
+    enabled: true
+    state: started

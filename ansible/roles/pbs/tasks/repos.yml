@@ -1,0 +1,41 @@
+---
+- name: Remove the legacy enterprise repository list
+  tags: [install]
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/pbs-enterprise.list
+    state: absent
+
+- name: Disable the enterprise repository
+  tags: [install]
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/pbs-enterprise.sources
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      Types: deb
+      URIs: https://enterprise.proxmox.com/debian/pbs
+      Suites: {{ ansible_distribution_release }}
+      Components: pbs-enterprise
+      Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+      Enabled: no
+
+- name: Enable the no-subscription repository
+  tags: [install]
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/pbs-no-subscription.sources
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      Types: deb
+      URIs: http://download.proxmox.com/debian/pbs
+      Suites: {{ ansible_distribution_release }}
+      Components: pbs-no-subscription
+      Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+
+- name: Upgrade packages
+  tags: [install, updates]
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
