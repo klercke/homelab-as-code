@@ -24,7 +24,7 @@
     opts: "{{ immich_nfs_opts }}"
     state: mounted
 
-- name: Create config and data directories
+- name: Create config ML cache directories
   tags: [config]
   ansible.builtin.file:
     path: "{{ item }}"
@@ -34,8 +34,16 @@
     mode: "0750"
   loop:
     - "{{ immich_config_dir }}"
-    - "{{ immich_postgres_data_dir }}"
     - "{{ immich_ml_cache_dir }}"
+
+- name: Create Postgres data directory
+  tags: [config]
+  ansible.builtin.file:
+    path: "{{ immich_postgres_data_dir }}"
+    state: directory
+    owner: "999"
+    group: "999"
+    mode: "0700"
 
 - name: Write the Postgres environment
   tags: [config]
