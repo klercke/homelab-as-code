@@ -23,6 +23,12 @@
     state: restarted
     daemon_reload: true
 
+- name: Restart immich-public-proxy-upload
+  ansible.builtin.systemd_service:
+    name: immich-public-proxy-upload
+    state: restarted
+    daemon_reload: true
+
 - name: Restart immich-stack
   ansible.builtin.systemd_service:
     name: immich-stack

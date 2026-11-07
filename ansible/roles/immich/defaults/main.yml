@@ -12,19 +12,20 @@ immich_postgres_image: "ghcr.io/immich-app/postgres:16-vectorchord1.1.1-pgvector
 
 # Addons
 immich_public_proxy_image: "docker.io/alangrainger/immich-public-proxy:4.1.2"
+immich_public_proxy_upload_image: "docker.io/alangrainger/immich-public-proxy-upload:4.1.2"
 immich_stack_image: "docker.io/majorfi/immich-stack:0.2.43"
 
 immich_port: 2283
 immich_ml_port: 3003
 immich_public_proxy_port: 3000
+immich_public_proxy_upload_port: 3001
 
 immich_config_dir: /etc/immich
 immich_postgres_data_dir: /var/lib/immich/postgres
 immich_ml_cache_dir: /var/lib/immich/model-cache
 
-# The library, thumbnails and encoded video live on the NAS. The database
-# stores absolute paths under this location, so it is mounted at the same
-# path on the VM and inside the container.
+# The library, thumbnails and encoded video live on the NAS.
+# Same path is used in the VM and container.
 immich_media_location: /mnt/immich
 immich_nfs_src: "10.0.20.50:/mnt/storage1/immich"
 immich_nfs_opts: "vers=3,hard,_netdev"
@@ -41,8 +42,7 @@ immich_timezone: "America/New_York"
 
 immich_public_base_url: "https://images.ptxe.dev"
 
-# immich-stack groups bursts and RAW+JPEG pairs. Empty criteria means its
-# defaults.
+# immich-stack groups bursts and RAW+JPEG pairs.
 immich_stack_run_mode: "cron"
 immich_stack_cron_interval: 86400
 
@@ -51,4 +51,4 @@ immich_allowed_hosts:
   - 10.0.20.19 # caddy01
 immich_public_proxy_allowed_hosts:
   - 10.0.20.19 # caddy01
-  - 10.0.20.24 # nginx-tmp, serving images.ptxe.dev until edge01 exists
+  - 10.0.20.24 # nginx-tmp
