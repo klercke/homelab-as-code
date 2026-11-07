@@ -139,6 +139,10 @@ resource "netbox_primary_ip" "v6" {
   virtual_machine_id = netbox_virtual_machine.this[each.key].id
   ip_address_id      = netbox_ip_address.v6[each.key].id
   ip_address_version = 6
+
+  # Prevent v4 and v6 addresses from being written at the same time, casuing
+  # errors.
+  depends_on = [netbox_primary_ip.this]
 }
 
 resource "netbox_ip_range" "this" {

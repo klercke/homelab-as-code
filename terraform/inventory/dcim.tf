@@ -187,4 +187,8 @@ resource "netbox_device_primary_ip" "v6" {
   device_id          = netbox_device.this[each.key].id
   ip_address_id      = netbox_ip_address.device_mgmt_v6[each.key].id
   ip_address_version = 6
+
+  # Prevents v4 and v6 addresses from beign written at the same time, causing
+  # errors.
+  depends_on = [netbox_device_primary_ip.this]
 }
