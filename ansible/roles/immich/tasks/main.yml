@@ -24,7 +24,7 @@
     opts: "{{ immich_nfs_opts }}"
     state: mounted
 
-- name: Create config and data directories
+- name: Create config ML cache directories
   tags: [config]
   ansible.builtin.file:
     path: "{{ item }}"
@@ -34,8 +34,16 @@
     mode: "0750"
   loop:
     - "{{ immich_config_dir }}"
-    - "{{ immich_postgres_data_dir }}"
     - "{{ immich_ml_cache_dir }}"
+
+- name: Create Postgres data directory
+  tags: [config]
+  ansible.builtin.file:
+    path: "{{ immich_postgres_data_dir }}"
+    state: directory
+    owner: "999"
+    group: "999"
+    mode: "0700"
 
 - name: Write the Postgres environment
   tags: [config]
@@ -70,6 +78,17 @@
   no_log: true
   notify: Restart immich-public-proxy
 
+- name: Write the public proxy upload environment
+  tags: [config]
+  ansible.builtin.template:
+    src: public-proxy-upload.env.j2
+    dest: "{{ immich_config_dir }}/public-proxy-upload.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart immich-public-proxy-upload
+
 - name: Write the immich-stack environment
   tags: [config]
   ansible.builtin.template:
@@ -92,6 +111,7 @@
     - "{{ immich_server_image }}"
     - "{{ immich_ml_image }}"
     - "{{ immich_public_proxy_image }}"
+    - "{{ immich_public_proxy_upload_image }}"
     - "{{ immich_stack_image }}"
   register: _immich_pull
   changed_when: "'present' not in _immich_pull.stdout"
@@ -111,12 +131,14 @@
     - immich-ml
     - immich-server
     - immich-public-proxy
+    - immich-public-proxy-upload
     - immich-stack
   notify:
     - Restart immich-postgres
     - Restart immich-ml
     - Restart immich-server
     - Restart immich-public-proxy
+    - Restart immich-public-proxy-upload
     - Restart immich-stack
 
 - name: Allow the reverse proxy to the web UI
@@ -131,11 +153,11 @@
 - name: Allow the public proxy's fronts
   tags: [firewall]
   ansible.posix.firewalld:
-    rich_rule: "rule family=ipv4 source address={{ item }}/32 port port={{ immich_public_proxy_port }} protocol=tcp accept"
+    rich_rule: "rule family=ipv4 source address={{ item[0] }}/32 port port={{ item[1] }} protocol=tcp accept"
     permanent: true
     immediate: true
     state: enabled
-  loop: "{{ immich_public_proxy_allowed_hosts }}"
+  loop: "{{ immich_public_proxy_allowed_hosts | product([immich_public_proxy_port, immich_public_proxy_upload_port]) | list }}"
 
 # Quadlet units are generated, so they can't be enabled; WantedBy in the
 # .container file handles boot. This only starts them the first time.
@@ -150,4 +172,5 @@
     - immich-ml
     - immich-server
     - immich-public-proxy
+    - immich-public-proxy-upload
     - immich-stack

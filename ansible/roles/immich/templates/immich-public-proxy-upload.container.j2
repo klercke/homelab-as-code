@@ -1,0 +1,22 @@
+# Managed by Ansible. Local changes will be overwritten.
+[Unit]
+Description=Immich public share uploads
+Wants=network-online.target immich-server.service
+After=network-online.target immich-server.service
+
+[Container]
+Image={{ immich_public_proxy_upload_image }}
+ContainerName=immich-public-proxy-upload
+Network=host
+EnvironmentFile={{ immich_config_dir }}/public-proxy-upload.env
+# Faces the internet and writes nothing to disk.
+ReadOnly=true
+DropCapability=ALL
+NoNewPrivileges=true
+
+[Service]
+Restart=always
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

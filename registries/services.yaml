@@ -1,7 +1,7 @@
 ---
 # ProtoNet service registry.
 #
-# Three sections, different cardinality:
+# Three sections, different purposes:
 #
 #   host_services   what every host in hosts.yaml listens on, because the base
 #                   role installs it everywhere (SSH, node_exporter).
@@ -129,6 +129,10 @@ role_services:
       protocol: "tcp"
       ports: [3000]
       description: "Public share links, served as images.ptxe.dev."
+    - name: "Immich public proxy uploads"
+      protocol: "tcp"
+      ports: [3001]
+      description: "Uploads for public share links, served as images.ptxe.dev."
 
   monitoring:
     - name: "Prometheus"
