@@ -24,6 +24,15 @@
     state: present
     reload: true
 
+- name: Forward IPv6 between the tunnel and the LAN
+  tags: [config]
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: "1"
+    sysctl_file: /etc/sysctl.d/90-netbird.conf
+    state: present
+    reload: true
+
 # Peer traffic arriving on the tunnel is filtered by NetBird's own ACLs, which
 # are set per user in the dashboard.
 - name: Trust the NetBird interface
