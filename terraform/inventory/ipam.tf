@@ -80,8 +80,10 @@ resource "netbox_virtual_machine" "this" {
   status      = "active"
   vcpus       = each.value.cores
   memory_mb   = each.value.memory
-  description = each.value.description
-  tags        = [netbox_tag.hlac.name, netbox_tag.crit[tostring(each.value.crit)].name]
+  # Netbox's disk size calculatons can be inconsistent, so set it ourselves
+  disk_size_mb = (each.value.disk + try(each.value.data_disk, 0)) * 1024
+  description  = each.value.description
+  tags         = [netbox_tag.hlac.name, netbox_tag.crit[tostring(each.value.crit)].name]
 }
 
 resource "netbox_interface" "this" {
