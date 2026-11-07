@@ -281,20 +281,35 @@ locals {
 
   # == Services ==
 
-  # Keyed by target/name/protocol because DNS exists on both TCP and UDP, so
-  # the protocol has to be part of the key to avoid collisions
-  # Every host gets host_services (installed by the base role) plus its role's.
+  # A host's own services (hosts.yaml) come last, for things that differ per
+  # instance, like a wings node's port block.
+  # If a range is given, it's broken into a list for Netbox.
   vm_services = merge(concat([
     for hk, h in local.hosts : {
-      for s in concat(local.host_services, try(local.role_services[h.role], [])) :
-      "${hk}/${s.name}/${s.protocol}" => merge(s, { target = hk })
+      for s in concat(local.host_services, try(local.role_services[h.role], []), try(h.services, [])) :
+      "${hk}/${s.name}/${s.protocol}" => merge(s, {
+        target = hk
+        ports = flatten([
+          for p in s.ports : can(tonumber(p)) ? [tonumber(p)] : range(
+            tonumber(split("-", p)[0]),
+            tonumber(split("-", p)[1]) + 1,
+          )
+        ])
+      })
     }
   ], [{}])...)
-
   device_services = merge(concat([
     for dk, d in local.devices : {
       for s in try(local.role_services[d.role], []) :
-      "${dk}/${s.name}/${s.protocol}" => merge(s, { target = dk })
+      "${dk}/${s.name}/${s.protocol}" => merge(s, {
+        target = dk
+        ports = flatten([
+          for p in s.ports : can(tonumber(p)) ? [tonumber(p)] : range(
+            tonumber(split("-", p)[0]),
+            tonumber(split("-", p)[1]) + 1,
+          )
+        ])
+      })
     }
   ], [{}])...)
 

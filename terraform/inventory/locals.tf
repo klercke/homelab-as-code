@@ -33,7 +33,9 @@ locals {
     for hname, h in local.hosts : merge(
       { "${hname}-os" = { host = hname, name = "scsi0", size = h.disk } },
       try(h.data_disk, null) == null ? {} :
-      { "${hname}-data" = { host = hname, name = "scsi1", size = h.data_disk } }
+      { "${hname}-data" = { host = hname, name = "scsi1", size = h.data_disk } },
+      try(h.backup_disk, null) == null ? {} :
+      { "${hname}-backup" = { host = hname, name = "scsi2", size = h.backup_disk } }
     )
   ]...)
 

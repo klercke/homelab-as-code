@@ -9,7 +9,7 @@
 # through `direnv exec` in that directory instead of relying on the shell.
 
 # Role playbooks, in dependency order
-roles := "postgres valkey netbox powerdns recursor kea monitoring llm immich caddy pbs netbird"
+roles := "postgres valkey netbox powerdns recursor kea monitoring llm immich caddy pbs netbird wings"
 
 default:
     @just --list

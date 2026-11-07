@@ -227,3 +227,60 @@ hosts:
     disk: 16
     description: "Netbird routing peer. Node 2 of an HA pair."
     ipv6: true
+
+
+  wings01:
+    vlan: "home-servers"
+    host_octet: 28
+    layer: "l1"  # Really l2 (a workload); moves when a workloads module exists
+    role: "wings"
+    crit: 3
+    node: "pve02"
+    cores: 4
+    memory: 16384
+    disk: 32
+    data_disk: 32
+    backup_disk: 64
+    description: "Pelican wings game server."
+    ipv6: true
+    services:
+      - name: "SFTP"
+        protocol: "tcp"
+        ports: [2122]
+        description: "SFTP for bulk file transfers."
+      - name: "Game servers"
+        protocol: "tcp"
+        ports: ["27100-27199"]
+        description: "Dynamic UDP ports for game services."
+      - name: "Game servers"
+        protocol: "udp"
+        ports: ["27100-27199"]
+        description: "Dynamic TCP ports for game services."
+
+  wings02:
+    vlan: "home-servers"
+    host_octet: 29
+    layer: "l1"  # Really l2 (a workload); moves when a workloads module exists
+    role: "wings"
+    crit: 3
+    node: "pve01"
+    cores: 4
+    memory: 16384
+    disk: 32
+    data_disk: 64
+    backup_disk: 128
+    description: "Pelican wings game server."
+    ipv6: true
+    services:
+      - name: "SFTP"
+        protocol: "tcp"
+        ports: [2222]
+        description: "SFTP for bulk file transfers."
+      - name: "Game servers"
+        protocol: "tcp"
+        ports: ["27200-27299"]
+        description: "Dynamic UDP ports for game services."
+      - name: "Game servers"
+        protocol: "udp"
+        ports: ["27200-27299"]
+        description: "Dynamic TCP ports for game services."
