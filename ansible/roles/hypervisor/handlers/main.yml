@@ -3,3 +3,7 @@
   ansible.builtin.systemd_service:
     name: zramswap
     state: restarted
+
+- name: Reload bridge networking
+  ansible.builtin.command: ifreload -a
+  changed_when: true

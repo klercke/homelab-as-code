@@ -2,6 +2,9 @@
 - name: Package repositories
   ansible.builtin.import_tasks: repos.yml
 
+- name: Guest bridge
+  ansible.builtin.import_tasks: bridge.yml
+
 - name: Install zram-tools
   tags: [install]
   ansible.builtin.apt:
