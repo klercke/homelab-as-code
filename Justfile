@@ -15,7 +15,7 @@ default:
     @just --list
 
 # Run the whole pipeline in order
-apply: hypervisors substrate base platform firewall playbooks inventory
+apply: hypervisors substrate base platform cloudflare firewall playbooks inventory
 
 # 0. Proxmox hosts themselves (zram)
 hypervisors *args:
@@ -32,6 +32,10 @@ base *args:
 # 3. DNS records and Kea reservations
 platform:
     direnv exec terraform/platform tofu -chdir=terraform/platform apply
+
+# 3a. Public DNS for ptxe.dev
+cloudflare:
+   direnv exec terraform/cloudflare tofu -chdir=terraform/cloudflare apply
 
 # 3b. Host and role aliases on fw01
 firewall:
@@ -53,6 +57,7 @@ role name *args:
 plan:
     direnv exec terraform/substrate tofu -chdir=terraform/substrate plan
     direnv exec terraform/platform tofu -chdir=terraform/platform plan
+    direnv exec terraform/cloudflare tofu -chdir=terraform/cloudflare plan
     direnv exec terraform/firewall tofu -chdir=terraform/firewall plan
     direnv exec terraform/inventory tofu -chdir=terraform/inventory plan
 
