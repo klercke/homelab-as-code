@@ -56,3 +56,4 @@ These are features that I intend to add in the future.
 - [ ] Move existing VMs to `vmdata`
 - [ ] Local S3 bucket for Pelican backups
 - [ ] Radicale or similar DAV server
+- [ ] Bring Linode under management, replace existing server, build status page
