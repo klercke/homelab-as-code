@@ -1,0 +1,24 @@
+---
+wings_version: "v1.0.0-rc.1"
+wings_sha256: "19dda386e02041da1f1fbcc73f34e4bb01c1fbc2d499aac79a6be3a51ba7f0e8"
+
+wings_data_device: /dev/sdb
+wings_data_label: wings-data
+wings_backup_device: /dev/sdc
+wings_backup_label: wings-backup
+
+# Each node advertises its own SFTP port so fw01 can forward both from the WAN.
+wings_sftp_ports:
+  wings01: 2122
+  wings02: 2222
+
+# The panel and the reverse proxy reach the Wings API directly.
+wings_api_allowed_hosts:
+  - 10.0.20.24 # nginx-tmp
+  - 10.0.20.40 # pelican-panel (temp) TODO remove
+  - 10.0.20.30 # pelican01
+
+# Until split-horizon DNS exists, public names hairpin through NAT64, breaking.
+# Point them at the internal proxy instead.
+wings_hosts_overrides:
+  pelican.ptxe.dev: 10.0.20.24

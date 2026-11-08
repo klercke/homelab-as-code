@@ -81,9 +81,14 @@ resource "netbox_virtual_machine" "this" {
   vcpus       = each.value.cores
   memory_mb   = each.value.memory
   # Netbox's disk size calculatons can be inconsistent, so set it ourselves
-  disk_size_mb = (each.value.disk + try(each.value.data_disk, 0)) * 1024
+  disk_size_mb = (each.value.disk + try(each.value.data_disk, 0) + try(each.value.backup_disk, 0)) * 1024
   description  = each.value.description
   tags         = [netbox_tag.hlac.name, netbox_tag.crit[tostring(each.value.crit)].name]
+
+  lifecycle {
+    # Prevents race condition when resizing disks
+    ignore_changes = [disk_size_mb]
+  }
 }
 
 resource "netbox_interface" "this" {
@@ -121,6 +126,10 @@ resource "netbox_primary_ip" "this" {
   for_each           = local.hosts
   virtual_machine_id = netbox_virtual_machine.this[each.key].id
   ip_address_id      = netbox_ip_address.this[each.key].id
+
+  # Prevent a race condition where the primary IP rewrites the VM object while
+  # disk size is being calculated
+  depends_on = [netbox_virtual_disk.this]
 }
 
 # Only hosts with ipv6: true. The address itself is SLAAC with a fixed token.

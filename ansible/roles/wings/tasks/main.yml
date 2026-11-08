@@ -1,0 +1,171 @@
+---
+- name: Verify data devices exist
+  tags: [install]
+  ansible.builtin.assert:
+    that:
+      - wings_data_device in ansible_devices | map('regex_replace', '^', '/dev/') | list
+      - wings_backup_device in ansible_devices | map('regex_replace', '^', '/dev/') | list
+    fail_msg: "Data or backup disk missing. Check scsi1 and scsi2 in Terraform."
+
+- name: Create filesystems
+  tags: [install]
+  community.general.filesystem:
+    fstype: xfs
+    dev: "{{ item.dev }}"
+    opts: "-L {{ item.label }}"
+  loop:
+    - { dev: "{{ wings_data_device }}", label: "{{ wings_data_label }}" }
+    - { dev: "{{ wings_backup_device }}", label: "{{ wings_backup_label }}" }
+
+# Order matters: backups mounts inside the data volume.
+- name: Mount game data
+  tags: [install]
+  ansible.posix.mount:
+    path: /var/lib/pelican
+    src: "LABEL={{ wings_data_label }}"
+    fstype: xfs
+    opts: defaults,noatime
+    state: mounted
+
+- name: Mount local backups
+  tags: [install]
+  ansible.posix.mount:
+    path: /var/lib/pelican/backups
+    src: "LABEL={{ wings_backup_label }}"
+    fstype: xfs
+    opts: defaults,noatime
+    state: mounted
+
+- name: Add the Docker CE repository
+  tags: [install]
+  ansible.builtin.yum_repository:
+    name: docker-ce-stable
+    description: Docker CE Stable
+    baseurl: "https://download.docker.com/linux/rhel/$releasever/$basearch/stable"
+    gpgkey: "https://download.docker.com/linux/rhel/gpg"
+    gpgcheck: true
+
+- name: Install Docker
+  tags: [install]
+  ansible.builtin.dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: present
+
+- name: Enable Docker
+  tags: [service]
+  ansible.builtin.systemd_service:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Resolve public panel names internally
+  tags: [config]
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '\s{{ item.key | regex_escape }}$'
+    line: "{{ item.value }} {{ item.key }}"
+  loop: "{{ wings_hosts_overrides | dict2items }}"
+
+- name: Install Wings
+  tags: [install]
+  ansible.builtin.get_url:
+    url: "https://github.com/pelican-dev/wings/releases/download/{{ wings_version }}/wings_linux_amd64"
+    dest: /usr/local/bin/wings
+    checksum: "sha256:{{ wings_sha256 }}"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart wings
+
+- name: Create the Wings config directory
+  tags: [config]
+  ansible.builtin.file:
+    path: /etc/pelican
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+# The panel generates this file, then we store it in SOPS for rebuilds.
+- name: Write the node config from SOPS
+  tags: [config]
+  ansible.builtin.copy:
+    content: "{{ lookup('vars', 'wings_config_' + inventory_hostname, default='') }}"
+    dest: /etc/pelican/config.yml
+    owner: root
+    group: root
+    mode: "0600"
+    force: false
+  when: lookup('vars', 'wings_config_' + inventory_hostname, default='') | length > 0
+  no_log: true
+
+- name: Install the Wings unit
+  tags: [service]
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/wings.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Wings Daemon
+      After=docker.service
+      Requires=docker.service
+      PartOf=docker.service
+
+      [Service]
+      User=root
+      WorkingDirectory=/etc/pelican
+      LimitNOFILE=4096
+      PIDFile=/var/run/wings/daemon.pid
+      ExecStart=/usr/local/bin/wings
+      Restart=on-failure
+      StartLimitInterval=180
+      StartLimitBurst=30
+      RestartSec=5s
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: Restart wings
+
+- name: Allow the panel and proxy to reach the Wings API
+  tags: [firewall]
+  ansible.posix.firewalld:
+    rich_rule: "rule family=ipv4 source address={{ item }}/32 port port=8080 protocol=tcp accept"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ wings_api_allowed_hosts }}"
+
+# Game ports need no rules here, Docker publishes them with its own forwarding rules.
+- name: Allow SFTP
+  tags: [firewall]
+  ansible.posix.firewalld:
+    port: "{{ wings_sftp_ports[inventory_hostname] }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Check for a node config
+  tags: [service]
+  ansible.builtin.stat:
+    path: /etc/pelican/config.yml
+  register: wings_config_file
+
+- name: Enable Wings
+  tags: [service]
+  ansible.builtin.systemd_service:
+    name: wings
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: wings_config_file.stat.exists
+
+- name: Remind user to upload wings config
+  tags: [service]
+  ansible.builtin.debug:
+    msg: "No /etc/pelican/config.yml yet. Create the node in the panel and store its config as wings_config_{{ inventory_hostname }} in SOPS."
+  when: not wings_config_file.stat.exists

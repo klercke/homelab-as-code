@@ -32,8 +32,8 @@ resource "proxmox_virtual_environment_vm" "substrate" {
     floating = try(each.value.memory_min, each.value.memory)
   }
 
-  # Balloon and memory size changes only apply on a cold boot. Never let an
-  # apply reboot the whole substrate at once; restart guests one at a time.
+  # Prevent memory ballooning changes from rebooting VMs so that the reboots
+  # can be manually ordered.
   reboot_after_update = false
 
   disk {
@@ -54,6 +54,18 @@ resource "proxmox_virtual_environment_vm" "substrate" {
       size         = disk.value
       discard      = "on"
       ssd          = true
+    }
+  }
+
+  dynamic "disk" {
+    for_each = try([each.value.backup_disk], [])
+    content {
+      datastore_id = var.datastore_id
+      interface    = "scsi2"
+      size         = disk.value
+      discard      = "on"
+      ssd          = true
+      backup       = false
     }
   }
 

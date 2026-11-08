@@ -177,13 +177,19 @@ role_services:
     - name: "Proxmox Backup Server"
       protocol: "tcp"
       ports: [8007]
-      description: "Web UI and API. pve01's backup storage."
+      description: "PBS Web UI and API."
 
   firewall:
     - name: "HTTPS"
       protocol: "tcp"
       ports: [443]
       description: "OPNsense web UI."
+
+  wings:
+    - name: "Wings API"
+      protocol: "tcp"
+      ports: [8080]
+      description: "Pelican Wings API."
 
 public_services:
   netbox:
