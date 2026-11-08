@@ -150,3 +150,15 @@
 - name: Configure node_exporter
   ansible.builtin.import_tasks: node_exporter.yml
   tags: [node_exporter]
+
+- name: Keep SSH host keys across cloud-init instance changes
+  tags: [config]
+  ansible.builtin.copy:
+    dest: /etc/cloud/cloud.cfg.d/99-hlac-keep-host-keys.cfg
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by Ansible. A changed instance ID (any edit to the VM's
+      # cloud-init config) would otherwise regenerate host keys on boot.
+      ssh_deletekeys: false

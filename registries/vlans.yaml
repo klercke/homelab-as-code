@@ -108,3 +108,13 @@ vlans:
       enabled: true
       dynamic_start: 100
       dynamic_end: 109
+
+  home-dmz:
+    net_id: 70
+    site: "home"
+    fns: "dmz"
+    name: "DMZ"
+    description: "Public-facing servers; ingress network."
+    status: "active"
+    dhcp_v4:
+      enabled: false

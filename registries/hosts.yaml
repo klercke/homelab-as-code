@@ -251,11 +251,11 @@ hosts:
       - name: "Game servers"
         protocol: "tcp"
         ports: ["27100-27199"]
-        description: "Dynamic UDP ports for game services."
+        description: "TCP port allocations for game services."
       - name: "Game servers"
         protocol: "udp"
         ports: ["27100-27199"]
-        description: "Dynamic TCP ports for game services."
+        description: "UDP port allocations for game services."
 
   wings02:
     vlan: "home-servers"
@@ -279,8 +279,22 @@ hosts:
       - name: "Game servers"
         protocol: "tcp"
         ports: ["27200-27299"]
-        description: "Dynamic UDP ports for game services."
+        description: "TCP port allocations for game services."
       - name: "Game servers"
         protocol: "udp"
         ports: ["27200-27299"]
-        description: "Dynamic TCP ports for game services."
+        description: "UDP port allocations for game services."
+
+  edge01:
+    vlan: "home-dmz"
+    host_octet: 10
+    layer: "l1"
+    role: "edge"
+    crit: 2
+    node: "pve02"
+    cores: 2
+    memory: 2048
+    memory_min: 1024
+    disk: 16
+    description: "Edge proxy for public-facing HTTP(S) services."
+    ipv6: true
