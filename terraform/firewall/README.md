@@ -27,8 +27,11 @@ Rules stay hand-built in OPNsense and should reference the `role_` aliases, so a
 
 | Name | Type |
 |------|------|
+| [opnsense_firewall_alias.edge_scrape_ports](https://registry.terraform.io/providers/browningluke/opnsense/latest/docs/resources/firewall_alias) | resource |
+| [opnsense_firewall_alias.internal](https://registry.terraform.io/providers/browningluke/opnsense/latest/docs/resources/firewall_alias) | resource |
 | [opnsense_firewall_alias.node](https://registry.terraform.io/providers/browningluke/opnsense/latest/docs/resources/firewall_alias) | resource |
 | [opnsense_firewall_alias.role](https://registry.terraform.io/providers/browningluke/opnsense/latest/docs/resources/firewall_alias) | resource |
+| [opnsense_firewall_alias.web_ports](https://registry.terraform.io/providers/browningluke/opnsense/latest/docs/resources/firewall_alias) | resource |
 
 ## Inputs
 
