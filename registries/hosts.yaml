@@ -268,7 +268,7 @@ hosts:
     memory: 16384
     disk: 32
     data_disk: 64
-    backup_disk: 128
+    backup_disk: 192
     description: "Pelican wings game server."
     ipv6: true
     services:
