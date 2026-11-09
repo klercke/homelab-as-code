@@ -32,6 +32,27 @@ litellm_settings:
   # Huginn's persona for every client key; see files/persona.py
   callbacks: persona.proxy_handler_instance
 
+# Tools for every key. Clients call them through LiteLLM's /mcp endpoint.
+mcp_servers:
+  # Hosted by Pirate Weather. The API key rides in the URL, so the whole URL
+  # lives in litellm.env and stays out of this file.
+  pirate_weather:
+    url: "os.environ/PIRATE_WEATHER_MCP_URL"
+    transport: "http"
+    # Keys see no MCP servers unless granted. Weather is harmless, so every
+    # key gets it. Grant anything sensitive per key instead.
+    allow_all_keys: true
+    # Every tool schema costs context on each request, and a long overlapping
+    # list makes small local models pick badly. These cover current conditions,
+    # forecasts and alerts.
+    allowed_tools:
+      - "get_weather_summary"
+      - "get_forecast"
+      - "get_hourly_forecast"
+      - "get_daily_forecast"
+      - "get_alerts"
+      - "get_historical_weather"
+
 general_settings:
   master_key: "os.environ/LITELLM_MASTER_KEY"
   database_url: "os.environ/DATABASE_URL"
