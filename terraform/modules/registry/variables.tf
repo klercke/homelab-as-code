@@ -10,6 +10,12 @@ variable "domain" {
   default     = "protonet.internal."
 }
 
+variable "public_domain" {
+  description = "Public DNS zone exposed services live under, without trailing dot."
+  type        = string
+  default     = "ptxe.dev"
+}
+
 variable "env" {
   description = "Environment label for canonical name."
   type        = string

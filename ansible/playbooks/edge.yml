@@ -1,0 +1,23 @@
+---
+- name: Edge reverse proxy
+  hosts: tag_role_edge
+  vars:
+    caddy_mode: "edge"
+    caddy_cloudflare_api_token: "{{ edge_cloudflare_api_token }}"
+  pre_tasks:
+    - name: Load platform secrets
+      tags: [always]
+      community.sops.load_vars:
+        file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
+      no_log: true
+
+    - name: Verify every backend resolved
+      tags: [always]
+      ansible.builtin.assert:
+        that:
+          - hlac.exposed_services | length > 0
+          - hlac.exposed_services.values() | selectattr('backend_ipv4', 'none') | list | length == 0
+        fail_msg: "An exposed service has no backend address. Run just substrate."
+
+  roles:
+    - caddy

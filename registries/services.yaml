@@ -206,6 +206,7 @@ role_services:
       description: "Prometheus metrics for Caddy reverse proxy."
 
 public_services:
+  # == Internal ==
   netbox:
     backend: "netbox01"
     port: 80
@@ -238,3 +239,34 @@ public_services:
     backend: "immich01"
     port: 2283
     description: "Immich web UI."
+
+  # == Exposed ==
+  pelican:
+    backend: "pelican-panel"
+    port: 80
+    exposure: "public"
+    description: "The control panel/web UI for Pelican game server."
+  wings01:
+    backend: "wings01"
+    port: 8080
+    exposure: "public"
+    description: "Pelican Wings game server node."
+  wings02:
+    backend: "wings02"
+    port: 8080
+    exposure: "public"
+    description: "Pelican Wings game server node."
+  images:
+    backend: "immich01"
+    port: 3000
+    exposure: "public"
+    routes:
+      - path: "/upload/*"
+        port: 3001
+    description: "Immich Public Proxy for secure image sharing."
+  mc-map:
+    backend: "wings02"
+    port: 27201
+    exposure: "public"
+    hostname: "map.mc.ptxe.dev"
+    description: "Bluemap for Vanilla Minecraft server."

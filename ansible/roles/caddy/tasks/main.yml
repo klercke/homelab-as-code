@@ -35,7 +35,7 @@
 - name: Write Cloudflare credentials
   tags: [config]
   ansible.builtin.copy:
-    content: "CF_API_TOKEN={{ cloudflare_api_token }}\n"
+    content: "CF_API_TOKEN={{ caddy_cloudflare_api_token }}\n"
     dest: /etc/caddy/cloudflare.env
     owner: root
     group: caddy
@@ -60,7 +60,7 @@
   become: true
   become_user: caddy
   environment:
-    CF_API_TOKEN: "{{ cloudflare_api_token }}"
+    CF_API_TOKEN: "{{ caddy_cloudflare_api_token }}"
   changed_when: false
   no_log: true
 

@@ -8,6 +8,33 @@
 	}
 }
 
+{% if caddy_mode == 'edge' %}
+
+# One certificate per public hostname, each through DNS-01, so nothing here
+# depends on port 80 being reachable. Caddy redirects HTTP to HTTPS, streams
+# request bodies (large uploads and Wings transfers), and proxies websockets.
+{% for name, svc in hlac.exposed_services | dictsort %}
+# {{ svc.description or name }} -> {{ svc.backend }}
+{{ svc.hostname }} {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+		resolvers 1.1.1.1 1.0.0.1
+	}
+
+{% for route in svc.routes %}
+	handle {{ route.path }} {
+		reverse_proxy {{ svc.scheme }}://{{ svc.backend_ipv4 }}:{{ route.port }}
+	}
+{% endfor %}
+	handle {
+		reverse_proxy {{ svc.scheme }}://{{ svc.backend_ipv4 }}:{{ svc.port }}
+	}
+}
+
+{% endfor %}
+
+{% else %}
+
 # One wildcard certificate for the whole namespace. DNS-01 writes exactly one
 # TXT record at _acme-challenge.{{ caddy_public_domain }} and removes it after
 # validation. No other name in ptxe.dev is ever touched.
@@ -33,6 +60,7 @@
 		respond "No such service" 404
 	}
 }
+{% endif %}
 
 # Metrics on their own port. The admin API also serves them, but let's keep it
 # locked down :)

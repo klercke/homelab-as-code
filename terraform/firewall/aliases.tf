@@ -55,3 +55,14 @@ resource "opnsense_firewall_alias" "edge_scrape_ports" {
   content     = ["9100", "9180"]
   description = "node_exporter and Caddy metrics on edge hosts. Managed by hlac."
 }
+
+
+# Public resolvers the DMZ may query directly:
+# - cloud-init's bootstrap resolver (Quad9)
+# - Cloudflare records Caddy uses to check DNS-01 records from outside split horizon
+resource "opnsense_firewall_alias" "public_dns" {
+  name        = "net_public_dns"
+  type        = "host"
+  content     = ["9.9.9.9", "149.112.112.112", "1.1.1.1", "1.0.0.1"]
+  description = "Public DNS resolvers. Managed by hlac."
+}
