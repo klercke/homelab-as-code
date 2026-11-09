@@ -92,6 +92,19 @@ resource "local_file" "derived_network" {
         }
       }
 
+      exposed_services = {
+        for k, s in module.registry.exposed_services : k => {
+          hostname     = s.hostname
+          backend      = s.backend
+          backend_ipv4 = module.registry.backend_records_v4[s.backend].ipv4
+          backend_fqdn = module.registry.backend_records_v4[s.backend].fqdn
+          port         = s.port
+          scheme       = try(s.scheme, "http")
+          routes       = s.routes
+          description  = try(s.description, null)
+        }
+      }
+
       vm_services     = module.registry.vm_services
       device_services = module.registry.device_services
 

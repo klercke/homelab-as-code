@@ -14,11 +14,6 @@ wings_sftp_ports:
 
 # The panel and the reverse proxy reach the Wings API directly.
 wings_api_allowed_hosts:
-  - 10.0.20.24 # nginx-tmp
+  - 10.0.70.10 # edge01
   - 10.0.20.40 # pelican-panel (temp) TODO remove
   - 10.0.20.30 # pelican01
-
-# Until split-horizon DNS exists, public names hairpin through NAT64, breaking.
-# Point them at the internal proxy instead.
-wings_hosts_overrides:
-  pelican.ptxe.dev: 10.0.20.24

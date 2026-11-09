@@ -67,7 +67,7 @@
 
     "public_services": {
       "type": "object",
-      "description": "User-facing name -> backend. Each becomes <name>.int.ptxe.dev behind the proxy.",
+      "description": "User-facing name -> backend. Internal services become <name>.int.ptxe.dev behind internal Caddy; public ones are served by edge Caddy under their hostname.",
       "propertyNames": {
         "$ref": "#/$defs/slug",
         "description": "Becomes the leftmost label of the public name."
@@ -90,11 +90,35 @@
             "enum": ["http", "https"],
             "description": "Backend protocol. Defaults to http."
           },
+          "exposure": {
+            "enum": ["internal", "public"],
+            "description": "internal (default): <name>.int.ptxe.dev via Caddy. public: served on the internet by edge Caddy."
+          },
+          "hostname": {
+            "type": "string",
+            "pattern": "^([a-z0-9-]+\\.)+ptxe\\.dev$",
+            "description": "Public services only. Defaults to <name>.ptxe.dev."
+          },
+          "routes": {
+            "type": "array",
+            "description": "Public services only. Paths sent to another port on the same backend; everything else goes to port.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "port"],
+              "properties": {
+                "path": { "type": "string", "pattern": "^/", "description": "Caddy path matcher, e.g. /upload*." },
+                "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+              }
+            }
+          },
           "description": {
             "type": "string",
             "maxLength": 200
           }
-        }
+        },
+        "if": { "not": { "properties": { "exposure": { "const": "public" } }, "required": ["exposure"] } },
+        "then": { "not": { "anyOf": [ { "required": ["hostname"] }, { "required": ["routes"] } ] } }
       }
     }
   }

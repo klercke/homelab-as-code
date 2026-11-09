@@ -35,6 +35,7 @@ No resources.
 | <a name="input_domain"></a> [domain](#input\_domain) | Internal DNS domain with trailing dot. | `string` | `"protonet.internal."` | no |
 | <a name="input_env"></a> [env](#input\_env) | Environment label for canonical name. | `string` | `"prd"` | no |
 | <a name="input_gateway_host_octet"></a> [gateway\_host\_octet](#input\_gateway\_host\_octet) | Host octet of the default gateway within each VLAN prefix. | `number` | `1` | no |
+| <a name="input_public_domain"></a> [public\_domain](#input\_public\_domain) | Public DNS zone exposed services live under, without trailing dot. | `string` | `"ptxe.dev"` | no |
 | <a name="input_registry_path"></a> [registry\_path](#input\_registry\_path) | Path to the registries directory relative to this module. | `string` | `"../../../registries"` | no |
 | <a name="input_site_prefix_v4_bits"></a> [site\_prefix\_v4\_bits](#input\_site\_prefix\_v4\_bits) | Prefix length every site supernet must carry. | `number` | `16` | no |
 | <a name="input_site_prefix_v6_bits"></a> [site\_prefix\_v6\_bits](#input\_site\_prefix\_v6\_bits) | Prefix length every site IPv6 prefix must carry (the ISP delegation). | `number` | `56` | no |
@@ -57,6 +58,7 @@ No resources.
 | <a name="output_device_types"></a> [device\_types](#output\_device\_types) | Raw device type registry, keyed by type slug. |
 | <a name="output_device_vlan"></a> [device\_vlan](#output\_device\_vlan) | Device name -> VLAN key containing its management address. |
 | <a name="output_devices"></a> [devices](#output\_devices) | Raw device registry, keyed by device name. |
+| <a name="output_exposed_services"></a> [exposed\_services](#output\_exposed\_services) | Names edge-Caddy serves on the internet -> backend, port, hostname, and path routes. |
 | <a name="output_host_cidr_v4"></a> [host\_cidr\_v4](#output\_host\_cidr\_v4) | Hostname -> IPv4 address with prefix length. |
 | <a name="output_host_cidr_v6"></a> [host\_cidr\_v6](#output\_host\_cidr\_v6) | Hostname -> IPv6 address with prefix length. Only hosts with ipv6: true are present. |
 | <a name="output_host_ipv4"></a> [host\_ipv4](#output\_host\_ipv4) | Hostname -> bare IPv4 address. |
@@ -70,7 +72,7 @@ No resources.
 | <a name="output_hosts"></a> [hosts](#output\_hosts) | Raw host registry, keyed by hostname. Filter by layer at the call site. |
 | <a name="output_locations"></a> [locations](#output\_locations) | Raw location registry, keyed by location slug. |
 | <a name="output_macs"></a> [macs](#output\_macs) | Hostname -> MAC address. |
-| <a name="output_public_services"></a> [public\_services](#output\_public\_services) | User-facing name -> backend host and port for the reverse proxy. |
+| <a name="output_public_services"></a> [public\_services](#output\_public\_services) | Internal names behind internal-Caddy -> backend host and port for the reverse proxy. |
 | <a name="output_racks"></a> [racks](#output\_racks) | Raw rack registry, keyed by rack name. |
 | <a name="output_regions"></a> [regions](#output\_regions) | Raw regions registry, keyed by region slug. |
 | <a name="output_reservations"></a> [reservations](#output\_reservations) | Device name -> Kea DHCPv4 reservation. Only contains devices with a specified MAC. |

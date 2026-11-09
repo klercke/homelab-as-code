@@ -330,13 +330,6 @@ devices:
     mgmt_ip_v4: "10.0.20.25"
     description: "Paperless-ngx. Hand-built LXC (CT 123 on pve01), IP reserved."
 
-  nginx-tmp:
-    device_type: "unmanaged-vm"
-    role: "appliance"
-    site: "home"
-    mgmt_ip_v4: "10.0.20.24"
-    description: "Nginx Proxy Manager in Docker. Hand-built legacy LXC, IP reserved."
-
   pelican-panel:
     device_type: "unmanaged-vm"
     role: "appliance"

@@ -51,4 +51,4 @@ immich_allowed_hosts:
   - 10.0.20.19 # caddy01
 immich_public_proxy_allowed_hosts:
   - 10.0.20.19 # caddy01
-  - 10.0.20.24 # nginx-tmp
+  - 10.0.70.10 # edge01

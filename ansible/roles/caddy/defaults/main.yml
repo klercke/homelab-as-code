@@ -8,3 +8,12 @@ caddy_public_domain: "int.ptxe.dev"
 caddy_acme_email: "admin@ptxe.dev"
 
 caddy_wildcard: true
+
+# internal: one wildcard certificate for *.int.ptxe.dev, sites from
+#   hlac.public_services (caddy##).
+# edge: a certificate per public hostname, sites from hlac.exposed_services
+#   (edge##).
+caddy_mode: "internal"
+
+# Each proxy gets its own so one can be revoked alone.
+caddy_cloudflare_api_token: "{{ cloudflare_api_token }}"

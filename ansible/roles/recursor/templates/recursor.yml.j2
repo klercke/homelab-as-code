@@ -17,7 +17,7 @@ incoming:
 
 recursor:
   forward_zones:
-{% for zone in recursor_internal_zones %}
+{% for zone in recursor_internal_zones + recursor_exposed_zones %}
     - zone: {{ zone }}
       forwarders:
 {% for ip in recursor_auth_targets %}
@@ -35,7 +35,7 @@ recursor:
 dnssec:
   validation: validate
   negative_trustanchors:
-{% for zone in recursor_internal_zones %}
+{% for zone in recursor_internal_zones + recursor_exposed_zones %}
     - name: {{ zone }}
       reason: "internally served, unsigned"
 {% endfor %}

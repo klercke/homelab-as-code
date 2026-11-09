@@ -19,9 +19,21 @@ locals {
   device_types = local._devices.device_types
   devices      = local._devices.devices
 
-  host_services   = try(local._services.host_services, [])
-  role_services   = local._services.role_services
-  public_services = local._services.public_services
+  host_services = try(local._services.host_services, [])
+  role_services = local._services.role_services
+  # public_services keeps its historical name: the internal names behind
+  # Caddy (<name>.int.ptxe.dev).
+  # exposed_services are the ones edge-Caddy serves on the internet.
+  _all_proxied = local._services.public_services
+  public_services = {
+    for k, s in local._all_proxied : k => s if try(s.exposure, "internal") == "internal"
+  }
+  exposed_services = {
+    for k, s in local._all_proxied : k => merge(s, {
+      hostname = try(s.hostname, "${k}.${var.public_domain}")
+      routes   = try(s.routes, [])
+    }) if try(s.exposure, "internal") == "public"
+  }
 
   # == Site plan ==
 
@@ -320,7 +332,7 @@ locals {
   )
 
   unresolved_backends = [
-    for k, s in local.public_services : "${k} -> ${s.backend}"
+    for k, s in local._all_proxied : "${k} -> ${s.backend}"
     if !contains(keys(local.backend_records_v4), s.backend)
   ]
 }

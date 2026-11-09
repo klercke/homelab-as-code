@@ -191,8 +191,13 @@ output "role_services" {
 }
 
 output "public_services" {
-  description = "User-facing name -> backend host and port for the reverse proxy."
+  description = "Internal names behind internal-Caddy -> backend host and port for the reverse proxy."
   value       = local.public_services
+}
+
+output "exposed_services" {
+  description = "Names edge-Caddy serves on the internet -> backend, port, hostname, and path routes."
+  value       = local.exposed_services
 }
 
 output "vm_services" {
