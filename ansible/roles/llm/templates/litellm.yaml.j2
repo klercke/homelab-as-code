@@ -7,6 +7,11 @@ model_list:
       model: "openai/{{ name }}"
       api_base: "{{ llm_models.workers[m.worker].url }}/v1"
       api_key: "none"
+{% if m.thinking is defined and not m.thinking %}
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: false
+{% endif %}
 {% endfor %}
 {% for name, e in llm_models.embeddings | dictsort %}
   - model_name: "{{ name }}"

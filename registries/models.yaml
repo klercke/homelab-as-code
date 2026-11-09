@@ -78,7 +78,8 @@ models:
     hf: "unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL"
     ctx: 16384
     ttl: 1800
-    args: "-fa on -ctk q8_0 -ctv q8_0 --reasoning-budget 0 --temp 0.7 --top-p 0.8 --top-k 20 --min-p 0"
+    thinking: false
+    args: "-fa on -ctk q8_0 -ctv q8_0 --reasoning-format deepseek --temp 0.7 --top-p 0.8 --top-k 20 --min-p 0"
 
   # Newest dense Qwen, squeezed to 3-bit (12.5 GiB). Smartest per question,
   # slowest per token. Experimental: drop it if quality at Q3 disappoints.
