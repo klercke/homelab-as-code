@@ -177,8 +177,9 @@
     - searxng
     - llm-embed
 
-# Open WebUI's LiteLLM key. LiteLLM accepts a caller-chosen key value, so the
-# value lives in SOPS and this only makes sure LiteLLM knows about it.
+# LiteLLM keys for clients hlac manages (llm_keys). LiteLLM accepts a
+# caller-chosen key value, so each value lives in SOPS and this only makes sure
+# LiteLLM knows about it, with the settings from llm_keys.
 - name: Wait for LiteLLM
   tags: [keys]
   ansible.builtin.uri:
@@ -198,7 +199,18 @@
   register: _openwebui_key
   no_log: true
 
-- name: Register the Open WebUI key
+- name: Look up managed keys
+  tags: [keys]
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ llm_litellm_port }}/key/info?key={{ lookup('ansible.builtin.vars', item.secret) | urlencode }}"
+    headers:
+      Authorization: "Bearer {{ litellm_master_key }}"
+    status_code: [200, 400, 404]
+  loop: "{{ llm_keys }}"
+  register: _llm_keys
+  no_log: true
+
+- name: Register managed keys
   tags: [keys]
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ llm_litellm_port }}/key/generate"
@@ -206,18 +218,15 @@
     headers:
       Authorization: "Bearer {{ litellm_master_key }}"
     body_format: json
-    body:
-      key: "{{ litellm_openwebui_key }}"
-      key_alias: "{{ llm_openwebui_key_alias }}"
-      max_budget: "{{ llm_openwebui_budget }}"
-      budget_duration: "{{ llm_openwebui_budget_duration }}"
-      metadata:
-        managed_by: "hlac"
-  when: _openwebui_key.status != 200
+    body: "{{ _settings | combine({'key': lookup('ansible.builtin.vars', item.item.secret), 'key_alias': item.item.alias, 'metadata': {'managed_by': 'hlac'}}) }}"
+  vars:
+    _settings: "{{ item.item | dict2items | rejectattr('key', 'in', ['alias', 'secret']) | items2dict }}"
+  loop: "{{ _llm_keys.results }}"
+  when: item.status != 200
   changed_when: true
   no_log: true
 
-- name: Keep the Open WebUI key's budget in step
+- name: Keep managed keys in step
   tags: [keys]
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ llm_litellm_port }}/key/update"
@@ -225,13 +234,15 @@
     headers:
       Authorization: "Bearer {{ litellm_master_key }}"
     body_format: json
-    body:
-      key: "{{ litellm_openwebui_key }}"
-      max_budget: "{{ llm_openwebui_budget }}"
-      budget_duration: "{{ llm_openwebui_budget_duration }}"
+    body: "{{ _settings | combine({'key': lookup('ansible.builtin.vars', item.item.secret)}) }}"
+  vars:
+    _settings: "{{ item.item | dict2items | rejectattr('key', 'in', ['alias', 'secret']) | items2dict }}"
+    _info: "{{ item.json.info | default({}) }}"
+  loop: "{{ _llm_keys.results }}"
   when:
-    - _openwebui_key.status == 200
-    - (_openwebui_key.json.info.max_budget | default(0, true) | float) != (llm_openwebui_budget | float)
-      or (_openwebui_key.json.info.budget_duration | default('', true)) != llm_openwebui_budget_duration
+    - item.status == 200
+    - (_settings.max_budget is defined and (_info.max_budget | default(0, true) | float) != (_settings.max_budget | float))
+      or (_settings.budget_duration is defined and (_info.budget_duration | default('', true)) != _settings.budget_duration)
+      or (_settings.models is defined and (_info.models | default([], true) | sort) != (_settings.models | sort))
   changed_when: true
   no_log: true
