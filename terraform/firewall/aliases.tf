@@ -6,6 +6,13 @@ resource "opnsense_firewall_alias" "node" {
   type        = "host"
   content     = each.value.addresses
   description = "${each.key}. Managed by hlac."
+
+
+  lifecycle {
+    # Without this, a node alias cant be destroyed while it's a member of a
+    # role alias.
+    create_before_destroy = true
+  }
 }
 
 # One alias per role, nesting the node aliases
