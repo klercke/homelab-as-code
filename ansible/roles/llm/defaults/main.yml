@@ -59,3 +59,24 @@ llm_persona_surfaces:
   opencode:
     system: [core, coding]
     personal: [persona_konnor]
+  # Home Assistant's Assist agent. Anyone in the household may be speaking,
+  # so no personal context.
+  home-assistant:
+    system: [core, user-voice, voice]
+
+
+# LiteLLM keys the role registers and keeps in step. Each names the SOPS
+# variable holding its value (`secret`) and its alias, which also picks its
+# persona surface below. Any other field (max_budget, budget_duration, models)
+# is passed to LiteLLM as-is; leave one out to leave it unmanaged.
+llm_keys:
+  - alias: "{{ llm_openwebui_key_alias }}"
+    secret: "litellm_openwebui_key"
+    max_budget: "{{ llm_openwebui_budget }}"
+    budget_duration: "{{ llm_openwebui_budget_duration }}"
+  # Home Assistant's Assist agent. Local models only: HA sends the state of
+  # every exposed entity with each request, so home data never reaches a
+  # cloud model. Local models cost nothing, so it needs no budget.
+  - alias: "home-assistant"
+    secret: "litellm_homeassistant_key"
+    models: "{{ llm_models.models.keys() | list | sort }}"

@@ -344,13 +344,6 @@ devices:
     mgmt_ip_v4: "10.0.20.40"
     description: "Pelican web UI. Hand-built legacy LXC, IP reserved."
 
-  pelican-wings:
-    device_type: "unmanaged-vm"
-    role: "appliance"
-    site: "home"
-    mgmt_ip_v4: "10.0.20.41"
-    description: "Pelican game servers. Hand-built legacy LXC, IP reserved."
-
   pbs01:
     device_type: "datto-siris-s4-custom"
     role: "backup"

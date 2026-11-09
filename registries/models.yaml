@@ -73,6 +73,13 @@ models:
     ttl: 600
     args: "-fa on -ctk q8_0 -ctv q8_0 --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0"
 
+  qwen-9b-voice:
+    worker: "thor"
+    hf: "unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL"
+    ctx: 16384
+    ttl: 1800
+    args: "-fa on -ctk q8_0 -ctv q8_0 --reasoning-budget 0 --temp 0.7 --top-p 0.8 --top-k 20 --min-p 0"
+
   # Newest dense Qwen, squeezed to 3-bit (12.5 GiB). Smartest per question,
   # slowest per token. Experimental: drop it if quality at Q3 disappoints.
   qwen-27b:

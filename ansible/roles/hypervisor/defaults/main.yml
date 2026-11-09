@@ -39,3 +39,6 @@ hypervisor_cluster_primary: "pve01"
 
 # Third quorum vote, from corosync-qnetd on the backup server (pbs role).
 hypervisor_qdevice_host: "pbs01"
+
+# The bridge guests attach to. Must be VLAN-aware; see tasks/bridge.yml.
+hypervisor_bridge: "vmbr0"

@@ -1,0 +1,18 @@
+---
+# Guests are tagged per VLAN on one VLAN-aware bridge.
+# Without this, PVE builds a separate vmbr0vNNN bridge (and NIC subinterface)
+# for every tag in use.
+- name: Make the guest bridge VLAN-aware
+  tags: [config]
+  community.general.interfaces_file:
+    dest: /etc/network/interfaces
+    iface: "{{ hypervisor_bridge }}"
+    address_family: inet
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  loop:
+    - { key: bridge-vlan-aware, value: "yes" }
+    - { key: bridge-vids, value: "2-4094" }
+  loop_control:
+    label: "{{ item.key }}"
+  notify: Reload bridge networking

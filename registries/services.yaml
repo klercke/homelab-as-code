@@ -191,6 +191,20 @@ role_services:
       ports: [8080]
       description: "Pelican Wings API."
 
+  edge:
+    - name: "HTTP"
+      protocol: "tcp"
+      ports: [80]
+      description: "Non-encrypted HTTP traffic to the public-facing reverse proxy. Redirects to HTTPS."
+    - name: "HTTPS"
+      protocol: "tcp"
+      ports: [443]
+      description: "Encrypted HTTPS traffic to the public-facing reverse proxy."
+    - name: "Caddy metrics"
+      protocol: "tcp"
+      ports: [9180]
+      description: "Prometheus metrics for Caddy reverse proxy."
+
 public_services:
   netbox:
     backend: "netbox01"

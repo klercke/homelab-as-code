@@ -7,8 +7,8 @@
 /system ntp client set enabled=yes servers=0.pool.ntp.org,1.pool.ntp.org
 
 /interface ethernet
-set [find default-name=ether1] disabled=yes comment="patch01-01 fw01:lan-trunk"
-set [find default-name=ether2] disabled=yes comment="patch01-02 fw01:lan-legacy"
+set [find default-name=ether1] disabled=no comment="patch01-01 fw01:opt1"
+set [find default-name=ether2] disabled=no comment="patch02-02 fw01:lan"
 set [find default-name=ether3] disabled=yes
 set [find default-name=ether4] disabled=yes
 set [find default-name=ether5] disabled=no comment="patch01-05 pve01:nic0"
@@ -76,11 +76,11 @@ add address=10.0.254.2/24 interface=ether49 comment="oob"
 add name=bond-nas01 mode=802.3ad slaves=ether13,ether14 lacp-rate=1sec transmit-hash-policy=layer-2-and-3 comment="nas01"
 
 /interface bridge
-add name=bridge1 protocol-mode=rstp priority=0x4000 vlan-filtering=no frame-types=admit-only-vlan-tagged
+add name=bridge1 protocol-mode=rstp priority=0x1000 vlan-filtering=no frame-types=admit-only-vlan-tagged
 
 /interface bridge port
-add bridge=bridge1 interface=ether1 frame-types=admit-only-vlan-tagged comment="fw01:lan-trunk"
-add bridge=bridge1 interface=ether2 pvid=1 frame-types=admit-only-untagged-and-priority-tagged edge=yes comment="fw01:lan-legacy"
+add bridge=bridge1 interface=ether1 frame-types=admit-only-vlan-tagged comment="fw01:opt1"
+add bridge=bridge1 interface=ether2 pvid=1 frame-types=admit-only-untagged-and-priority-tagged edge=yes comment="fw01:lan"
 add bridge=bridge1 interface=ether5 pvid=160 comment="pve01:nic0"
 add bridge=bridge1 interface=ether7 pvid=160 comment="pve02:port0"
 add bridge=bridge1 interface=bond-nas01 pvid=120 frame-types=admit-only-untagged-and-priority-tagged edge=yes comment="nas01"
@@ -102,6 +102,7 @@ add bridge=bridge1 vlan-ids=130 tagged=ether1,ether5,ether7,sfp-sfpplus1 comment
 add bridge=bridge1 vlan-ids=140 tagged=ether1,ether5,ether7,sfp-sfpplus1 comment="LAB"
 add bridge=bridge1 vlan-ids=150 tagged=ether1,ether5,ether7,sfp-sfpplus1 comment="GUEST"
 add bridge=bridge1 vlan-ids=160 tagged=bridge1,ether1,sfp-sfpplus1 untagged=ether5,ether7,ether17,ether18,ether19,ether20 comment="MANAGEMENT"
+add bridge=bridge1 vlan-ids=170 tagged=ether1,ether5,ether7 comment="DMZ"
 
 /interface vlan
 add interface=bridge1 name=vlan160-mgmt vlan-id=160 comment="MANAGEMENT"

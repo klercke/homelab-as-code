@@ -181,7 +181,6 @@
               ansible
               check-jsonschema
               kea # for perfdhcp
-              just
               proxmox-auto-install-assistant
               xorriso
               gettext
