@@ -82,28 +82,6 @@ records:
     port: 465
     target: "smtp.migadu.com"
 
-  # == Web, through the home proxy ==
-  pelican:
-    type: "CNAME"
-    name: "pelican.ptxe.dev"
-    content: "ptxe.dev"
-  wings01:
-    type: "CNAME"
-    name: "wings01.ptxe.dev"
-    content: "ptxe.dev"
-  wings02:
-    type: "CNAME"
-    name: "wings02.ptxe.dev"
-    content: "ptxe.dev"
-  images:
-    type: "CNAME"
-    name: "images.ptxe.dev"
-    content: "ptxe.dev"
-  map-mc:
-    type: "CNAME"
-    name: "map.mc.ptxe.dev"
-    content: "ptxe.dev"
-
   # == Game servers ==
   mc-srv:
     type: "SRV"

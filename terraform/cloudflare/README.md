@@ -19,17 +19,24 @@ The apex A record is left to OPNsense's dynamic DNS; everything else is here.
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_registry"></a> [registry](#module\_registry) | ../modules/registry | n/a |
 
 ## Resources
 
 | Name | Type |
 |------|------|
+| [cloudflare_dns_record.edge_aaaa](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/dns_record) | resource |
+| [cloudflare_dns_record.exposed](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/dns_record) | resource |
 | [cloudflare_dns_record.this](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/dns_record) | resource |
 
 ## Inputs
 
-No inputs.
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_edge_proxy_host"></a> [edge\_proxy\_host](#input\_edge\_proxy\_host) | The host key for the server that serves exposed names. | `string` | `"edge01"` | no |
+| <a name="input_env"></a> [env](#input\_env) | The environment slug that this module operates under (prd, dev, lab). | `string` | `"prd"` | no |
 
 ## Outputs
 

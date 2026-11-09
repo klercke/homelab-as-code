@@ -42,7 +42,7 @@ These are features that I intend to add in the future.
 - [x] Proxmox answer files
 - [ ] Rebuild all "legacy" lab hosts in code
 - [ ] Proxmox Datacenter Manager
-- [ ] Public ingress edge (replaces nginx-tmp)
+- [x] Public ingress edge (replaces nginx-tmp)
 - [x] Encrypted offsite backups
 - [x] PVE cluster
 - [ ] SMART alerts

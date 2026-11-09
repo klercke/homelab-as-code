@@ -61,14 +61,6 @@
     enabled: true
     state: started
 
-- name: Resolve public panel names internally
-  tags: [config]
-  ansible.builtin.lineinfile:
-    path: /etc/hosts
-    regexp: '\s{{ item.key | regex_escape }}$'
-    line: "{{ item.value }} {{ item.key }}"
-  loop: "{{ wings_hosts_overrides | dict2items }}"
-
 - name: Install Wings
   tags: [install]
   ansible.builtin.get_url:

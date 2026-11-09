@@ -9,3 +9,10 @@ variable "internal_proxy_host" {
   type        = string
   default     = "caddy01"
 }
+
+
+variable "edge_proxy_host" {
+  description = "The host key for the server proxying public services. Internal clients reach exposed names through it too."
+  type        = string
+  default     = "edge01"
+}

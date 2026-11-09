@@ -10,3 +10,7 @@ recursor_internal_zones:
   - "protonet.internal"
   - "int.ptxe.dev"
   - "use-application-dns.net"
+
+# For split horizon.
+# All edge-Caddy-exposed services are answered with edge01's address internally.
+recursor_exposed_zones: "{{ hlac.exposed_services.values() | map(attribute='hostname') | sort | list }}"
