@@ -63,6 +63,10 @@
             "maxLength": 300,
             "pattern": "^[A-Za-z0-9 ._:=,/+-]*$",
             "description": "Extra llama-server flags, e.g. KV cache quantization or MoE offload. No shell quoting: llama-swap splits on whitespace."
+          },
+          "thinking": {
+            "type": "boolean",
+            "description": "Whether or not thinking should be enabled."
           }
         }
       }
