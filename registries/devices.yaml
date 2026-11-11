@@ -257,6 +257,12 @@ devices:
     description: "Second Proxmox VE node, clustered with pve01. Disks need to be replaced."
 
   # A BMC's static address is ideally its host's octet + 100.
+  pve01-bmc:
+    device_type: "generic-bmc"
+    role: "management"
+    site: "home"
+    mgmt_ip_v4: "10.0.60.120"
+
   pve02-bmc:
     device_type: "generic-bmc"
     role: "management"

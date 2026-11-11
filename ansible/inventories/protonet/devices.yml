@@ -29,6 +29,8 @@
           "ansible_host": "10.0.60.21"
     "device_role_management":
       "hosts":
+        "pve01-bmc":
+          "ansible_host": "10.0.60.120"
         "pve02-bmc":
           "ansible_host": "10.0.60.121"
     "device_role_storage":

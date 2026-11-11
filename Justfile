@@ -70,3 +70,6 @@ service: substrate platform
 # just iso pbs01 /path/to/pbs.io --burn
 iso host source_iso *args:
     scripts/build-installer-iso.sh {{ args }} {{ host }} {{ source_iso }}
+
+# Run all jobs necessary to add a new unmanged device
+device: substrate platform firewall inventory
