@@ -153,7 +153,63 @@ zones:
         name: "klercke.com"
         content: "mail.klercke.com"
         priority: 10
+
+      # == Mail: both senders authorized until cutover, then Migadu only with -all ==
       mail-spf:
         type: "TXT"
         name: "klercke.com"
-        content: '"v=spf1 include:mfg.siteprotect.com ~all"'
+        content: '"v=spf1 include:mfg.siteprotect.com include:spf.migadu.com ~all"'
+
+      # == Mail (Migadu), pre-staged: MX stays on Hostway until cutover ==
+      mail-verify:
+        type: "TXT"
+        name: "klercke.com"
+        content: '"hosted-email-verify=bemxmx6w"'
+      mail-dmarc:
+        type: "TXT"
+        name: "_dmarc.klercke.com"
+        content: '"v=DMARC1; p=none; rua=mailto:konnor@klercke.com"'
+      mail-dkim-1:
+        type: "CNAME"
+        name: "key1._domainkey.klercke.com"
+        content: "key1.klercke.com._domainkey.migadu.com"
+      mail-dkim-2:
+        type: "CNAME"
+        name: "key2._domainkey.klercke.com"
+        content: "key2.klercke.com._domainkey.migadu.com"
+      mail-dkim-3:
+        type: "CNAME"
+        name: "key3._domainkey.klercke.com"
+        content: "key3.klercke.com._domainkey.migadu.com"
+      mail-autoconfig:
+        type: "CNAME"
+        name: "autoconfig.klercke.com"
+        content: "autoconfig.migadu.com"
+      mail-autodiscover-srv:
+        type: "SRV"
+        name: "_autodiscover._tcp.klercke.com"
+        priority: 0
+        weight: 1
+        port: 443
+        target: "autodiscover.migadu.com"
+      mail-imaps:
+        type: "SRV"
+        name: "_imaps._tcp.klercke.com"
+        priority: 0
+        weight: 1
+        port: 993
+        target: "imap.migadu.com"
+      mail-pop3s:
+        type: "SRV"
+        name: "_pop3s._tcp.klercke.com"
+        priority: 0
+        weight: 1
+        port: 995
+        target: "pop.migadu.com"
+      mail-submissions:
+        type: "SRV"
+        name: "_submissions._tcp.klercke.com"
+        priority: 0
+        weight: 1
+        port: 465
+        target: "smtp.migadu.com"
