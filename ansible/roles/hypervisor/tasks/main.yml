@@ -5,6 +5,9 @@
 - name: Guest bridge
   ansible.builtin.import_tasks: bridge.yml
 
+- name: GPU passthrough
+  ansible.builtin.import_tasks: vfio.yml
+
 - name: Install zram-tools
   tags: [install]
   ansible.builtin.apt:

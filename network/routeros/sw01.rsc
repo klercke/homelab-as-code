@@ -89,7 +89,7 @@ add bridge=bridge1 interface=ether17 pvid=160 frame-types=admit-only-untagged-an
 add bridge=bridge1 interface=ether18 pvid=160 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="pve02:bmc"
 add bridge=bridge1 interface=ether19 pvid=160 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="pbs01:bmc"
 add bridge=bridge1 interface=ether20 pvid=160 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="nas01:bmc"
-add bridge=bridge1 interface=ether23 pvid=120 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="homeassistant:eth0"
+add bridge=bridge1 interface=ether23 pvid=120 frame-types=admit-all edge=yes bpdu-guard=yes comment="homeassistant:eth0"
 add bridge=bridge1 interface=ether21 pvid=110 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="laptop01:eth0"
 add bridge=bridge1 interface=sfp-sfpplus1 frame-types=admit-only-vlan-tagged comment="sw02:sfp1"
 # TEMP: sw02 + AP management on untagged VLAN 1 until moved to MANAGEMENT
@@ -101,7 +101,7 @@ add bridge=bridge1 interface=sfp-sfpplus2 pvid=110 frame-types=admit-only-untagg
 add bridge=bridge1 vlan-ids=1 untagged=ether2,ether24 comment="LAN"
 add bridge=bridge1 vlan-ids=110 tagged=ether1,ether5,ether7,sfp-sfpplus1 untagged=ether21,sfp-sfpplus2 comment="CLIENTS"
 add bridge=bridge1 vlan-ids=120 tagged=ether1,ether5,ether7,sfp-sfpplus1 untagged=bond-nas01,ether15,ether23 comment="SERVERS"
-add bridge=bridge1 vlan-ids=130 tagged=ether1,ether5,ether7,sfp-sfpplus1 comment="IOT"
+add bridge=bridge1 vlan-ids=130 tagged=ether1,ether5,ether7,ether23,sfp-sfpplus1 comment="IOT"
 add bridge=bridge1 vlan-ids=140 tagged=ether1,ether5,ether7,sfp-sfpplus1 comment="LAB"
 add bridge=bridge1 vlan-ids=150 tagged=ether1,ether5,ether7,sfp-sfpplus1 comment="GUEST"
 add bridge=bridge1 vlan-ids=160 tagged=bridge1,ether1,sfp-sfpplus1 untagged=ether5,ether7,ether17,ether18,ether19,ether20 comment="MANAGEMENT"

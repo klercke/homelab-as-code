@@ -1,0 +1,43 @@
+---
+# For GPU Passthrough
+- name: Configure vfio-pci device claims
+  tags: [config]
+  ansible.builtin.template:
+    src: vfio.conf.j2
+    dest: /etc/modprobe.d/vfio.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: hypervisor_vfio_pci_ids | length > 0
+  register: _hv_vfio_conf
+  notify:
+    - Update initramfs
+    - Warn vfio reboot
+
+- name: Load vfio modules at boot
+  tags: [config]
+  ansible.builtin.template:
+    src: vfio-modules.conf.j2
+    dest: /etc/modules-load.d/vfio.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: hypervisor_vfio_pci_ids | length > 0
+  register: _hv_vfio_modules
+  notify:
+    - Update initramfs
+    - Warn vfio reboot
+
+- name: Remove vfio config from hosts without passthrough
+  tags: [config]
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/modprobe.d/vfio.conf
+    - /etc/modules-load.d/vfio.conf
+  when: hypervisor_vfio_pci_ids | length == 0
+  register: _hv_vfio_removed
+  notify:
+    - Update initramfs
+    - Warn vfio reboot

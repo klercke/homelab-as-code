@@ -291,6 +291,42 @@ locals {
     }
   }
 
+  # Extra addresses on other VLANs, keyed "<device>-<label>".
+  device_secondary = merge([
+    for k, d in local.devices : {
+      for label, ip in try(d.secondary_ips_v4, {}) : "${k}-${label}" => {
+        device = k
+        ipv4   = ip
+        vlan = one([
+          for vk, v in local.vlans : vk
+          if v.site == d.site && cidrhost(local.vlan_prefix_v4[vk], 0) == cidrhost(
+            "${ip}/${split("/", local.vlan_prefix_v4[vk])[1]}", 0
+          )
+        ])
+      }
+    }
+  ]...)
+
+  device_secondary_cidr_v4 = {
+    for k, s in local.device_secondary :
+    k => "${s.ipv4}/${split("/", local.vlan_prefix_v4[s.vlan])[1]}" if s.vlan != null
+  }
+
+  device_secondary_records_v4 = {
+    for k, s in local.device_secondary : k => {
+      fqdn     = "${k}.${var.env}.${local.sites[local.devices[s.device].site].slug}.${var.domain}"
+      ipv4     = s.ipv4
+      ptr_name = "${join(".", reverse(split(".", s.ipv4)))}.in-addr.arpa."
+      rev_zone = local.reverse_zones_v4[s.vlan]
+    } if s.vlan != null
+  }
+
+  # Every IPv4 address a device holds, for the overlap checks.
+  device_addresses_v4 = concat(
+    [for k, d in local.devices : d.mgmt_ip_v4 if try(d.mgmt_ip_v4, null) != null],
+    [for k, s in local.device_secondary : s.ipv4],
+  )
+
   # == Services ==
 
   # A host's own services (hosts.yaml) come last, for things that differ per

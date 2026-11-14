@@ -12,6 +12,13 @@
         - "2212E61FD5A7"
         - "2212E61FD411"
     hypervisor_vmpool_serials: "{{ hypervisor_vmpool_disk_serials.get(inventory_hostname, []) }}"
+    # vendor:device IDs to hand to vfio-pci, from lspci -nn.
+    # Every function of the card must be listed.
+    hypervisor_vfio_pci_ids_by_host:
+      pve01:
+        - "1002:7480"
+        - "1002:ab30"
+    hypervisor_vfio_pci_ids: "{{ hypervisor_vfio_pci_ids_by_host.get(inventory_hostname, []) }}"
   pre_tasks:
     - name: Load infra secrets
       tags: [always]

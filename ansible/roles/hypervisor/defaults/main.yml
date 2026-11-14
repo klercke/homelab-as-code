@@ -42,3 +42,13 @@ hypervisor_qdevice_host: "pbs01"
 
 # The bridge guests attach to. Must be VLAN-aware; see tasks/bridge.yml.
 hypervisor_bridge: "vmbr0"
+
+# GPU passthrough:
+# vendor:device IDs (lspci -nn) that vfio-pci claims at boot.
+# Empty means no passthrough and no vfio config.
+# Set per host in the playbook.
+# softdeps lets vfio-pcie load before other drivers that would take control of the devices first.
+hypervisor_vfio_pci_ids: []
+hypervisor_vfio_softdep_drivers:
+  - "amdgpu"
+  - "snd_hda_intel"

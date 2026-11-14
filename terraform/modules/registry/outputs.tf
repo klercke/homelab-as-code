@@ -173,6 +173,21 @@ output "device_records_v6" {
   value       = local.device_records_v6
 }
 
+output "device_secondary" {
+  description = "<device>-<label> -> { device, ipv4, vlan }. Extra device addresses from secondary_ips_v4."
+  value       = local.device_secondary
+}
+
+output "device_secondary_cidr_v4" {
+  description = "<device>-<label> -> secondary IPv4 address with prefix length."
+  value       = local.device_secondary_cidr_v4
+}
+
+output "device_secondary_records_v4" {
+  description = "<device>-<label> -> { fqdn, ipv4, ptr_name, rev_zone }."
+  value       = local.device_secondary_records_v4
+}
+
 output "reservations" {
   description = "Device name -> Kea DHCPv4 reservation. Only contains devices with a specified MAC."
   value       = local.reservations

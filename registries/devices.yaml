@@ -262,12 +262,15 @@ devices:
     role: "management"
     site: "home"
     mgmt_ip_v4: "10.0.60.120"
+    mac: "d0:50:99:f3:5b:0e"
+    description: "ASRockRack IPMI for pve01."
 
   pve02-bmc:
     device_type: "generic-bmc"
     role: "management"
     site: "home"
     mgmt_ip_v4: "10.0.60.121"
+    mac: "00:25:90:f1:a2:87"
     description: "Supermicro IPMI for pve02."
 
   nas01:
@@ -327,6 +330,8 @@ devices:
     site: "home"
     mac: "00:23:24:b9:72:d1"
     mgmt_ip_v4: "10.0.20.31"
+    secondary_ips_v4:
+      iot: "10.0.30.31"
     description: "Mini PC sitting in rack running HAOS."
 
   paperless:

@@ -147,7 +147,7 @@ check "host_ips_clear_of_devices" {
   assert {
     condition = length(setintersection(
       toset(values(local.host_ipv4)),
-      toset([for k, d in local.devices : d.mgmt_ip_v4 if try(d.mgmt_ip_v4, null) != null])
+      toset(local.device_addresses_v4)
     )) == 0
     error_message = "A host in hosts.yaml derives an address already used by a device in devices.yaml."
   }
@@ -230,6 +230,30 @@ check "no_name_collisions" {
   assert {
     condition     = length(setintersection(keys(local.hosts), keys(local.devices))) == 0
     error_message = "A name appears in both hosts.yaml and devices.yaml; their DNS records would collide."
+  }
+}
+
+check "device_secondary_ips_resolve" {
+  assert {
+    condition     = alltrue([for k, s in local.device_secondary : s.vlan != null])
+    error_message = "A device secondary_ips_v4 address does not fall inside any VLAN prefix at that device's site."
+  }
+}
+
+check "device_addresses_unique" {
+  assert {
+    condition     = length(distinct(local.device_addresses_v4)) == length(local.device_addresses_v4)
+    error_message = "Two devices in devices.yaml share an address (mgmt_ip_v4 or secondary_ips_v4)."
+  }
+}
+
+check "device_secondary_names_clear" {
+  assert {
+    condition = length(setintersection(
+      keys(local.device_secondary),
+      setunion(keys(local.hosts), keys(local.devices)),
+    )) == 0
+    error_message = "A <device>-<label> secondary name collides with a host or device name; their DNS records would collide."
   }
 }
 

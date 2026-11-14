@@ -54,6 +54,9 @@ No resources.
 | <a name="output_device_records_v4"></a> [device\_records\_v4](#output\_device\_records\_v4) | Device name -> { fqdn, ipv4, ptr\_name, rev\_zone }. |
 | <a name="output_device_records_v6"></a> [device\_records\_v6](#output\_device\_records\_v6) | Device name -> { fqdn, ipv6, ptr\_name, rev\_zone }. Only devices with mgmt\_iid\_v6 are present. |
 | <a name="output_device_roles"></a> [device\_roles](#output\_device\_roles) | Raw device role registry, keyed by role slug. |
+| <a name="output_device_secondary"></a> [device\_secondary](#output\_device\_secondary) | <device>-<label> -> { device, ipv4, vlan }. Extra device addresses from secondary\_ips\_v4. |
+| <a name="output_device_secondary_cidr_v4"></a> [device\_secondary\_cidr\_v4](#output\_device\_secondary\_cidr\_v4) | <device>-<label> -> secondary IPv4 address with prefix length. |
+| <a name="output_device_secondary_records_v4"></a> [device\_secondary\_records\_v4](#output\_device\_secondary\_records\_v4) | <device>-<label> -> { fqdn, ipv4, ptr\_name, rev\_zone }. |
 | <a name="output_device_services"></a> [device\_services](#output\_device\_services) | Flattened services for physical devices keyed target/name/protocol. |
 | <a name="output_device_types"></a> [device\_types](#output\_device\_types) | Raw device type registry, keyed by type slug. |
 | <a name="output_device_vlan"></a> [device\_vlan](#output\_device\_vlan) | Device name -> VLAN key containing its management address. |
