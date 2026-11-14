@@ -9,14 +9,14 @@ locals {
   # Every exposed name is a CNAME to this.
   # Its A record is managed by DDNS on fw01.
   # Its AAAA record is just edge01's.
-  edge_name = "edge.${local.dns.zone}"
+  edge_name = "edge.${local.edge_zone}"
   edge_v6   = try(module.registry.host_records_v6[var.edge_proxy_host].ipv6, null)
 }
 
 resource "cloudflare_dns_record" "exposed" {
   for_each = module.registry.exposed_services
 
-  zone_id = local.zone_id
+  zone_id = local.edge_zone_id
   name    = each.value.hostname
   type    = "CNAME"
   content = local.edge_name
@@ -28,7 +28,7 @@ resource "cloudflare_dns_record" "exposed" {
 resource "cloudflare_dns_record" "edge_aaaa" {
   count = local.edge_v6 == null ? 0 : 1
 
-  zone_id = local.zone_id
+  zone_id = local.edge_zone_id
   name    = local.edge_name
   type    = "AAAA"
   content = local.edge_v6

@@ -1,7 +1,7 @@
 resource "cloudflare_dns_record" "this" {
-  for_each = local.dns.records
+  for_each = local.records
 
-  zone_id = local.zone_id
+  zone_id = each.value.zone_id
   name    = each.value.name
   type    = each.value.type
   ttl     = try(each.value.ttl, 1)

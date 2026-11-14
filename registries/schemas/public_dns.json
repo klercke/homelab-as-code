@@ -4,43 +4,55 @@
   "title": "ProtoNet public DNS registry",
   "type": "object",
   "additionalProperties": false,
-  "required": ["zone", "records"],
+  "required": ["zones"],
   "properties": {
-    "zone": {
-      "type": "string",
-      "description": "The Cloudflare zone these records live in."
-    },
-    "records": {
+    "zones": {
       "type": "object",
-      "description": "Stable key -> record. Renaming a key replaces the record.",
-      "propertyNames": { "pattern": "^[a-z][a-z0-9-]{1,62}$" },
+      "description": "Cloudflare zone name -> its ID and records.",
+      "propertyNames": { "pattern": "^[a-z0-9.-]+\\.[a-z]+$" },
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["type", "name"],
+        "required": ["zone_id", "records"],
         "properties": {
-          "type": { "enum": ["A", "AAAA", "CNAME", "MX", "TXT", "SRV"] },
-          "name": { "type": "string", "description": "Fully qualified, without the trailing dot." },
-          "content": { "type": "string", "description": "Not used for SRV. TXT values keep their surrounding quotes." },
-          "priority": { "type": "integer", "minimum": 0, "maximum": 65535 },
-          "weight": { "type": "integer", "minimum": 0, "maximum": 65535 },
-          "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
-          "target": { "type": "string" },
-          "ttl": { "type": "integer", "description": "Seconds, or 1 for automatic (the default)." },
-          "proxied": { "type": "boolean", "description": "A, AAAA and CNAME only. Defaults to false." }
-        },
-        "allOf": [
-          {
-            "if": { "properties": { "type": { "const": "SRV" } } },
-            "then": { "required": ["priority", "weight", "port", "target"], "not": { "required": ["content"] } },
-            "else": { "required": ["content"] }
-          },
-          {
-            "if": { "properties": { "type": { "const": "MX" } } },
-            "then": { "required": ["priority"] }
+          "zone_id": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+          "records": {
+            "type": "object",
+            "description": "Stable key -> record. Renaming a key replaces the record.",
+            "propertyNames": { "pattern": "^[a-z][a-z0-9-]{1,62}$" },
+            "additionalProperties": { "$ref": "#/$defs/record" }
           }
-        ]
+        }
       }
+    }
+  },
+  "$defs": {
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "enum": ["A", "AAAA", "CNAME", "MX", "TXT", "SRV"] },
+        "name": { "type": "string", "description": "Fully qualified, without the trailing dot." },
+        "content": { "type": "string", "description": "Not used for SRV. TXT values keep their surrounding quotes." },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "weight": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "target": { "type": "string" },
+        "ttl": { "type": "integer", "description": "Seconds, or 1 for automatic (the default)." },
+        "proxied": { "type": "boolean", "description": "A, AAAA and CNAME only. Defaults to false." }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "SRV" } } },
+          "then": { "required": ["priority", "weight", "port", "target"], "not": { "required": ["content"] } },
+          "else": { "required": ["content"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "MX" } } },
+          "then": { "required": ["priority"] }
+        }
+      ]
     }
   }
 }
