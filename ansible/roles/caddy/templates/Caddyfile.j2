@@ -3,7 +3,14 @@
 	email {{ caddy_acme_email }}
 
 	log {
+{% if caddy_mode == 'site' %}
+		output file /var/log/caddy/caddy.log {
+			roll_at 00:00
+			roll_keep_for {{ caddy_access_log_keep }}
+		}
+{% else %}
 		output file /var/log/caddy/caddy.log
+{% endif %}
 		format json
 	}
 }

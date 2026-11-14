@@ -2,3 +2,8 @@
 - name: Reload sshd
   ansible.builtin.shell:
     cmd: /usr/sbin/sshd -t && systemctl reload sshd
+
+- name: Restart journald
+  ansible.builtin.systemd_service:
+    name: systemd-journald
+    state: restarted

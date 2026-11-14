@@ -113,3 +113,29 @@
     permanent: true
     immediate: true
     state: enabled
+
+# Logs with visitor IPs are kept 14 days, per the privacy page.
+# Rotate the journal daily and drop files after 13 days, so no entry outlives
+# ~14.
+- name: Create journald drop-in directory
+  tags: [logging]
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Limit journal retention
+  tags: [logging]
+  ansible.builtin.copy:
+    dest: /etc/systemd/journald.conf.d/10-retention.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by Ansible. Matches the website's privacy page.
+      [Journal]
+      MaxFileSec=1day
+      MaxRetentionSec=13day
+  notify: Restart journald
