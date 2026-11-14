@@ -1,0 +1,18 @@
+---
+# The account CI deploys as.
+# Its only key is locked to rrsync into web_deploy_root.
+web_deploy_user: "deploy"
+web_deploy_root: "/srv/http/klercke.com/public"
+web_deploy_key: "web01_deploy.pub"
+web_keys_dir: "{{ playbook_dir }}/../../keys"
+
+# Admin logins (ansible plus the base role's login users) are only allowed from
+# home and NetBird.
+# Home's IPv4 is dynamic, so it's looked up from the DDNS record at run time.
+web_admin_users: "{{ ['ansible'] + (protonet_login_users | map(attribute='name') | list) }}"
+web_home_v4_name: "edge.ptxe.dev"
+web_netbird_cidrs:
+  - "100.64.0.0/10"
+
+# Refuse to write AllowUsers unless this run comes from home's current IPv4.
+web_ssh_source_check: true

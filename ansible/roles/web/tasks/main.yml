@@ -1,0 +1,115 @@
+---
+- name: Install rsync and rrsync
+  tags: [install]
+  ansible.builtin.dnf:
+    name:
+      - rsync
+      - rsync-rrsync
+    state: present
+
+- name: Check rrsync is where the deploy key expects it
+  tags: [deploy]
+  ansible.builtin.stat:
+    path: /usr/bin/rrsync
+  register: _web_rrsync
+
+- name: Fail if rrsync is missing
+  tags: [deploy]
+  ansible.builtin.assert:
+    that: _web_rrsync.stat.exists
+    fail_msg: "/usr/bin/rrsync not found. Check where rsync-rrsync installs it (rpm -ql rsync-rrsync)."
+
+- name: Create deploy user
+  tags: [deploy]
+  ansible.builtin.user:
+    name: "{{ web_deploy_user }}"
+    system: true
+    shell: /bin/bash
+    home: "/var/lib/{{ web_deploy_user }}"
+    create_home: true
+    password_lock: true
+
+- name: Create site directories
+  tags: [deploy]
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: "0755"
+  loop:
+    - path: "{{ web_deploy_root | dirname }}"
+      owner: "root"
+    - path: "{{ web_deploy_root }}"
+      owner: "{{ web_deploy_user }}"
+
+# Restrict drops forwarding, PTY, agent and X11.
+# The forced command means the key can only rsync into web_deploy_root,
+# write-only.
+- name: Lock the deploy key to rrsync
+  tags: [deploy]
+  ansible.posix.authorized_key:
+    user: "{{ web_deploy_user }}"
+    key: "{{ lookup('ansible.builtin.file', web_keys_dir + '/' + web_deploy_key) }}"
+    key_options: 'restrict,command="/usr/bin/rrsync -wo {{ web_deploy_root }}"'
+    exclusive: true
+
+- name: Look up home's public IPv4
+  tags: [ssh]
+  ansible.builtin.command:
+    cmd: dig +short A {{ web_home_v4_name }} @1.1.1.1
+  delegate_to: localhost
+  become: false
+  run_once: true
+  changed_when: false
+  register: _web_home_v4
+
+- name: Find the address this run connects from
+  tags: [ssh]
+  ansible.builtin.shell:
+    cmd: echo "${SSH_CLIENT%% *}"
+  become: false
+  changed_when: false
+  register: _web_client
+
+- name: Determine who may log in, and from where
+  tags: [ssh]
+  ansible.builtin.set_fact:
+    _web_home_v4_addr: "{{ _web_home_v4.stdout_lines | select('match', '^[0-9.]+$') | first }}"
+    _web_admin_sources: >-
+      {{ [(_web_home_v4.stdout_lines | select('match', '^[0-9.]+$') | first) ~ '/32',
+          hlac.sites.home.prefix_v6] + web_netbird_cidrs }}
+
+- name: Refuse to lock out this connection
+  tags: [ssh]
+  ansible.builtin.assert:
+    that: _web_client.stdout == _web_home_v4_addr
+    fail_msg: >-
+      This run connects from {{ _web_client.stdout }}, but {{ web_home_v4_name }}
+      says home is {{ _web_home_v4_addr }}. Writing AllowUsers now could lock
+      Ansible out. Check DDNS, or set web_ssh_source_check=false if you're
+      deliberately connecting another allowed way.
+  when: web_ssh_source_check
+
+- name: Limit who can log in over SSH
+  tags: [ssh]
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/20-web.conf
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      # Managed by Ansible.
+      # The deploy user may connect from anywhere.
+      # Its only key is locked to rrsync.
+      # Admin users only from home and NetBird.
+      AllowUsers {{ web_deploy_user }} {{ web_admin_users | product(_web_admin_sources) | map('join', '@') | join(' ') }}
+  notify: Reload sshd
+
+- name: Open HTTP/3
+  tags: [firewall]
+  ansible.posix.firewalld:
+    port: "443/udp"
+    permanent: true
+    immediate: true
+    state: enabled

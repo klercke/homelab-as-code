@@ -1,0 +1,4 @@
+---
+- name: Reload sshd
+  ansible.builtin.shell:
+    cmd: /usr/sbin/sshd -t && systemctl reload sshd
