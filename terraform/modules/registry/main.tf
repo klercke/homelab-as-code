@@ -13,6 +13,9 @@ locals {
   vlans = yamldecode(file("${local._base}/vlans.yaml")).vlans
   hosts = yamldecode(file("${local._base}/hosts.yaml")).hosts
 
+  _cloud_file = "${local._base}/cloud.yaml"
+  cloud_hosts = fileexists(local._cloud_file) ? yamldecode(file(local._cloud_file)).cloud_hosts : {}
+
   racks        = local._devices.racks
   locations    = local._devices.locations
   device_roles = local._devices.device_roles
@@ -351,6 +354,30 @@ locals {
       for s in try(local.role_services[d.role], []) :
       "${dk}/${s.name}/${s.protocol}" => merge(s, {
         target = dk
+        ports = flatten([
+          for p in s.ports : can(tonumber(p)) ? [tonumber(p)] : range(
+            tonumber(split("-", p)[0]),
+            tonumber(split("-", p)[1]) + 1,
+          )
+        ])
+      })
+    }
+  ], [{}])...)
+
+  # Cloud hosts don't run sshd on 22, so the shared SSH entry is replaced by
+  # one on the host's own port.
+  # It's public because web deploys come from CI.
+  cloud_services = merge(concat([
+    for hk, h in local.cloud_hosts : {
+      for s in concat(
+        [{ name = "SSH", protocol = "tcp", ports = [h.ssh_port], public = true, description = "Ansible, admin, and deploy access." }],
+        [for s in local.host_services : s if s.name != "SSH"],
+        try(local.role_services[h.role], []),
+        try(h.services, []),
+      ) :
+      "${hk}/${s.name}/${s.protocol}" => merge(s, {
+        target = hk
+        public = try(s.public, false)
         ports = flatten([
           for p in s.ports : can(tonumber(p)) ? [tonumber(p)] : range(
             tonumber(split("-", p)[0]),

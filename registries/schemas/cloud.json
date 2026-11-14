@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://protonet.internal/schemas/cloud.json",
+  "title": "ProtoNet cloud host registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["cloud_hosts"],
+  "properties": {
+    "cloud_hosts": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9-]{1,14}[0-9]{2}$",
+        "description": "Functional name: role slug followed by a two-digit ordinal. Shared namespace with hosts.yaml and devices.yaml."
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["provider", "region", "plan", "image", "layer", "role", "crit", "ssh_port"],
+        "properties": {
+          "provider": {
+            "enum": ["linode"]
+          },
+          "region": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "Provider region ID, e.g. us-east."
+          },
+          "plan": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "Provider plan ID. At least 2 GiB of RAM: dnf transactions OOM below roughly 1.7 GiB usable."
+          },
+          "image": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+/[a-z0-9.-]+$",
+            "description": "Provider image ID. Only read at creation; changing it does not rebuild."
+          },
+          "layer": {
+            "enum": ["l0", "l1", "l2"],
+            "description": "l0 substrate, l1 source-of-truth services, l2 workloads."
+          },
+          "role": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,30}$"
+          },
+          "crit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "1 critical infra, 2 infra non-critical, 3 end-user impact, 4 no impact."
+          },
+          "ssh_port": {
+            "type": "integer",
+            "minimum": 1024,
+            "maximum": 65535,
+            "description": "Admin and deploy sshd port. Port 22 is left free for other services."
+          },
+          "backups": {
+            "type": "boolean",
+            "description": "Enable the provider's own backup service. Defaults to false."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "services": {
+            "type": "array",
+            "description": "This host's own services, on top of its role's in services.yaml.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "protocol", "ports"],
+              "properties": {
+                "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+                "protocol": { "enum": ["tcp", "udp", "sctp"] },
+                "ports": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "oneOf": [
+                      { "type": "integer", "minimum": 1, "maximum": 65535 },
+                      { "type": "string", "pattern": "^[0-9]{1,5}-[0-9]{1,5}$" }
+                    ]
+                  }
+                },
+                "public": { "type": "boolean" },
+                "description": { "type": "string", "maxLength": 200 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

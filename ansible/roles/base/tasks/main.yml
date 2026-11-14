@@ -1,7 +1,7 @@
 # Checks the registry's configured maximum, not ansible_memtotal_mb: the
 # balloon shrinks MemTotal toward memory_min, so a healthy host could fail a
 # check against the live value.
-- name: Check configured memory
+- name: Check configured memory for non-cloud hosts
   ansible.builtin.assert:
     that:
       - hlac.hosts[inventory_hostname].memory is defined
@@ -10,6 +10,16 @@
       {{ inventory_hostname }} has memory
       {{ hlac.hosts[inventory_hostname].memory | default('missing from hlac.json (run just substrate)') }}
       (MB, from hosts.yaml). dnf transactions need ~2GB.
+  when: not base_is_cloud
+
+- name: Check memory on cloud hosts
+  ansible.builtin.assert:
+    that:
+      - ansible_memtotal_mb >= 1800
+    fail_msg: >-
+      {{ inventory_hostname }} has {{ ansible_memtotal_mb }} MB. dnf transactions
+      need ~2GB; pick a larger plan in cloud.yaml.
+  when: base_is_cloud
 
 - name: Enable EPEL
   tags: [install]
@@ -47,6 +57,7 @@
   ansible.builtin.systemd_service:
     name: qemu-guest-agent
     enabled: true
+  when: not base_is_cloud
 
 - name: Harden sshd
   tags: [ssh, config]
@@ -95,6 +106,14 @@
         enabled: true
         state: started
 
+    - name: Allow the cloud host's sshd port
+      ansible.posix.firewalld:
+        port: "{{ hlac.cloud_hosts[inventory_hostname].ssh_port }}/tcp"
+        permanent: true
+        immediate: true
+        state: enabled
+      when: base_is_cloud
+
     - name: Allow base services
       ansible.posix.firewalld:
         service: "{{ item }}"
@@ -115,13 +134,14 @@
 - name: Configure resolvers
   ansible.builtin.import_tasks: resolvers.yml
   tags: [dns, config]
+  when: not base_is_cloud
 
 - name: Configure IPv6
   ansible.builtin.import_tasks: ipv6.yml
   tags: [ipv6, config]
   vars:
     _ipv6: "{{ hlac.hosts[inventory_hostname] }}"
-  when: hlac.hosts[inventory_hostname].token_v6 is not none
+  when: not base_is_cloud and hlac.hosts[inventory_hostname].token_v6 is not none
 
 - name: Check whether PSI is available
   tags: [bootloader]

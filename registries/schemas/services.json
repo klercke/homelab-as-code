@@ -42,6 +42,10 @@
         "description": {
           "type": "string",
           "maxLength": 200
+        },
+        "public": {
+          "type": "boolean",
+          "description": "Reachable from the internet. Opened in a cloud host's provider firewall; ignored for Proxmox hosts and devices."
         }
       }
     }
