@@ -7,3 +7,12 @@
 - name: Reload bridge networking
   ansible.builtin.command: ifreload -a
   changed_when: true
+
+- name: Update initramfs
+  ansible.builtin.command:
+    argv: [update-initramfs, -u, -k, all]
+  changed_when: true
+
+- name: Warn vfio reboot
+  ansible.builtin.debug:
+    msg: "vfio-pci config changed. Manual reboot required for the device claims to take effect."

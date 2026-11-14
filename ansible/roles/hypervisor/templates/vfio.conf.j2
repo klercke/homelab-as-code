@@ -1,0 +1,5 @@
+# Managed by Ansible. Local changes will be overwritten.
+options vfio-pci ids={{ hypervisor_vfio_pci_ids | join(',') }}
+{% for driver in hypervisor_vfio_softdep_drivers %}
+softdep {{ driver }} pre: vfio-pci
+{% endfor %}
