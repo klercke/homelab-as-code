@@ -11,106 +11,149 @@
 #
 # All string values are quoted deliberately, see README
 
-zone: "ptxe.dev"
+zones:
+  "ptxe.dev":
+    zone_id: "6994338dbca6b4685e53f2ab0be6c48f"
+    records:
+      # == Mail (Migadu) ==
+      mail-mx-1:
+        type: "MX"
+        name: "ptxe.dev"
+        content: "aspmx1.migadu.com"
+        priority: 10
+      mail-mx-2:
+        type: "MX"
+        name: "ptxe.dev"
+        content: "aspmx2.migadu.com"
+        priority: 20
+      mail-spf:
+        type: "TXT"
+        name: "ptxe.dev"
+        content: '"v=spf1 include:spf.migadu.com -all"'
+      mail-verify:
+        type: "TXT"
+        name: "ptxe.dev"
+        content: '"hosted-email-verify=nqlhuodh"'
+      mail-dmarc:
+        type: "TXT"
+        name: "_dmarc.ptxe.dev"
+        content: '"v=DMARC1; p=quarantine;"'
+      mail-dkim-1:
+        type: "CNAME"
+        name: "key1._domainkey.ptxe.dev"
+        content: "key1.ptxe.dev._domainkey.migadu.com"
+      mail-dkim-2:
+        type: "CNAME"
+        name: "key2._domainkey.ptxe.dev"
+        content: "key2.ptxe.dev._domainkey.migadu.com"
+      mail-dkim-3:
+        type: "CNAME"
+        name: "key3._domainkey.ptxe.dev"
+        content: "key3.ptxe.dev._domainkey.migadu.com"
+      mail-autoconfig:
+        type: "CNAME"
+        name: "autoconfig.ptxe.dev"
+        content: "autoconfig.migadu.com"
+      mail-autodiscover:
+        type: "SRV"
+        name: "_autodiscover._tcp.ptxe.dev"
+        priority: 0
+        weight: 1
+        port: 443
+        target: "autodiscover.migadu.com"
+      mail-imaps:
+        type: "SRV"
+        name: "_imaps._tcp.ptxe.dev"
+        priority: 0
+        weight: 1
+        port: 993
+        target: "imap.migadu.com"
+      mail-pop3s:
+        type: "SRV"
+        name: "_pop3s._tcp.ptxe.dev"
+        priority: 0
+        weight: 1
+        port: 995
+        target: "pop.migadu.com"
+      mail-submissions:
+        type: "SRV"
+        name: "_submissions._tcp.ptxe.dev"
+        priority: 0
+        weight: 1
+        port: 465
+        target: "smtp.migadu.com"
 
-records:
-  # == Mail (Migadu) ==
-  mail-mx-1:
-    type: "MX"
-    name: "ptxe.dev"
-    content: "aspmx1.migadu.com"
-    priority: 10
-  mail-mx-2:
-    type: "MX"
-    name: "ptxe.dev"
-    content: "aspmx2.migadu.com"
-    priority: 20
-  mail-spf:
-    type: "TXT"
-    name: "ptxe.dev"
-    content: '"v=spf1 include:spf.migadu.com -all"'
-  mail-verify:
-    type: "TXT"
-    name: "ptxe.dev"
-    content: '"hosted-email-verify=nqlhuodh"'
-  mail-dmarc:
-    type: "TXT"
-    name: "_dmarc.ptxe.dev"
-    content: '"v=DMARC1; p=quarantine;"'
-  mail-dkim-1:
-    type: "CNAME"
-    name: "key1._domainkey.ptxe.dev"
-    content: "key1.ptxe.dev._domainkey.migadu.com"
-  mail-dkim-2:
-    type: "CNAME"
-    name: "key2._domainkey.ptxe.dev"
-    content: "key2.ptxe.dev._domainkey.migadu.com"
-  mail-dkim-3:
-    type: "CNAME"
-    name: "key3._domainkey.ptxe.dev"
-    content: "key3.ptxe.dev._domainkey.migadu.com"
-  mail-autoconfig:
-    type: "CNAME"
-    name: "autoconfig.ptxe.dev"
-    content: "autoconfig.migadu.com"
-  mail-autodiscover:
-    type: "SRV"
-    name: "_autodiscover._tcp.ptxe.dev"
-    priority: 0
-    weight: 1
-    port: 443
-    target: "autodiscover.migadu.com"
-  mail-imaps:
-    type: "SRV"
-    name: "_imaps._tcp.ptxe.dev"
-    priority: 0
-    weight: 1
-    port: 993
-    target: "imap.migadu.com"
-  mail-pop3s:
-    type: "SRV"
-    name: "_pop3s._tcp.ptxe.dev"
-    priority: 0
-    weight: 1
-    port: 995
-    target: "pop.migadu.com"
-  mail-submissions:
-    type: "SRV"
-    name: "_submissions._tcp.ptxe.dev"
-    priority: 0
-    weight: 1
-    port: 465
-    target: "smtp.migadu.com"
+      # == Game servers ==
+      mc-srv:
+        type: "SRV"
+        name: "_minecraft._tcp.mc.ptxe.dev"
+        priority: 1
+        weight: 1
+        port: 27200
+        target: "ptxe.dev"
+      gregtech-srv:
+        type: "SRV"
+        name: "_minecraft._tcp.gregtech.ptxe.dev"
+        priority: 1
+        weight: 1
+        port: 27203
+        target: "ptxe.dev"
+      mmc-srv:
+        type: "SRV"
+        name: "_minecraft._tcp.mmc.ptxe.dev"
+        priority: 1
+        weight: 1
+        port: 27008
+        target: "pelican.atheria.org"
 
-  # == Game servers ==
-  mc-srv:
-    type: "SRV"
-    name: "_minecraft._tcp.mc.ptxe.dev"
-    priority: 1
-    weight: 1
-    port: 27200
-    target: "ptxe.dev"
-  gregtech-srv:
-    type: "SRV"
-    name: "_minecraft._tcp.gregtech.ptxe.dev"
-    priority: 1
-    weight: 1
-    port: 27203
-    target: "ptxe.dev"
-  mmc-srv:
-    type: "SRV"
-    name: "_minecraft._tcp.mmc.ptxe.dev"
-    priority: 1
-    weight: 1
-    port: 27008
-    target: "pelican.atheria.org"
+      # == Elsewhere ==
+      status:
+        type: "CNAME"
+        name: "status.ptxe.dev"
+        content: "z3r0d4y.dev"
+      vtt:
+        type: "CNAME"
+        name: "vtt.ptxe.dev"
+        content: "foundry.prototypexenon.com"
 
-  # == Elsewhere ==
-  status:
-    type: "CNAME"
-    name: "status.ptxe.dev"
-    content: "z3r0d4y.dev"
-  vtt:
-    type: "CNAME"
-    name: "vtt.ptxe.dev"
-    content: "foundry.prototypexenon.com"
+  "klercke.com":
+    zone_id: "72c67d5d298e3c185576d7b418c9dc9f"
+    records:
+      # == Legacy Hostway: replaced at the Migadu cutover ==
+      web-apex:
+        type: "A"
+        name: "klercke.com"
+        content: "64.41.95.164"
+      web-www:
+        type: "A"
+        name: "www.klercke.com"
+        content: "64.41.95.164"
+      web-ftp:
+        type: "A"
+        name: "ftp.klercke.com"
+        content: "64.41.95.164"
+      mail-host:
+        type: "A"
+        name: "mail.klercke.com"
+        content: "64.26.60.153"
+      mail-pop:
+        type: "A"
+        name: "pop.klercke.com"
+        content: "64.26.60.229"
+      mail-smtp:
+        type: "A"
+        name: "smtp.klercke.com"
+        content: "64.26.60.229"
+      mail-autodiscover:
+        type: "A"
+        name: "autodiscover.klercke.com"
+        content: "64.26.60.105"
+      mail-mx:
+        type: "MX"
+        name: "klercke.com"
+        content: "mail.klercke.com"
+        priority: 10
+      mail-spf:
+        type: "TXT"
+        name: "klercke.com"
+        content: '"v=spf1 include:mfg.siteprotect.com ~all"'
