@@ -119,19 +119,20 @@ zones:
   "klercke.com":
     zone_id: "72c67d5d298e3c185576d7b418c9dc9f"
     records:
-      # == Legacy Hostway: replaced at the Migadu cutover ==
+      # == Web ==
       web-apex:
         type: "A"
         name: "klercke.com"
-        content: "64.41.95.164"
+        host: "web01"
+      web-apex-v6:
+        type: "AAAA"
+        name: "klercke.com"
+        host: "web01"
       web-www:
-        type: "A"
+        type: "CNAME"
         name: "www.klercke.com"
-        content: "64.41.95.164"
-      web-ftp:
-        type: "A"
-        name: "ftp.klercke.com"
-        content: "64.41.95.164"
+        content: "klercke.com"
+      # == Legacy Hostway: replaced at the Migadu cutover ==
       mail-host:
         type: "A"
         name: "mail.klercke.com"
