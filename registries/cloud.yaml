@@ -21,3 +21,4 @@ cloud_hosts:
     ssh_port: 2222
     backups: true
     description: "Host for public-facing websites."
+    rdns: "klercke.com"

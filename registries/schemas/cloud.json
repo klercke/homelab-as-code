@@ -59,6 +59,11 @@
             "type": "boolean",
             "description": "Enable the provider's own backup service. Defaults to false."
           },
+          "rdns": {
+            "type": "string",
+            "pattern": "^([a-z0-9-]+\\.)+[a-z]+$",
+            "description": "Reverse DNS name for the host's public addresses. Its A/AAAA must already resolve to them."
+          },
           "description": {
             "type": "string",
             "maxLength": 200

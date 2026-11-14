@@ -28,7 +28,9 @@ Nothing else reads NetBox yet, so it applies last, after the role playbooks have
 | Name | Type |
 |------|------|
 | [netbox_aggregate.private](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/aggregate) | resource |
+| [netbox_cluster.cloud](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/cluster) | resource |
 | [netbox_cluster.protonet](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/cluster) | resource |
+| [netbox_cluster_type.cloud](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/cluster_type) | resource |
 | [netbox_cluster_type.pve](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/cluster_type) | resource |
 | [netbox_device.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device) | resource |
 | [netbox_device_bay.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_bay) | resource |
@@ -39,7 +41,10 @@ Nothing else reads NetBox yet, so it applies last, after the role playbooks have
 | [netbox_device_role.physical](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_role) | resource |
 | [netbox_device_role.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_role) | resource |
 | [netbox_device_type.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/device_type) | resource |
+| [netbox_interface.cloud](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/interface) | resource |
 | [netbox_interface.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/interface) | resource |
+| [netbox_ip_address.cloud_v4](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
+| [netbox_ip_address.cloud_v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
 | [netbox_ip_address.device_mgmt](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
 | [netbox_ip_address.device_mgmt_v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
 | [netbox_ip_address.device_secondary](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/ip_address) | resource |
@@ -56,6 +61,8 @@ Nothing else reads NetBox yet, so it applies last, after the role playbooks have
 | [netbox_prefix.site_v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/prefix) | resource |
 | [netbox_prefix.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/prefix) | resource |
 | [netbox_prefix.v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/prefix) | resource |
+| [netbox_primary_ip.cloud_v4](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/primary_ip) | resource |
+| [netbox_primary_ip.cloud_v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/primary_ip) | resource |
 | [netbox_primary_ip.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/primary_ip) | resource |
 | [netbox_primary_ip.v6](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/primary_ip) | resource |
 | [netbox_rack.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/rack) | resource |
@@ -63,12 +70,16 @@ Nothing else reads NetBox yet, so it applies last, after the role playbooks have
 | [netbox_region.l1](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/region) | resource |
 | [netbox_region.l2](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/region) | resource |
 | [netbox_rir.rfc1918](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/rir) | resource |
+| [netbox_service.cloud](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/service) | resource |
 | [netbox_service.device](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/service) | resource |
 | [netbox_service.vm](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/service) | resource |
+| [netbox_site.cloud](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/site) | resource |
 | [netbox_site.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/site) | resource |
 | [netbox_tag.crit](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/tag) | resource |
 | [netbox_tag.hlac](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/tag) | resource |
+| [netbox_virtual_disk.cloud](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/virtual_disk) | resource |
 | [netbox_virtual_disk.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/virtual_disk) | resource |
+| [netbox_virtual_machine.cloud](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/virtual_machine) | resource |
 | [netbox_virtual_machine.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/virtual_machine) | resource |
 | [netbox_virtual_machine_interface_primary_mac_address.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/virtual_machine_interface_primary_mac_address) | resource |
 | [netbox_vlan.this](https://registry.terraform.io/providers/e-breuninger/netbox/latest/docs/resources/vlan) | resource |

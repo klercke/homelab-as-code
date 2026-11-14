@@ -71,6 +71,8 @@ A token with privilege separation on gets only what both it and its user hold, a
 |------|------|
 | [linode_firewall.cloud](https://registry.terraform.io/providers/linode/linode/latest/docs/resources/firewall) | resource |
 | [linode_instance.cloud](https://registry.terraform.io/providers/linode/linode/latest/docs/resources/instance) | resource |
+| [linode_rdns.cloud_v4](https://registry.terraform.io/providers/linode/linode/latest/docs/resources/rdns) | resource |
+| [linode_rdns.cloud_v6](https://registry.terraform.io/providers/linode/linode/latest/docs/resources/rdns) | resource |
 | [local_file.cloud_inventory](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_file.derived_network](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_file.devices_inventory](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |

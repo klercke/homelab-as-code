@@ -81,14 +81,21 @@ resource "local_file" "derived_network" {
 
       cloud_hosts = {
         for k, h in local.cloud_linode : k => {
-          provider = h.provider
-          region   = h.region
-          role     = h.role
-          layer    = h.layer
-          crit     = h.crit
-          ssh_port = h.ssh_port
-          ipv4     = linode_instance.cloud[k].ip_address
-          ipv6     = split("/", linode_instance.cloud[k].ipv6)[0]
+          provider    = h.provider
+          region      = h.region
+          image       = h.image
+          role        = h.role
+          layer       = h.layer
+          crit        = h.crit
+          ssh_port    = h.ssh_port
+          description = try(h.description, null)
+          rdns        = try(h.rdns, null)
+          ipv4        = linode_instance.cloud[k].ip_address
+          ipv6        = split("/", linode_instance.cloud[k].ipv6)[0]
+          # Sizes as the provider reports them, for NetBox
+          vcpus     = try(linode_instance.cloud[k].specs[0].vcpus, linode_instance.cloud[k].specs.vcpus)
+          memory_mb = try(linode_instance.cloud[k].specs[0].memory, linode_instance.cloud[k].specs.memory)
+          disk_mb   = try(linode_instance.cloud[k].specs[0].disk, linode_instance.cloud[k].specs.disk)
         }
       }
 

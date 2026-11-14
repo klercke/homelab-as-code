@@ -63,7 +63,7 @@ resource "netbox_platform" "rocky9" {
 }
 
 resource "netbox_device_role" "this" {
-  for_each  = toset([for _, h in local.hosts : h.role])
+  for_each  = toset(concat([for _, h in local.hosts : h.role], [for _, h in local.cloud_hosts : h.role]))
   name      = each.value
   color_hex = lookup(local.role_colors, each.value, "9e9e9e")
   vm_role   = true

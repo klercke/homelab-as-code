@@ -58,3 +58,23 @@ resource "linode_firewall" "cloud" {
 
   linodes = [linode_instance.cloud[each.key].id]
 }
+
+# Linode refuses rDNS unless the name already resolves to the address, so a new
+# host's rdns: goes in after its forward records (just cloudflare).
+locals {
+  cloud_rdns = { for k, h in local.cloud_linode : k => h.rdns if try(h.rdns, null) != null }
+}
+
+resource "linode_rdns" "cloud_v4" {
+  for_each = local.cloud_rdns
+
+  address = linode_instance.cloud[each.key].ip_address
+  rdns    = each.value
+}
+
+resource "linode_rdns" "cloud_v6" {
+  for_each = local.cloud_rdns
+
+  address = split("/", linode_instance.cloud[each.key].ipv6)[0]
+  rdns    = each.value
+}

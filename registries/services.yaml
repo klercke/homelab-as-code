@@ -204,6 +204,7 @@ role_services:
       protocol: "tcp"
       ports: [9180]
       description: "Prometheus metrics for Caddy reverse proxy."
+
   web:
     - name: "HTTP"
       protocol: "tcp"
