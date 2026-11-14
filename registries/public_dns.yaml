@@ -213,3 +213,9 @@ zones:
         weight: 1
         port: 465
         target: "smtp.migadu.com"
+
+      # == Verification ==
+      bluesky:
+        type: "TXT"
+        name: "_atproto.klercke.com"
+        content: '"did=did:plc:xafnygoa5rxkdvhets75nbb5"'
