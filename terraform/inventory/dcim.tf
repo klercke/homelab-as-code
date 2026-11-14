@@ -168,6 +168,19 @@ resource "netbox_device_primary_ip" "this" {
   ip_address_id = netbox_ip_address.device_mgmt[each.key].id
 }
 
+# Extra addresses from secondary_ips_v4, on the same mgmt interface (one
+# physical port, tagged VLANs).
+resource "netbox_ip_address" "device_secondary" {
+  for_each = module.registry.device_secondary_cidr_v4
+
+  ip_address   = each.value
+  status       = "active"
+  dns_name     = trimsuffix(module.registry.device_secondary_records_v4[each.key].fqdn, ".")
+  interface_id = netbox_device_interface.mgmt[module.registry.device_secondary[each.key].device].id
+  object_type  = "dcim.interface"
+  tags         = [netbox_tag.hlac.name]
+}
+
 # Only devices with mgmt_iid_v6. hlac does not configure the address; the device
 # must already use it.
 resource "netbox_ip_address" "device_mgmt_v6" {
