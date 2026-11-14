@@ -43,16 +43,29 @@
     - path: "{{ web_deploy_root }}"
       owner: "{{ web_deploy_user }}"
 
-# Restrict drops forwarding, PTY, agent and X11.
-# The forced command means the key can only rsync into web_deploy_root,
-# write-only.
-- name: Lock the deploy key to rrsync
+- name: Create the deploy user's .ssh directory
   tags: [deploy]
-  ansible.posix.authorized_key:
-    user: "{{ web_deploy_user }}"
-    key: "{{ lookup('ansible.builtin.file', web_keys_dir + '/' + web_deploy_key) }}"
-    key_options: 'restrict,command="/usr/bin/rrsync -wo {{ web_deploy_root }}"'
-    exclusive: true
+  ansible.builtin.file:
+    path: "/var/lib/{{ web_deploy_user }}/.ssh"
+    state: directory
+    owner: "{{ web_deploy_user }}"
+    group: "{{ web_deploy_user }}"
+    mode: "0700"
+
+# One key per deploy target.
+# Restrict drops forwarding, PTY, agent and X11.
+# Each forced command allows only a write-only rsync into its directory.
+- name: Lock the deploy keys to rrsync
+  tags: [deploy]
+  ansible.builtin.copy:
+    dest: "/var/lib/{{ web_deploy_user }}/.ssh/authorized_keys"
+    owner: "{{ web_deploy_user }}"
+    group: "{{ web_deploy_user }}"
+    mode: "0600"
+    content: |
+      # Managed by Ansible.
+      restrict,command="/usr/bin/rrsync -wo {{ web_deploy_root }}" {{ lookup('ansible.builtin.file', web_keys_dir + '/' + web_deploy_key) }}
+      restrict,command="/usr/bin/rrsync -wo {{ web_webssh_root }}" {{ lookup('ansible.builtin.file', web_keys_dir + '/' + web_webssh_key) }}
 
 - name: Look up home's public IPv4
   tags: [ssh]
@@ -139,3 +152,7 @@
       MaxFileSec=1day
       MaxRetentionSec=13day
   notify: Restart journald
+
+- name: webssh
+  ansible.builtin.import_tasks: webssh.yml
+  tags: [webssh]

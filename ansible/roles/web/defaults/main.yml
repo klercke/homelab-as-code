@@ -4,6 +4,11 @@
 web_deploy_user: "deploy"
 web_deploy_root: "/srv/http/klercke.com/public"
 web_deploy_key: "web01_deploy.pub"
+
+# webssh: CI rsyncs a static binary here with its own key
+web_webssh_root: "/srv/webssh"
+web_webssh_key: "web01_webssh_deploy.pub"
+
 web_keys_dir: "{{ playbook_dir }}/../../keys"
 
 # Admin logins (ansible plus the base role's login users) are only allowed from

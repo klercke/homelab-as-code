@@ -22,3 +22,8 @@ cloud_hosts:
     backups: true
     description: "Host for public-facing websites."
     rdns: "klercke.com"
+    services:
+      - name: "webssh"
+        protocol: "tcp"
+        ports: [22]
+        public: true

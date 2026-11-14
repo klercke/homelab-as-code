@@ -1,0 +1,7 @@
+# Managed by Ansible.
+[Unit]
+Description=Restart webssh after a deploy
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl restart webssh.service
