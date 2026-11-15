@@ -159,7 +159,7 @@ zones:
       mail-dmarc:
         type: "TXT"
         name: "_dmarc.klercke.com"
-        content: '"v=DMARC1; p=quarantine; rua=mailto:konnor@klercke.com"'
+        content: '"v=DMARC1; p=quarantine; rua=mailto:dmarc@klercke.com"'
       mail-dkim-1:
         type: "CNAME"
         name: "key1._domainkey.klercke.com"
