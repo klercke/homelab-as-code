@@ -1,0 +1,10 @@
+# Managed by Ansible.
+[Unit]
+Description=Restart webssh when CI deploys a new binary
+
+[Path]
+PathChanged={{ web_webssh_root }}/webssh
+Unit=webssh-restart.service
+
+[Install]
+WantedBy=multi-user.target

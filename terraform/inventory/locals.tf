@@ -14,6 +14,17 @@ locals {
   host_site    = module.registry.host_site
   host_records = module.registry.host_records_v4
 
+  # Cloud hosts with the addresses and sizes substrate got from the provider.
+  # Run just substrate before just inventory after a cloud host changes.
+  cloud_hosts = jsondecode(file("${path.root}/../../ansible/inventories/protonet/group_vars/all/hlac.json")).hlac.cloud_hosts
+
+  # One NetBox site and cluster per provider region, e.g. linode-us-east
+  cloud_sites = {
+    for key, s in {
+      for _, h in local.cloud_hosts : "${h.provider}-${h.region}" => { provider = h.provider, region = h.region }...
+    } : key => s[0]
+  }
+
   fns_roles = {
     for fns, names in { for k, v in local.vlans : v.fns => v.name... } :
     fns => names[0]

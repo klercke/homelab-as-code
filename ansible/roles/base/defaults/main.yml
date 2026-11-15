@@ -8,8 +8,13 @@ base_packages:
   - vim-enhanced
   - bind-utils
   - tcpdump
+  - tar
 
 base_timezone: America/New_York
+
+# Cloud hosts (registries/cloud.yaml) aren't on the home network.
+# No recursors, no router advertisements, and sshd on their own port.
+base_is_cloud: "{{ inventory_hostname in (hlac.cloud_hosts | default({})) }}"
 
 # Host firewall. See note below before changing.
 base_firewalld_enabled: true

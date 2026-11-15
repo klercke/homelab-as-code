@@ -3,7 +3,14 @@
 	email {{ caddy_acme_email }}
 
 	log {
+{% if caddy_mode == 'site' %}
+		output file /var/log/caddy/caddy.log {
+			roll_at 00:00
+			roll_keep_for {{ caddy_access_log_keep }}
+		}
+{% else %}
 		output file /var/log/caddy/caddy.log
+{% endif %}
 		format json
 	}
 }
@@ -29,6 +36,70 @@
 	handle {
 		reverse_proxy {{ svc.scheme }}://{{ svc.backend_ipv4 }}:{{ svc.port }}
 	}
+}
+
+{% endfor %}
+
+{% elif caddy_mode == 'site' %}
+
+# Static sites, deployed by rsync. Certificates through DNS-01, so they can be
+# issued before DNS points here.
+{% for host, site in caddy_sites | dictsort %}
+{% if site.aliases | default([]) %}
+{{ site.aliases | join(', ') }} {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+		resolvers 1.1.1.1 1.0.0.1
+	}
+	redir https://{{ host }}{uri} permanent
+}
+
+{% endif %}
+{{ host }} {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+		resolvers 1.1.1.1 1.0.0.1
+	}
+
+	encode zstd gzip
+	root * {{ site.root }}
+{% if site.access_log | default(false) %}
+
+	log {
+		output file /var/log/caddy/{{ host }}.access.log {
+			roll_at 00:00
+			roll_keep_for {{ caddy_access_log_keep }}
+		}
+		format json
+	}
+{% endif %}
+{% if site.plausible_script is defined %}
+
+	@plausible path /js/script.js /api/event
+	handle @plausible {
+		rewrite /js/script.js {{ site.plausible_script }}
+		reverse_proxy https://plausible.io {
+			header_up Host {http.reverse_proxy.upstream.hostport}
+		}
+	}
+{% endif %}
+
+	handle {
+		file_server
+	}
+{% if site.error_template is defined %}
+
+	handle_errors {
+		@404 expression `{err.status_code} == 404`
+		handle @404 {
+			rewrite * {{ site.error_template }}
+			templates {
+				between [[ ]]
+			}
+			file_server
+		}
+	}
+{% endif %}
 }
 
 {% endfor %}

@@ -205,6 +205,23 @@ role_services:
       ports: [9180]
       description: "Prometheus metrics for Caddy reverse proxy."
 
+  web:
+    - name: "HTTP"
+      protocol: "tcp"
+      ports: [80]
+      public: true
+    - name: "HTTPS"
+      protocol: "tcp"
+      ports: [443]
+      public: true
+    - name: "HTTP/3"
+      protocol: "udp"
+      ports: [443]
+      public: true
+    - name: "Caddy metrics"
+      protocol: "tcp"
+      ports: [9180]
+
 public_services:
   # == Internal ==
   netbox:

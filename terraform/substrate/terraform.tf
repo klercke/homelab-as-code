@@ -7,6 +7,11 @@ terraform {
       version = "0.111.1"
     }
 
+    linode = {
+      source  = "linode/linode"
+      version = "~> 4.9"
+    }
+
     local = {
       source  = "hashicorp/local"
       version = "~> 2.9"
@@ -42,4 +47,8 @@ provider "proxmox" {
   # auth and endpoint comes from env vars (see .envrc)
 
   insecure = true # Still using self-signed cert for now
+}
+
+provider "linode" {
+  # token comes from LINODE_TOKEN (see .envrc)
 }

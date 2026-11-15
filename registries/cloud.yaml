@@ -1,0 +1,29 @@
+---
+# ProtoNet cloud host registry.
+#
+# Hosts that live with a cloud provider instead of on Proxmox.
+# Substrate will build them alongside the VMs.
+# Addresses come from the provider, not from a VLAN, so they are not stored or derived here.
+#
+# Crit levels are the same as hosts.yaml.
+#
+# All string values are quoted deliberately: see README.md.
+
+cloud_hosts:
+  web01:
+    provider: "linode"
+    region: "us-east"
+    plan: "g6-standard-1"
+    image: "linode/rocky9"
+    layer: "l1"  # Really l2 (a workload); moves when a workloads module exists
+    role: "web"
+    crit: 3
+    ssh_port: 2222
+    backups: true
+    description: "Host for public-facing websites."
+    rdns: "klercke.com"
+    services:
+      - name: "webssh"
+        protocol: "tcp"
+        ports: [22]
+        public: true

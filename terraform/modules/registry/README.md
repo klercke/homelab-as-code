@@ -48,6 +48,8 @@ No resources.
 | Name | Description |
 |------|-------------|
 | <a name="output_backend_records_v4"></a> [backend\_records\_v4](#output\_backend\_records\_v4) | Host or device name -> { fqdn, ipv4, ptr\_name, rev\_zone }. Valid public\_service backends. |
+| <a name="output_cloud_hosts"></a> [cloud\_hosts](#output\_cloud\_hosts) | Hosts in cloud.yaml, keyed by name. |
+| <a name="output_cloud_services"></a> [cloud\_services](#output\_cloud\_services) | Services on every cloud host, with ranges expanded and a public flag. |
 | <a name="output_device_ipv6"></a> [device\_ipv6](#output\_device\_ipv6) | Device name -> bare management IPv6 address. Only devices with mgmt\_iid\_v6 are present. |
 | <a name="output_device_mgmt_cidr_v4"></a> [device\_mgmt\_cidr\_v4](#output\_device\_mgmt\_cidr\_v4) | Device name -> management IP with prefix length. |
 | <a name="output_device_mgmt_cidr_v6"></a> [device\_mgmt\_cidr\_v6](#output\_device\_mgmt\_cidr\_v6) | Device name -> management IPv6 address with prefix length. Only devices with mgmt\_iid\_v6 are present. |

@@ -229,3 +229,13 @@ output "backend_records_v4" {
   description = "Host or device name -> { fqdn, ipv4, ptr_name, rev_zone }. Valid public_service backends."
   value       = local.backend_records_v4
 }
+
+output "cloud_hosts" {
+  description = "Hosts in cloud.yaml, keyed by name."
+  value       = local.cloud_hosts
+}
+
+output "cloud_services" {
+  description = "Services on every cloud host, with ranges expanded and a public flag."
+  value       = local.cloud_services
+}

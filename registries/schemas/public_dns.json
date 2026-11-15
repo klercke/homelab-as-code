@@ -40,17 +40,26 @@
         "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
         "target": { "type": "string" },
         "ttl": { "type": "integer", "description": "Seconds, or 1 for automatic (the default)." },
-        "proxied": { "type": "boolean", "description": "A, AAAA and CNAME only. Defaults to false." }
+        "proxied": { "type": "boolean", "description": "A, AAAA and CNAME only. Defaults to false." },
+        "host": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,14}[0-9]{2}$",
+          "description": "A and AAAA only: use this cloud host's address (from hlac.json) instead of content."
+        }
       },
       "allOf": [
         {
           "if": { "properties": { "type": { "const": "SRV" } } },
           "then": { "required": ["priority", "weight", "port", "target"], "not": { "required": ["content"] } },
-          "else": { "required": ["content"] }
+          "else": { "oneOf": [{ "required": ["content"] }, { "required": ["host"] }] }
         },
         {
           "if": { "properties": { "type": { "const": "MX" } } },
           "then": { "required": ["priority"] }
+        },
+        {
+          "if": { "required": ["host"] },
+          "then": { "properties": { "type": { "enum": ["A", "AAAA"] } } }
         }
       ]
     }

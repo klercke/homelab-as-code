@@ -10,10 +10,25 @@ caddy_acme_email: "admin@ptxe.dev"
 caddy_wildcard: true
 
 # internal: one wildcard certificate for *.int.ptxe.dev, sites from
-#   hlac.public_services (caddy##).
+# hlac.public_services (caddy##).
+#
 # edge: a certificate per public hostname, sites from hlac.exposed_services
-#   (edge##).
+# (edge##).
+#
+# site: static sites from caddy_sites, served from disk (web##).
 caddy_mode: "internal"
+
+# site mode only. Keyed by hostname:
+#   root: directory to serve
+#   aliases: hostnames that 301 to the site, keeping the path
+#   error_template: page rendered for 404s, with [[ ]] template delimiters
+#   plausible_script: file Plausible serves for /js/script.js
+#   access_log: true to keep an access log
+caddy_sites: {}
+
+# Access logs roll at midnight.
+# Rolled files older than this are deleted, so no entry outlives ~14 days.
+caddy_access_log_keep: "312h"
 
 # Each proxy gets its own so one can be revoked alone.
 caddy_cloudflare_api_token: "{{ cloudflare_api_token }}"

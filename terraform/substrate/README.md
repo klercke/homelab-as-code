@@ -47,6 +47,7 @@ A token with privilege separation on gets only what both it and its user hold, a
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.10 |
+| <a name="requirement_linode"></a> [linode](#requirement\_linode) | ~> 4.9 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.9 |
 | <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.111.1 |
 
@@ -54,6 +55,7 @@ A token with privilege separation on gets only what both it and its user hold, a
 
 | Name | Version |
 |------|---------|
+| <a name="provider_linode"></a> [linode](#provider\_linode) | 4.9.0 |
 | <a name="provider_local"></a> [local](#provider\_local) | 2.9.1 |
 | <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 0.111.1 |
 
@@ -67,6 +69,11 @@ A token with privilege separation on gets only what both it and its user hold, a
 
 | Name | Type |
 |------|------|
+| [linode_firewall.cloud](https://registry.terraform.io/providers/linode/linode/latest/docs/resources/firewall) | resource |
+| [linode_instance.cloud](https://registry.terraform.io/providers/linode/linode/latest/docs/resources/instance) | resource |
+| [linode_rdns.cloud_v4](https://registry.terraform.io/providers/linode/linode/latest/docs/resources/rdns) | resource |
+| [linode_rdns.cloud_v6](https://registry.terraform.io/providers/linode/linode/latest/docs/resources/rdns) | resource |
+| [local_file.cloud_inventory](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_file.derived_network](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_file.devices_inventory](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [proxmox_backup_job.crit1](https://registry.terraform.io/providers/bpg/proxmox/0.111.1/docs/resources/backup_job) | resource |

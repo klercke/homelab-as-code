@@ -270,9 +270,20 @@ check "role_services_reference_real_roles" {
       keys(local.role_services),
       distinct(concat(
         [for _, h in local.hosts : h.role],
-        [for _, d in local.devices : d.role]
+        [for _, d in local.devices : d.role],
+        [for _, c in local.cloud_hosts : c.role]
       ))
     )) == 0
     error_message = "services.yaml defines role_services for a role no host or device uses."
+  }
+}
+
+check "cloud_host_names_unique" {
+  assert {
+    condition = length(setintersection(
+      toset(keys(local.cloud_hosts)),
+      setunion(toset(keys(local.hosts)), toset(keys(local.devices))),
+    )) == 0
+    error_message = "A cloud host in cloud.yaml has the same name as a host or device."
   }
 }

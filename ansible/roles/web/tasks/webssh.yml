@@ -1,0 +1,67 @@
+---
+# webssh: the website's terminal over SSH, on port 22.
+# CI rsyncs a static binary into web_webssh_root with its own key, and a path
+# unit restarts the service when it changes.
+# The service stays inactive until the first deploy.
+
+- name: Create webssh deploy directory
+  ansible.builtin.file:
+    path: "{{ web_webssh_root }}"
+    state: directory
+    owner: "{{ web_deploy_user }}"
+    group: "{{ web_deploy_user }}"
+    mode: "0755"
+
+# Systemd can't execute files labelled var_t.
+# rsync's temp file inherits the directory's label, so the renamed binary is
+# bin_t too.
+- name: Label the webssh directory for executables
+  community.general.sefcontext:
+    target: "{{ web_webssh_root }}(/.*)?"
+    setype: bin_t
+    state: present
+  register: _web_webssh_fcontext
+
+- name: Apply the label
+  ansible.builtin.command:
+    cmd: restorecon -R {{ web_webssh_root }}
+  when: _web_webssh_fcontext.changed
+
+- name: Give port 22 to webssh
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-hlac-port.conf
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      # Managed by Ansible. Port 22 belongs to webssh.
+      Port {{ hlac.cloud_hosts[inventory_hostname].ssh_port }}
+  notify: Reload sshd
+
+- name: Install webssh units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - webssh.service
+    - webssh-restart.service
+    - webssh-restart.path
+  notify: Reload systemd
+
+- name: Flush handlers so systemd sees the units
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable webssh
+  ansible.builtin.systemd_service:
+    name: webssh.service
+    enabled: true
+    state: started
+
+- name: Watch for new webssh binaries
+  ansible.builtin.systemd_service:
+    name: webssh-restart.path
+    enabled: true
+    state: started

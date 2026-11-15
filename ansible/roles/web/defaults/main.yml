@@ -1,0 +1,28 @@
+---
+# The account CI deploys as.
+# Each of its keys is locked to rrsync into one site's root.
+web_deploy_user: "deploy"
+
+# Static sites, keyed by hostname.
+# The caddy role reads the same dict as caddy_sites.
+# Deploy_key is the web role's addition.
+#   root: directory CI rsyncs into, and Caddy serves
+#   deploy_key: public key in keys/ allowed to write there
+web_sites: {}
+
+# webssh: CI rsyncs a static binary here with its own key
+web_webssh_root: "/srv/webssh"
+web_webssh_key: "web01_webssh_deploy.pub"
+
+web_keys_dir: "{{ playbook_dir }}/../../keys"
+
+# Admin logins (ansible plus the base role's login users) are only allowed from
+# home and NetBird.
+# Home's IPv4 is dynamic, so it's looked up from the DDNS record at run time.
+web_admin_users: "{{ ['ansible'] + (protonet_login_users | map(attribute='name') | list) }}"
+web_home_v4_name: "edge.ptxe.dev"
+web_netbird_cidrs:
+  - "100.64.0.0/10"
+
+# Refuse to write AllowUsers unless this run comes from home's current IPv4.
+web_ssh_source_check: true
