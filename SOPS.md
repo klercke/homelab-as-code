@@ -1,203 +1,73 @@
-# SOPS in homelab-as-code
+# Secrets
 
-Secrets in this repo are encrypted with [SOPS](https://github.com/getsops/sops) using
-[age](https://github.com/FiloSottile/age) keys. Encrypted files are committed to git.
-Plaintext never is.
+Secrets live in `secrets/`, encrypted with [SOPS](https://github.com/getsops/sops) and [age](https://age-encryption.org/).
+SOPS only encrypts values so keys stay readable and `git diff` shows which secret changed without showing the secret.
 
-SOPS encrypts *values* and leaves *keys* readable, so `git diff` still shows you which
-secret changed even though you cannot see what it changed to.
+## Recipients
 
-## Contents
+Every file is encrypted to the same three age keys, defined in `.sops.yaml`.
+Any one of them can decrypt any file.
 
-- [Model](#model)
-- [Prerequisites](#prerequisites)
-- [File layout](#file-layout)
-- [Normal operations](#normal-operations)
-- [Re-encryption: three different operations](#re-encryption-three-different-operations)
-- [Adding or removing a recipient](#adding-or-removing-a-recipient)
-- [How consumers read secrets](#how-consumers-read-secrets)
-- [Generating new secrets](#generating-new-secrets)
-- [Guardrails](#guardrails)
-- [Gotchas](#gotchas)
-- [Disaster recovery](#disaster-recovery)
-
-## Model
-
-Every secrets file is encrypted to three age recipients, declared in `.sops.yaml`:
-
-| Recipient | Private key lives | Purpose |
+| Key | Where the private key lives | Used for |
 |---|---|---|
-| `d0c` | workstation, `~/.config/sops/age/keys.txt` | day to day work |
-| `ci` | GitLab CI variable (File type, protected) | pipeline runs |
-| `bg` | offline, not on any machine | recovery |
+| `d0c` | My workstation, `~/.config/sops/age/keys.txt` | Day-to-day work |
+| `ci` | CI secret store | Automated runs |
+| `bg` | Offline | Break-glass recovery |
 
-Three keys rather than one means losing the workstation does not lose the secrets, and rotating CI credentials does not require touching the admin key.
+## Files
 
-Any one of the three can decrypt any file.
-There is no threshold scheme.
+| File | Holds | Read by |
+|---|---|---|
+| `substrate.sops.yaml` | Proxmox and Linode API tokens, state backend credentials, the state passphrase | `terraform/substrate` |
+| `platform.sops.yaml` | Service credentials (Postgres, NetBox, PowerDNS, Kea, Valkey, LiteLLM, ...), API tokens, and the other Terraform layers' credentials | The other Terraform layers, most playbooks |
+| `infra.sops.yaml` | Physical infrastructure: PBS encryption key and tokens, offsite backup credentials, installer and firewall values | `hypervisors` and `pbs` playbooks |
 
-## Prerequisites
+Keys that a Terraform layer reads from its environment are uppercase (`PROXMOX_VE_API_TOKEN`, `TOFU_STATE_PASSPHRASE`), because they become environment variables as-is.
+Everything Ansible reads is lowercase.
 
-```bash
-nix develop          # provides sops, age
-```
+Every file needs a creation rule in `.sops.yaml`.
+SOPS checks the rules on decrypt too, so a file without a matching rule can't be read even with a valid key.
 
-SOPS finds the admin key automatically at `~/.config/sops/age/keys.txt`.
-If it lives elsewhere, set `SOPS_AGE_KEY_FILE`.
+## Everyday use
 
-Verify you can decrypt:
+Everything comes from the dev shell (`nix develop`).
+SOPS finds my key at `~/.config/sops/age/keys.txt`; set `SOPS_AGE_KEY_FILE` if it lives somewhere else.
+Run these from the repo root, since creation rules match paths relative to `.sops.yaml`.
 
-```bash
-sops -d --extract '["TF_HTTP_USERNAME"]' secrets/substrate.sops.yaml
-```
+| Task | Command |
+|---|---|
+| Read one value | `sops -d --extract '["pdns_api_key"]' secrets/platform.sops.yaml` |
+| See which keys a file has | `sops -d secrets/platform.sops.yaml \| sed -E 's/: .*/: <redacted>/'` |
+| Edit a file | `TMPDIR="$XDG_RUNTIME_DIR" sops secrets/platform.sops.yaml` |
+| Run a command with a file's secrets in its environment | `sops exec-env secrets/substrate.sops.yaml 'tofu plan'` |
 
-## File layout
+`TMPDIR` keeps SOPS's decrypted scratch file in tmpfs instead of on disk (see [Plaintext](#plaintext)).
 
-```
-.sops.yaml                      creation rules, recipient list
-secrets/
-  substrate.sops.yaml           PVE API token, GitLab state creds, state passphrase
-  platform.sops.yaml            Postgres roles, NetBox, PowerDNS, Kea
-scripts/
-  generate_secrets.sh           generates platform secrets from scratch
-```
+After changing a value, rerun whatever consumes it: the Terraform layer or the playbook.
 
-The split follows the OpenTofu state layers.
-A compromise of the platform key should not hand over cluster access, so PVE credentials live only in `substrate.sops.yaml`.
+## How secrets are consumed
 
-`.sops.yaml` matches files by path.
-Adding a new secrets file means adding a creation rule for it first, or SOPS will refuse to encrypt (and refuse to decrypt, see Gotchas).
+### OpenTofu
 
-## Normal operations
-
-**Read one value** (does not open an editor, does not write plaintext to disk):
-
-```bash
-sops -d --extract '["pdns_api_key"]' secrets/platform.sops.yaml
-```
-
-**Read everything, redacted** (useful for confirming structure):
-
-```bash
-sops -d secrets/platform.sops.yaml | sed -E 's/: .*/: <redacted>/'
-```
-
-**Edit values:**
-
-```bash
-TMPDIR="$XDG_RUNTIME_DIR" sops secrets/platform.sops.yaml
-```
-
-Opens `$EDITOR` with the decrypted content and re-encrypts on save.
-The `TMPDIR` override keeps the decrypted scratch file in tmpfs.
-See Gotchas for why that matters on btrfs or zfs.
-
-**Run a command with secrets in the environment:**
-
-```bash
-sops exec-env secrets/substrate.sops.yaml 'tofu plan'
-```
-
-Environment variables are named after the YAML keys, which is why keys in `substrate.sops.yaml` are already uppercase (`PROXMOX_VE_API_TOKEN`, `TF_HTTP_PASSWORD`).
-In practice direnv does this automatically, see below.
-
-## Re-encryption: three different operations
-
-These get conflated.
-They are not the same thing and they fix different problems.
-
-### 1. Recipients changed
-
-You edited the recipient list in `.sops.yaml` (added a key, removed a key).
-The files themselves still carry the old recipient set until you sync them:
-
-```bash
-sops updatekeys secrets/substrate.sops.yaml
-sops updatekeys secrets/platform.sops.yaml
-```
-
-Editing `.sops.yaml` without running this is the single most common mistake.
-The new key looks configured but cannot actually decrypt anything, and you will not find out until you need it.
-
-`updatekeys` is also a useful no-op check: if the recipients already match, it reports no changes, which confirms the creation rule matches the file's path.
-
-### 2. Data key compromised
-
-An age private key leaked, so the data key it protects must be considered compromised:
-
-```bash
-sops rotate -i secrets/platform.sops.yaml
-```
-
-This generates a fresh data key and re-encrypts the values under it.
-It does **not** change the secret values.
-If the plaintext itself leaked, you still have to rotate the actual credentials in Postgres, PVE, GitLab, and so on.
-
-### 3. Secret values changed
-
-Just edit the file:
-
-```bash
-TMPDIR="$XDG_RUNTIME_DIR" sops secrets/platform.sops.yaml
-```
-
-Then re-run whatever consumes it (`tofu apply`, the relevant Ansible play).
-
-## Adding or removing a recipient
-
-Full procedure, in order.
-Skipping step 3 is the failure mode described above.
-
-1. Get the new public key (`age-keygen` prints it, or read the `# public key:` line of an existing key file).
-2. Add it to the `keys:` anchors and every relevant `key_groups` in `.sops.yaml`.
-3. `sops updatekeys secrets/*.sops.yaml`
-4. Update the recipient count in the `check-sops` hook in `flake.nix` if the total changed.
-5. `prek run --all-files` to confirm the hook agrees.
-6. Commit `.sops.yaml` and the re-encrypted files together.
-
-For a **removal**, the same steps apply, but understand what it does and does not achieve.
-Removing a recipient prevents future decryption.
-It does not un-see anything that key already had access to.
-Treat a removed key as a compromise and rotate the underlying credentials.
-
-## How consumers read secrets
-
-### direnv (interactive work)
-
-`terraform/substrate/.envrc` decrypts into the environment on `cd`:
+Each layer's `.envrc` decrypts its file into the environment when I `cd` into the directory, and unloads it when I leave.
+The `.envrc` files aren't committed; this is the pattern:
 
 ```bash
 source_up
 watch_file ../../secrets/substrate.sops.yaml
-eval "$(sops -d --output-type dotenv ../../secrets/substrate.sops.yaml \
-  | direnv dotenv bash /dev/stdin)"
-
+eval "$(sops -d --output-type dotenv ../../secrets/substrate.sops.yaml | direnv dotenv bash /dev/stdin)"
 export TF_ENCRYPTION="key_provider \"pbkdf2\" \"main\" { passphrase = \"$TOFU_STATE_PASSPHRASE\" }"
 ```
 
-Loading is scoped to that directory.
-Leaving it unsets the variables.
-`watch_file` makes direnv reload after a rotation rather than serving a stale cached value.
+`watch_file` reloads it after a secret changes.
+Every `just` recipe runs through `direnv exec`, so recipes get the same environment.
 
-After editing any `.envrc`, direnv revokes its approval.
-Run `direnv allow` again or the variables will not load.
-
-Note the tradeoff: while you are inside that directory the token is in the environment of every process you launch, readable via `/proc/<pid>/environ`.
-Do not run untrusted tooling from there.
-
-### OpenTofu
-
-The `proxmox` provider reads `PROXMOX_VE_ENDPOINT` and `PROXMOX_VE_API_TOKEN` from the environment.
-Provider configuration is not written to state, so the PVE token never lands in state or in a saved plan file.
-
-The `http` backend reads `TF_HTTP_USERNAME` and `TF_HTTP_PASSWORD` the same way.
-
-This does **not** hold for secrets passed as resource arguments.
-Anything read via a `sops_file` data source or fed into a resource attribute (Postgres passwords, the NetBox API token) is stored in state in plaintext.
-That is what the OpenTofu `encryption` block is for.
-Assume state is sensitive regardless.
+Providers read their credentials from the environment, so those never end up in state.
+Anything passed into a resource does end up in state, which is why state is encrypted: every layer has an `encryption` block with `enforced = true`, and the passphrase comes in through `TF_ENCRYPTION`.
 
 ### Ansible
+
+Playbooks load their secrets as variables in `pre_tasks`:
 
 ```yaml
 - name: Load platform secrets
@@ -205,90 +75,63 @@ Assume state is sensitive regardless.
     file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
 ```
 
-Requires `ansible-galaxy collection install community.sops` and the `sops` binary on `PATH`.
-It shells out to `sops`, so the creation rule must match the path *as invoked*.
-Run playbooks from the repo root.
+## Changing recipients
 
-## Generating new secrets
+Editing `.sops.yaml` doesn't re-encrypt anything.
+The files keep their old recipients until `updatekeys` runs, so a new key looks configured but can't decrypt anything.
 
-`scripts/generate_secrets.sh` writes a fresh `platform.sops.yaml`.
-It generates hex values with `openssl rand`, builds the file in tmpfs, validates the shape, and encrypts.
+1. Add or remove the public key in `keys:` and in every creation rule in `.sops.yaml`.
+2. `sops updatekeys secrets/*.sops.yaml`
+3. If the number of recipients changed, update the count in the `check-sops` hook in `flake.nix`.
+4. `prek run --all-files`
+5. Commit `.sops.yaml` and the re-encrypted files together.
 
-Hex, not base64, deliberately: these values end up in `pdns.conf`, Kea JSON, and Postgres connection strings, and `+` and `/` cause escaping problems in all three.
-Also, `openssl rand -base64` wraps output at 64 columns, which silently produces invalid YAML for anything over 48 bytes.
+Removing a key stops it from decrypting future versions, not the ones it could already read.
+Treat a removed key as compromised and rotate the secrets it protected.
 
-Running it again **overwrites** the file.
-It is for bootstrapping, not for adding a single key.
-To add one key, edit the file.
+## Rotation
 
-## Guardrails
+| Situation | What to do |
+|---|---|
+| A secret value needs to change | Edit the file, then rerun its consumers |
+| An age private key leaked | `sops rotate -i <file>` for every file, which replaces the data key, then rotate the actual credentials too: `rotate` doesn't change any secret values |
+| A plaintext secret leaked | Rotate that credential at its source, then edit the file |
 
-Enforced by `prek` (configured in `flake.nix`):
+## Plaintext
 
-- `sops-encrypted` rejects any file under `secrets/` lacking a `sops:` metadata block, or carrying the wrong number of recipients.
-- `no-age-private-keys` rejects any staged text file containing something shaped like an age secret key.
-- `end-of-file-fixer`, `trim-trailing-whitespace`, and `check-yaml` all exclude `^secrets/`.
-  Nothing should rewrite a SOPS file automatically.
+My root filesystem is btrfs: deleted files survive in snapshots, and `shred` doesn't work on copy-on-write filesystems.
+So plaintext only ever goes to `$XDG_RUNTIME_DIR` (tmpfs), never the working tree, and `sops -d` is piped or extracted, never redirected to a file.
 
-These catch accidents, not intent.
-`git commit --no-verify` bypasses all of it, and so does any commit made outside this shell.
+Never `git add` a decrypted file, even briefly.
+`nix develop` and `nix flake check` copy tracked files into the world-readable Nix store, where they stay until garbage collection.
 
-## Gotchas
-
-**Creation rules gate decryption, not just encryption.**
-`sops -d` fails with `no matching creation rules found` when the file's path does not match a rule, even though the file carries valid metadata and you hold a valid key.
-The option is named `creation_rules` but it controls reads too.
-If you move or rename a secrets file, update `.sops.yaml` in the same commit.
-
-**Rules are matched relative to `.sops.yaml`.
-** Since SOPS 3.7.2, `path_regex` is compared against the path relative to the config file's directory, not an absolute path.
-Run SOPS from the repo root.
-
-**SOPS searches upward for `.sops.yaml` from the file it is operating on.**
-Encrypting a file in `/tmp` or `$XDG_RUNTIME_DIR` finds no config at all.
-Use `--filename-override` to tell SOPS what path to pretend it is at:
+When encrypting a file that lives in tmpfs, SOPS can't find `.sops.yaml` from there.
+Tell it where the file will end up:
 
 ```bash
 sops -e --filename-override secrets/platform.sops.yaml "$tmp" > secrets/platform.sops.yaml
 ```
 
-**Never write plaintext into the working tree.**
-The root filesystem is btrfs.
-Deleted blocks survive in snapshots and `shred` does not work on copy-on-write filesystems.
-Keep plaintext in `$XDG_RUNTIME_DIR` (tmpfs) and set `TMPDIR` when SOPS needs scratch space.
+## Guardrails
 
-**Never `git add` a decrypted file, even briefly.**
-`nix flake check` copies git-tracked files into `/nix/store`, which is world-readable, and store paths persist until garbage collection.
-Unlike a file, you cannot simply delete it back out.
+The pre-commit hooks (in `flake.nix`) check that:
 
-**Do not redirect `sops -d` to a file.**
-Pipe it, extract from it, or use `exec-env`.
+- every file in `secrets/` is SOPS-encrypted to exactly three recipients;
+- no text file contains an age private key;
+- nothing reformats files in `secrets/` (the YAML, whitespace, and end-of-file hooks all skip it).
 
-## Disaster recovery
+They catch mistakes, not intent: `git commit --no-verify` skips them.
 
-**Lost the workstation key.**
-Restore it from the password manager backup, or decrypt with the break-glass key and `updatekeys` to a newly generated admin key.
+## Recovery
 
-**Lost all three keys.**
-The secrets are gone.
-There is no recovery path and no vendor to call.
-This is why the break-glass key is offline and why the admin key is backed up independently.
+| Lost | Recovery |
+|---|---|
+| My workstation key | Restore it from my password manager, or decrypt with the break-glass key and `updatekeys` to a new key |
+| All three keys | The secrets are gone. Every credential has to be regenerated at its source |
+| `TOFU_STATE_PASSPHRASE` | State can't be read. Infrastructure keeps running, but managing it again means re-importing every resource. It's in `substrate.sops.yaml` and `platform.sops.yaml`, so it's covered by all three keys |
 
-**Lost `TOFU_STATE_PASSPHRASE`.**
-The encrypted OpenTofu state is unreadable, which is worse than it sounds: the infrastructure keeps running but you can no longer manage it, and rebuilding state means importing every resource by hand.
-It lives in `secrets/substrate.sops.yaml` and is therefore covered by the three-recipient scheme, but it deserves its own mention because the failure is silent until the day you need it.
-
-**Verify recovery works before you need it.**
-Periodically confirm the break-glass key still decrypts:
+Check the break-glass key still works now and then:
 
 ```bash
-SOPS_AGE_KEY_FILE=/path/to/breakglass.key sops -d secrets/platform.sops.yaml >/dev/null && echo OK
+SOPS_AGE_KEY_FILE=/path/to/breakglass.key sops -d secrets/platform.sops.yaml > /dev/null && echo OK
 ```
-
-An untested recovery path is a guess.
-
-## See also
-
-- SOPS: https://github.com/getsops/sops
-- age: https://github.com/FiloSottile/age
-- `community.sops`: https://galaxy.ansible.com/ui/repo/published/community/sops/
