@@ -132,6 +132,10 @@ zones:
         type: "CNAME"
         name: "www.klercke.com"
         content: "klercke.com"
+      web-blog:
+        type: "CNAME"
+        name: "blog.klercke.com"
+        content: "klercke.com"
 
       # == Mail (Migadu) ==
       mail-mx-1:

@@ -1,0 +1,7 @@
+# Managed by Ansible.
+# Restrict drops forwarding, PTY, agent and X11.
+# Each forced command allows only a write-only rsync into its directory.
+{% for host, site in web_sites | dictsort %}
+restrict,command="/usr/bin/rrsync -wo {{ site.root }}" {{ lookup('ansible.builtin.file', web_keys_dir + '/' + site.deploy_key) }}
+{% endfor %}
+restrict,command="/usr/bin/rrsync -wo {{ web_webssh_root }}" {{ lookup('ansible.builtin.file', web_keys_dir + '/' + web_webssh_key) }}

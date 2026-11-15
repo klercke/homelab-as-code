@@ -1,9 +1,14 @@
 ---
 # The account CI deploys as.
-# Its only key is locked to rrsync into web_deploy_root.
+# Each of its keys is locked to rrsync into one site's root.
 web_deploy_user: "deploy"
-web_deploy_root: "/srv/http/klercke.com/public"
-web_deploy_key: "web01_deploy.pub"
+
+# Static sites, keyed by hostname.
+# The caddy role reads the same dict as caddy_sites.
+# Deploy_key is the web role's addition.
+#   root: directory CI rsyncs into, and Caddy serves
+#   deploy_key: public key in keys/ allowed to write there
+web_sites: {}
 
 # webssh: CI rsyncs a static binary here with its own key
 web_webssh_root: "/srv/webssh"

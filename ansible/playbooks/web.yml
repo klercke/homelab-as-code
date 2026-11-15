@@ -2,17 +2,24 @@
 - name: Public website
   hosts: tag_role_web
   vars:
-    web_deploy_root: "/srv/http/klercke.com/public"
     caddy_mode: "site"
     caddy_cloudflare_api_token: "{{ web_cloudflare_api_token }}"
-    caddy_sites:
+    web_sites:
       klercke.com:
-        root: "{{ web_deploy_root }}"
+        root: "/srv/http/klercke.com/public"
+        deploy_key: "web01_deploy.pub"
         aliases:
           - "www.klercke.com"
         error_template: "/404.html"
         plausible_script: "/js/pa-Ol-QVpdHOyuKkkUSi7859.js"
         access_log: true
+      blog.klercke.com:
+        root: "/srv/http/blog.klercke.com/public"
+        deploy_key: "web01_blog_deploy.pub"
+        error_template: "/404.html"
+        plausible_script: "/js/pa-zWbPOcDAkRBGPM1LSDozX.js"
+        access_log: true
+    caddy_sites: "{{ web_sites }}"
   pre_tasks:
     - name: Load platform secrets
       tags: [always]

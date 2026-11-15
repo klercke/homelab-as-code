@@ -29,19 +29,29 @@
     create_home: true
     password_lock: true
 
-- name: Create site directories
+- name: Create site parent directories
   tags: [deploy]
   ansible.builtin.file:
-    path: "{{ item.path }}"
+    path: "{{ item.value.root | dirname }}"
     state: directory
-    owner: "{{ item.owner }}"
-    group: "{{ item.owner }}"
+    owner: root
+    group: root
     mode: "0755"
-  loop:
-    - path: "{{ web_deploy_root | dirname }}"
-      owner: "root"
-    - path: "{{ web_deploy_root }}"
-      owner: "{{ web_deploy_user }}"
+  loop: "{{ web_sites | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Create site deploy roots
+  tags: [deploy]
+  ansible.builtin.file:
+    path: "{{ item.value.root }}"
+    state: directory
+    owner: "{{ web_deploy_user }}"
+    group: "{{ web_deploy_user }}"
+    mode: "0755"
+  loop: "{{ web_sites | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
 
 - name: Create the deploy user's .ssh directory
   tags: [deploy]
@@ -52,20 +62,17 @@
     group: "{{ web_deploy_user }}"
     mode: "0700"
 
-# One key per deploy target.
-# Restrict drops forwarding, PTY, agent and X11.
-# Each forced command allows only a write-only rsync into its directory.
+# One key per deploy target, each locked to a write-only rsync into its own
+# directory.
+# See templates/authorized_keys.j2.
 - name: Lock the deploy keys to rrsync
   tags: [deploy]
-  ansible.builtin.copy:
+  ansible.builtin.template:
+    src: authorized_keys.j2
     dest: "/var/lib/{{ web_deploy_user }}/.ssh/authorized_keys"
     owner: "{{ web_deploy_user }}"
     group: "{{ web_deploy_user }}"
     mode: "0600"
-    content: |
-      # Managed by Ansible.
-      restrict,command="/usr/bin/rrsync -wo {{ web_deploy_root }}" {{ lookup('ansible.builtin.file', web_keys_dir + '/' + web_deploy_key) }}
-      restrict,command="/usr/bin/rrsync -wo {{ web_webssh_root }}" {{ lookup('ansible.builtin.file', web_keys_dir + '/' + web_webssh_key) }}
 
 - name: Look up home's public IPv4
   tags: [ssh]
