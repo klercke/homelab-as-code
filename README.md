@@ -17,7 +17,8 @@
 ## How it works
 
 ```mermaid
-%%{ init: { 'flowchart': { 'curve': 'stepAfter' } } }%% flowchart LR
+%%{ init: { 'flowchart': { 'curve': 'stepAfter' } } }%%
+flowchart LR
     R["registries/*.yaml<br/>(schema-validated)"]
 
     R --> S["substrate<br/>Proxmox VMs, Linode"]
@@ -39,7 +40,7 @@
 - **OpenTofu builds, then Ansible configures.**
     OpenTofu creates resources and writes to anything with a good API, plus creates `hlac.json`, which is consumed by Ansible.
     Ansible reads the registries via `hlac.json`, then configures the hosts according to their roles.
-- **Secrets are encrypted via SOPS.**
+- **Secrets are encrypted via [SOPS](SOPS.md).**
     SOPS lets me store the secrets in [age](https://age-encryption.org/)-encrypted files so they can be easily and automatically consumed.
 
 ## Layout
