@@ -16,6 +16,8 @@
       blog.klercke.com:
         root: "/srv/http/blog.klercke.com/public"
         deploy_key: "web01_blog_deploy.pub"
+        aliases:
+          - "blog.z3r0d4y.dev"
         error_template: "/404.html"
         plausible_script: "/js/pa-zWbPOcDAkRBGPM1LSDozX.js"
         access_log: true
