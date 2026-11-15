@@ -132,36 +132,22 @@ zones:
         type: "CNAME"
         name: "www.klercke.com"
         content: "klercke.com"
-      # == Legacy Hostway: replaced at the Migadu cutover ==
-      mail-host:
-        type: "A"
-        name: "mail.klercke.com"
-        content: "64.26.60.153"
-      mail-pop:
-        type: "A"
-        name: "pop.klercke.com"
-        content: "64.26.60.229"
-      mail-smtp:
-        type: "A"
-        name: "smtp.klercke.com"
-        content: "64.26.60.229"
-      mail-autodiscover:
-        type: "A"
-        name: "autodiscover.klercke.com"
-        content: "64.26.60.105"
-      mail-mx:
+
+      # == Mail (Migadu) ==
+      mail-mx-1:
         type: "MX"
         name: "klercke.com"
-        content: "mail.klercke.com"
+        content: "aspmx1.migadu.com"
         priority: 10
-
-      # == Mail: both senders authorized until cutover, then Migadu only with -all ==
+      mail-mx-2:
+        type: "MX"
+        name: "klercke.com"
+        content: "aspmx2.migadu.com"
+        priority: 20
       mail-spf:
         type: "TXT"
         name: "klercke.com"
-        content: '"v=spf1 include:mfg.siteprotect.com include:spf.migadu.com ~all"'
-
-      # == Mail (Migadu), pre-staged: MX stays on Hostway until cutover ==
+        content: '"v=spf1 include:spf.migadu.com -all"'
       mail-verify:
         type: "TXT"
         name: "klercke.com"
@@ -169,7 +155,7 @@ zones:
       mail-dmarc:
         type: "TXT"
         name: "_dmarc.klercke.com"
-        content: '"v=DMARC1; p=none; rua=mailto:konnor@klercke.com"'
+        content: '"v=DMARC1; p=quarantine; rua=mailto:konnor@klercke.com"'
       mail-dkim-1:
         type: "CNAME"
         name: "key1._domainkey.klercke.com"
