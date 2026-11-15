@@ -133,3 +133,4 @@ CI runs the same hooks on every push and pull request.
 - [ ] Replace existing Linode
 - [ ] Add public status page
 - [ ] Add a cool MOTD to all servers :)
+- [ ] Move from GitLab remote state (maybe to Cloudflare R2?)
