@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pre-commit:
+    name: Pre-commit hooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ github.token }}
+
+      # tofu validate needs providers and tflint needs its plugins.
+      # Backends are skipped since validation shouldn't touch state.
+      - name: Initialize OpenTofu and tflint
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          nix develop --command bash -euo pipefail -c '
+            for dir in $(find terraform -name "*.tf" -printf "%h\n" | sort -u); do
+              tofu -chdir="$dir" init -backend=false -input=false -no-color > /dev/null
+            done
+            tflint --init
+          '
+
+      - name: Run hooks
+        run: nix develop --command prek run --all-files --show-diff-on-failure
