@@ -54,7 +54,6 @@ hosts:
     node: "pve02"
     cores: 1
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "PowerDNS Authoritative. Points to postgres for backend."
     ipv6: true
@@ -68,7 +67,6 @@ hosts:
     node: "pve01"
     cores: 1
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "PowerDNS Authoritative. Points to postgres for backend."
     ipv6: true
@@ -82,7 +80,6 @@ hosts:
     node: "pve02"
     cores: 1
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "ISC Kea DHCPv4 with HA hook and PostgreSQL backend."
     ipv6: true
@@ -96,7 +93,6 @@ hosts:
     node: "pve01"
     cores: 1
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "ISC Kea DHCPv4 with HA hook and PostgreSQL backend."
     ipv6: true
@@ -110,7 +106,6 @@ hosts:
     node: "pve02"
     cores: 2
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "PowerDNS Recursor. Forwards internal zones to pdnsNN servers."
     ipv6: true
@@ -124,7 +119,6 @@ hosts:
     node: "pve01"
     cores: 2
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "PowerDNS Recursor. Forwards internal zones to pdnsNN servers."
     ipv6: true
@@ -138,7 +132,6 @@ hosts:
     node: "pve02"
     cores: 2
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "Valkey (Redis fork). Cache and RQ task queue for NetBox."
     ipv6: true
@@ -152,7 +145,6 @@ hosts:
     node: "pve02"
     cores: 2
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "Caddy. Reverse proxy for user-facing services."
     ipv6: true
@@ -209,7 +201,6 @@ hosts:
     node: "pve02"
     cores: 1
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "Netbird routing peer. Node 1 of an HA pair."
     ipv6: true
@@ -223,7 +214,6 @@ hosts:
     node: "pve01"
     cores: 1
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "Netbird routing peer. Node 2 of an HA pair."
     ipv6: true
@@ -294,7 +284,6 @@ hosts:
     node: "pve02"
     cores: 2
     memory: 2048
-    memory_min: 1024
     disk: 16
     description: "Edge proxy for public-facing HTTP(S) services."
     ipv6: true
