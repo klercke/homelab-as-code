@@ -210,3 +210,7 @@ zones:
         type: "TXT"
         name: "_atproto.klercke.com"
         content: '"did=did:plc:xafnygoa5rxkdvhets75nbb5"'
+      keyoxide:
+        type: "TXT"
+        name: "@"
+        content: '"openpgp4fpr:06788C66C871D5627E714F9A6D08129B14785597"'
