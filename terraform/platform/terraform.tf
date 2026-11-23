@@ -9,7 +9,7 @@ terraform {
 
     kea = {
       source  = "wfdewith/kea"
-      version = "0.0.3"
+      version = "0.2.0"
     }
   }
 

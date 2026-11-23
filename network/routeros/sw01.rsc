@@ -8,7 +8,7 @@
 
 /interface ethernet
 set [find default-name=ether1] disabled=no comment="patch01-01 fw01:opt1"
-set [find default-name=ether2] disabled=no comment="patch02-02 fw01:lan"
+set [find default-name=ether2] disabled=yes comment="patch02-02 fw01:lan"
 set [find default-name=ether3] disabled=yes
 set [find default-name=ether4] disabled=yes
 set [find default-name=ether5] disabled=no comment="patch01-05 pve01:nic0"
@@ -30,7 +30,7 @@ set [find default-name=ether20] disabled=yes comment="patch01-20 nas01:bmc"
 set [find default-name=ether21] disabled=no comment="patch01-21 laptop01:eth0"
 set [find default-name=ether22] disabled=yes
 set [find default-name=ether23] disabled=no comment="patch01-23 homeassistant:eth0"
-set [find default-name=ether24] disabled=no comment="sw02:port1 TEMP mgmt"
+set [find default-name=ether24] disabled=yes
 set [find default-name=ether25] disabled=yes
 set [find default-name=ether26] disabled=yes
 set [find default-name=ether27] disabled=yes
@@ -80,7 +80,6 @@ add name=bridge1 protocol-mode=rstp priority=0x1000 vlan-filtering=no frame-type
 
 /interface bridge port
 add bridge=bridge1 interface=ether1 frame-types=admit-only-vlan-tagged comment="fw01:opt1"
-add bridge=bridge1 interface=ether2 pvid=1 frame-types=admit-only-untagged-and-priority-tagged edge=yes comment="fw01:lan"
 add bridge=bridge1 interface=ether5 pvid=160 comment="pve01:nic0"
 add bridge=bridge1 interface=ether7 pvid=160 comment="pve02:port0"
 add bridge=bridge1 interface=bond-nas01 pvid=120 frame-types=admit-only-untagged-and-priority-tagged edge=yes comment="nas01"
@@ -91,20 +90,16 @@ add bridge=bridge1 interface=ether19 pvid=160 frame-types=admit-only-untagged-an
 add bridge=bridge1 interface=ether20 pvid=160 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="nas01:bmc"
 add bridge=bridge1 interface=ether23 pvid=120 frame-types=admit-all edge=yes bpdu-guard=yes comment="homeassistant:eth0"
 add bridge=bridge1 interface=ether21 pvid=110 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="laptop01:eth0"
-add bridge=bridge1 interface=sfp-sfpplus1 frame-types=admit-only-vlan-tagged comment="sw02:sfp1"
-# TEMP: sw02 + AP management on untagged VLAN 1 until moved to MANAGEMENT
-add bridge=bridge1 interface=ether24 pvid=1 frame-types=admit-only-untagged-and-priority-tagged comment="sw02:port1 TEMP mgmt"
+add bridge=bridge1 interface=sfp-sfpplus1 pvid=160 frame-types=admit-all comment="sw02:sfp1"
 add bridge=bridge1 interface=sfp-sfpplus2 pvid=110 frame-types=admit-only-untagged-and-priority-tagged edge=yes bpdu-guard=yes comment="thor:sfp0"
 
 /interface bridge vlan
-  # TEMP: legacy LAN only carries sw02 + AP management; remove with ether2 once they're on MANAGEMENT
-add bridge=bridge1 vlan-ids=1 untagged=ether2,ether24 comment="LAN"
 add bridge=bridge1 vlan-ids=110 tagged=ether1,ether5,ether7,sfp-sfpplus1 untagged=ether21,sfp-sfpplus2 comment="CLIENTS"
 add bridge=bridge1 vlan-ids=120 tagged=ether1,ether5,ether7,sfp-sfpplus1 untagged=bond-nas01,ether15,ether23 comment="SERVERS"
 add bridge=bridge1 vlan-ids=130 tagged=ether1,ether5,ether7,ether23,sfp-sfpplus1 comment="IOT"
 add bridge=bridge1 vlan-ids=140 tagged=ether1,ether5,ether7,sfp-sfpplus1 comment="LAB"
 add bridge=bridge1 vlan-ids=150 tagged=ether1,ether5,ether7,sfp-sfpplus1 comment="GUEST"
-add bridge=bridge1 vlan-ids=160 tagged=bridge1,ether1,sfp-sfpplus1 untagged=ether5,ether7,ether17,ether18,ether19,ether20 comment="MANAGEMENT"
+add bridge=bridge1 vlan-ids=160 tagged=bridge1,ether1 untagged=ether5,ether7,ether17,ether18,ether19,ether20,sfp-sfpplus1 comment="MANAGEMENT"
 add bridge=bridge1 vlan-ids=170 tagged=ether1,ether5,ether7 comment="DMZ"
 
 /interface vlan
@@ -118,7 +113,6 @@ add list=MGMT interface=vlan160-mgmt
 add list=MGMT interface=ether49
 add list=DISCOVERY interface=vlan160-mgmt
 add list=DISCOVERY interface=ether1
-add list=DISCOVERY interface=ether2
 add list=DISCOVERY interface=ether5
 add list=DISCOVERY interface=ether7
 add list=DISCOVERY interface=ether13
@@ -152,6 +146,7 @@ set winbox available-from=10.0.60.0/24,10.0.254.0/24,10.0.10.213/32,2603:7083:46
 /ip ssh set strong-crypto=yes host-key-type=ed25519
 /user ssh-keys remove [find user=admin]
 /user ssh-keys add user=admin key="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMlg7RCLSsR+yQA4EckheXWKXHiHLduZ3mBqwrSwvnmX protonet-admin"
+/user ssh-keys add user=admin key="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJr4Y2R6iJToJx8lEKwEvc2MuonG1ogA5FqcWSq8F5uR openpgp:0x0118F22B"
 /tool bandwidth-server set enabled=no
 /tool mac-server set allowed-interface-list=none
 /tool mac-server mac-winbox set allowed-interface-list=MGMT
