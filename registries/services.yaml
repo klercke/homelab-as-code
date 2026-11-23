@@ -149,6 +149,10 @@ role_services:
       protocol: "tcp"
       ports: [3000]
       description: "Dashboards. Reached through caddy01 as grafana.int.ptxe.dev."
+    - name: "Prusa Exporter"
+      protocol: "udp"
+      ports: [8514]
+      description: "Prometheus exporter for collecting metrics from Prusa printers."
 
   hypervisor:
     - name: "Proxmox VE"
@@ -221,6 +225,16 @@ role_services:
     - name: "Caddy metrics"
       protocol: "tcp"
       ports: [9180]
+
+  printer-3d:
+    - name: "PrusaLink"
+      protocol: "tcp"
+      ports: [80]
+
+  camera:
+    - name: "RTSP"
+      protocol: "tcp"
+      ports: [554]
 
 public_services:
   # == Internal ==

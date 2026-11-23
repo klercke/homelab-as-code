@@ -1,0 +1,12 @@
+# Managed by Ansible. Generated from devices.yaml via hlac.json.
+#
+# address must be the IP, not the FQDN.
+# UDP metrics are labeled with the sender's IP, and the dashboards join on it.
+printers:
+{% for name, p in monitoring_printers | dictsort %}
+  - address: {{ p.ipv4 | to_json }}
+    username: "maker"
+    password: {{ lookup('ansible.builtin.vars', name ~ '_prusalink_password') | to_json }}
+    name: {{ name | to_json }}
+    type: {{ prusa_exporter_models[p.device_type] | to_json }}
+{% endfor %}
