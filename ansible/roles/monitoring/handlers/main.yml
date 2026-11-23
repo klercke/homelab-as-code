@@ -3,6 +3,11 @@
   ansible.builtin.systemd_service:
     daemon_reload: true
 
+- name: Restart prusa_exporter
+  ansible.builtin.systemd_service:
+    name: prusa_exporter
+    state: restarted
+
 - name: Reload prometheus
   ansible.builtin.systemd_service:
     name: prometheus

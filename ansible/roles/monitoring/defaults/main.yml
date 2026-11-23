@@ -44,3 +44,21 @@ monitoring_scrape_jobs:
   caddy:
     port: 9180
     roles: ["caddy"]
+
+# Every active printer in devices.yaml with an address.
+monitoring_printers: >-
+  {{ hlac.devices | dict2items
+     | selectattr('value.role', 'equalto', 'printer-3d')
+     | selectattr('value.status', 'equalto', 'active')
+     | selectattr('value.ipv4') | items2dict }}
+
+prusa_exporter_version: "2.0.0"
+prusa_exporter_sha256: "67b0a5704023905e73658b5c5f3fc3c10c302031d92a4301169bfa94839ec344"
+prusa_exporter_port: 10009
+prusa_exporter_udp_port: 8514
+# Off because the slicer start G-code enables metrics instead.
+# When on, every exporter restart prompts a "print" on the printer.
+prusa_exporter_send_gcode: false
+# The printer_model label the dashboards filter on, per device type.
+prusa_exporter_models:
+  prusa-core-one-plus-gen2: "Core One"

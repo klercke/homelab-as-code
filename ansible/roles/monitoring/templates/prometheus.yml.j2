@@ -20,3 +20,31 @@ scrape_configs:
     file_sd_configs:
       - files: ["/etc/prometheus/targets/{{ name }}.yml"]
 {% endfor %}
+
+{% if monitoring_printers %}
+
+  # prusa_exporter runs on this host, see tasks/prusa.yml.
+  # PrusaLink is polled at scrape time, so it gets a slow interval and a long timeout.
+  - job_name: prusalink
+    scrape_interval: 60s
+    scrape_timeout: 30s
+    metrics_path: /metrics/prusalink
+    static_configs:
+      - targets: ["localhost:{{ prusa_exporter_port }}"]
+        labels:
+          role: "printer"
+          crit: "4"
+          kind: "device"
+
+  # Printers push UDP metrics continuously and the exporter keeps the latest value.
+  # The dashboard uses changes(...[30s]), so this has to stay well under 30s.
+  - job_name: prusa-udp
+    scrape_interval: 5s
+    metrics_path: /metrics/udp
+    static_configs:
+      - targets: ["localhost:{{ prusa_exporter_port }}"]
+        labels:
+          role: "printer"
+          crit: "4"
+          kind: "device"
+{% endif %}

@@ -1,0 +1,107 @@
+---
+# prusa_exporter runs on the monitoring host and covers every printer in devices.yaml.
+# Printers push UDP metrics to it, and it polls PrusaLink when Prometheus scrapes.
+- name: Create prusa_exporter user
+  tags: [install]
+  ansible.builtin.user:
+    name: prusa_exporter
+    system: true
+    shell: /sbin/nologin
+    create_home: false
+
+# Upstream ships a bare binary rather than a tarball.
+# The checksum keeps this idempotent and forces a download on a version bump.
+- name: Download prusa_exporter
+  tags: [install]
+  ansible.builtin.get_url:
+    url: "https://github.com/pubeldev/prusa_exporter/releases/download/{{ prusa_exporter_version }}/prusa_exporter-linux-amd64"
+    dest: /usr/local/bin/prusa_exporter
+    checksum: "sha256:{{ prusa_exporter_sha256 }}"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart prusa_exporter
+
+- name: Restore SELinux context on prusa_exporter
+  tags: [install]
+  ansible.builtin.command:
+    cmd: restorecon -v /usr/local/bin/prusa_exporter
+  register: _prusa_con
+  changed_when: _prusa_con.stdout | length > 0
+
+- name: Create prusa_exporter config directory
+  tags: [config]
+  ansible.builtin.file:
+    path: /etc/prusa_exporter
+    state: directory
+    owner: root
+    group: prusa_exporter
+    mode: "0750"
+
+- name: Write prusa_exporter config
+  tags: [config]
+  ansible.builtin.template:
+    src: prusa.yml.j2
+    dest: /etc/prusa_exporter/prusa.yml
+    owner: root
+    group: prusa_exporter
+    mode: "0640"
+  no_log: true
+  notify: Restart prusa_exporter
+
+- name: Install prusa_exporter unit
+  tags: [config]
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/prusa_exporter.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Prometheus exporter for Prusa printers
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      User=prusa_exporter
+      Group=prusa_exporter
+      ExecStart=/usr/local/bin/prusa_exporter \
+        --config.file=/etc/prusa_exporter/prusa.yml \
+        --exporter.metrics-port={{ prusa_exporter_port }} \
+        --udp.listen-address=0.0.0.0:{{ prusa_exporter_udp_port }} \
+        --udp.ip-override={{ ansible_host }} \
+        --{{ '' if prusa_exporter_send_gcode else 'no-' }}udp.gcode-enabled
+      Restart=on-failure
+      RestartSec=5
+      NoNewPrivileges=true
+      ProtectSystem=strict
+      ProtectHome=true
+      PrivateTmp=true
+
+      [Install]
+      WantedBy=multi-user.target
+  notify:
+    - Reload systemd
+    - Restart prusa_exporter
+
+# Only the printers may push metrics.
+# The HTTP port stays closed because Prometheus scrapes it over localhost.
+- name: Open the UDP metrics port to printers
+  tags: [firewall]
+  ansible.posix.firewalld:
+    rich_rule: >-
+      rule family=ipv4 source address={{ item.value.ipv4 }}/32
+      port port={{ prusa_exporter_udp_port }} protocol=udp accept
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ monitoring_printers | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Enable prusa_exporter
+  tags: [service]
+  ansible.builtin.systemd_service:
+    name: prusa_exporter
+    enabled: true
+    state: started
+    daemon_reload: true

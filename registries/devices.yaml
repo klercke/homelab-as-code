@@ -65,6 +65,12 @@ device_roles:
   iot-controller:
     name: "IoT Controller"
     color: "cddc39"  # #cddc39
+  printer-3d:
+    name: "3D Printer"
+    color: "fa6831"  # #fa6831
+  camera:
+    name: "Camera"
+    color: "32e8bf"  # #32e8bf
 
 device_types:
   protectli-fw4b:
@@ -188,6 +194,20 @@ device_types:
   unmanaged-vm:
     manufacturer: "Generic"
     model: "Unmanaged VM"
+    u_height: 0
+    full_depth: false
+    library: false
+
+  prusa-core-one-plus-gen2:
+    manufacturer: "Prusa Research"
+    model: "CORE One+ (Gen 2)"
+    u_height: 0
+    full_depth: false
+    library: false
+
+  buddy3d-camera-core-one:
+    manufacturer: "Prusa Research"
+    model: "Buddy3D Camera (CORE One)"
     u_height: 0
     full_depth: false
     library: false
@@ -376,3 +396,19 @@ devices:
     mac: "52:78:7d:d0:46:30"
     mgmt_ip_v4: "10.0.30.201"
     description: "PoE-powered Zigbee/Thread router for Home Assistant."
+
+  fdm01:
+    device_type: "prusa-core-one-plus-gen2"
+    role: "printer-3d"
+    site: "home"
+    mac: "1C:8F:57:F8:74:FC"
+    mgmt_ip_v4: "10.0.30.202"
+    description: "Primary 3D printer."
+
+  pcam01:
+    device_type: "buddy3d-camera-core-one"
+    role: "camera"
+    site: "home"
+    mac: "6C:D5:52:D6:BA:6A"
+    mgmt_ip_v4: "10.0.30.203"
+    description: "Buddy3D camera inside fdm01."

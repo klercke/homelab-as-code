@@ -24,6 +24,11 @@
   ansible.builtin.import_tasks: grafana.yml
   tags: [grafana]
 
+- name: Install prusa_exporter
+  ansible.builtin.import_tasks: prusa.yml
+  tags: [prusa]
+  when: monitoring_printers | length > 0
+
 - name: Install Grafana dashboards
   ansible.builtin.import_tasks: dashboards.yml
   tags: [dashboards]

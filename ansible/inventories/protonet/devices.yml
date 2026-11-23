@@ -17,6 +17,10 @@
       "hosts":
         "pbs01":
           "ansible_host": "10.0.20.49"
+    "device_role_camera":
+      "hosts":
+        "pcam01":
+          "ansible_host": "10.0.30.203"
     "device_role_firewall":
       "hosts":
         "fw01":
@@ -37,6 +41,10 @@
           "ansible_host": "10.0.60.120"
         "pve02-bmc":
           "ansible_host": "10.0.60.121"
+    "device_role_printer_3d":
+      "hosts":
+        "fdm01":
+          "ansible_host": "10.0.30.202"
     "device_role_storage":
       "hosts":
         "nas01":
