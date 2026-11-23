@@ -8,14 +8,14 @@ This module contains services that build on the substrate, but are still upstrea
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.10 |
-| <a name="requirement_kea"></a> [kea](#requirement\_kea) | 0.0.3 |
+| <a name="requirement_kea"></a> [kea](#requirement\_kea) | 0.2.0 |
 | <a name="requirement_powerdns"></a> [powerdns](#requirement\_powerdns) | ~> 1.5 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_kea"></a> [kea](#provider\_kea) | 0.0.3 |
+| <a name="provider_kea"></a> [kea](#provider\_kea) | 0.2.0 |
 | <a name="provider_powerdns"></a> [powerdns](#provider\_powerdns) | 1.5.0 |
 
 ## Modules
@@ -28,7 +28,7 @@ This module contains services that build on the substrate, but are still upstrea
 
 | Name | Type |
 |------|------|
-| [kea_dhcp4_reservation.this](https://registry.terraform.io/providers/wfdewith/kea/0.0.3/docs/resources/dhcp4_reservation) | resource |
+| [kea_dhcp4_reservation.this](https://registry.terraform.io/providers/wfdewith/kea/0.2.0/docs/resources/dhcp4_reservation) | resource |
 | [powerdns_record.a](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_record.aaaa](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |
 | [powerdns_record.exposed_a](https://registry.terraform.io/providers/pan-net/powerdns/latest/docs/resources/record) | resource |

@@ -27,6 +27,10 @@
           "ansible_host": "10.0.60.20"
         "pve02":
           "ansible_host": "10.0.60.21"
+    "device_role_iot_controller":
+      "hosts":
+        "slzb01":
+          "ansible_host": "10.0.30.201"
     "device_role_management":
       "hosts":
         "pve01-bmc":

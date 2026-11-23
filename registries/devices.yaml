@@ -62,6 +62,9 @@ device_roles:
   management:
     name: "Management"
     color: "673ab7"  # #673ab7
+  iot-controller:
+    name: "IoT Controller"
+    color: "cddc39"  # #cddc39
 
 device_types:
   protectli-fw4b:
@@ -159,6 +162,13 @@ device_types:
     full_depth: false
     library: true
 
+  smlight-slzb-mr3u:
+    manufacturer: "SMLIGHT"
+    model: "SLZB-MR3U"
+    u_height: 0
+    full_depth: false
+    library: false
+
   generic-bmc:
     manufacturer: "Generic"
     model: "Baseboard Management Controller"
@@ -173,8 +183,8 @@ device_types:
     full_depth: false
     library: false
 
-  # A guest built by hand outside hlac. Registered so its
-  # name resolves and its address stays reserved; nothing manages it.
+  # A guest built by hand outside hlac.
+  # Registered so its name resolves and its address stays reserved; nothing manages it.
   unmanaged-vm:
     manufacturer: "Generic"
     model: "Unmanaged VM"
@@ -217,6 +227,8 @@ devices:
     site: "home"
     rack: "rack01"
     position: 29
+    mgmt_ip_v4: "10.0.60.12"
+    mac: "f8:d9:b8:26:f7:2c"
     status: "decommissioning"
     description: "Legacy Datto E24 switch. Being decommissioned."
 
@@ -296,6 +308,7 @@ devices:
     role: "access-point"
     site: "home"
     mgmt_ip_v4: "10.0.60.22"
+    mac: "f8:d9:b8:2f:64:a1"
     description: "Primary AP."
 
   noct01:
@@ -355,3 +368,11 @@ devices:
     mgmt_ip_v4: "10.0.20.49"
     mgmt_iid_v6: "::31"
     description: "Recycled Siris S4 running Proxmox Backup Server."
+
+  slzb01:
+    device_type: "smlight-slzb-mr3u"
+    role: "iot-controller"
+    site: "home"
+    mac: "52:78:7d:d0:46:30"
+    mgmt_ip_v4: "10.0.30.201"
+    description: "PoE-powered Zigbee/Thread router for Home Assistant."
