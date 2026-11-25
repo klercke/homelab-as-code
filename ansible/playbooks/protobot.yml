@@ -1,0 +1,11 @@
+---
+- name: ProtoBot Discord bots
+  hosts: tag_role_protobot
+  pre_tasks:
+    - name: Load platform secrets
+      tags: [always]
+      community.sops.load_vars:
+        file: "{{ playbook_dir }}/../../secrets/platform.sops.yaml"
+      no_log: true
+  roles:
+    - protobot

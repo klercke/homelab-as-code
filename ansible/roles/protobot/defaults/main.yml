@@ -1,0 +1,31 @@
+---
+protobot_environments:
+  - preview
+  - production
+
+# The image a fresh VM starts from before CI's first deploy.
+# Preview follows main and production follows releases.
+protobot_seed_tags:
+  preview: "main"
+  production: "latest"
+
+protobot_registry_image: "ghcr.io/klercke/protobot"
+
+# Runs the containers and receives CI deploys.
+# The home lives under /home so SELinux labels it the way rootless podman
+# expects.
+protobot_user: "protobot"
+protobot_home: "/home/protobot"
+protobot_config_dir: "{{ protobot_home }}/config"
+protobot_data_dir: "{{ protobot_home }}/data"
+protobot_quadlet_dir: "{{ protobot_home }}/.config/containers/systemd"
+
+# Subordinate IDs for rootless podman.
+# Clear of the 100000+ ranges useradd hands to login users.
+protobot_subid_start: 524288
+
+# Each key is locked to deploying one environment.
+protobot_deploy_keys:
+  preview: "protobot01_preview_deploy.pub"
+  production: "protobot01_production_deploy.pub"
+protobot_keys_dir: "{{ playbook_dir }}/../../keys"

@@ -43,6 +43,7 @@ Each playbook targets one group and applies one role for VMs, or two for Proxmox
 | `netbird` | `tag_role_netbird` | netbird |
 | `wings` | `tag_role_wings` | wings |
 | `web` | `tag_role_web` | web, caddy (site mode) |
+| `protobot` | `tag_role_protobot` | protobot |
 
 
 ## Roles
@@ -66,6 +67,7 @@ Each playbook targets one group and applies one role for VMs, or two for Proxmox
 | `netbird` | NetBird routing peers. They only forward: no resolver changes, no routes from other peers. |
 | `wings` | Pelican Wings game server nodes, each with its own SFTP port forwarded from the WAN. |
 | `web` | Static sites and the `webssh` server: deploy roots, an rrsync-restricted deploy key per site, and the webssh service. |
+| `protobot` | Hosts the public production and preview instances of [ProtoBot](https://github.com/klercke/ProtoBot). |
 
 ## Tags
 

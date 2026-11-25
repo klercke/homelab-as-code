@@ -1,0 +1,153 @@
+---
+- name: Install packages
+  tags: [install]
+  ansible.builtin.dnf:
+    name:
+      - podman
+      # Lets Ansible become an unprivileged user.
+      - acl
+    state: present
+
+- name: Create the protobot user
+  tags: [install]
+  ansible.builtin.user:
+    name: "{{ protobot_user }}"
+    system: true
+    shell: /bin/bash
+    home: "{{ protobot_home }}"
+    create_home: true
+    password_lock: true
+  register: _protobot_user
+
+- name: Find the user's runtime directory
+  tags: [always]
+  ansible.builtin.set_fact:
+    _protobot_runtime: "/run/user/{{ _protobot_user.uid }}"
+
+# System users don't get subordinate IDs, and rootless podman needs them.
+- name: Give the protobot user subordinate IDs
+  tags: [install]
+  ansible.builtin.lineinfile:
+    path: "{{ item }}"
+    regexp: "^{{ protobot_user }}:"
+    line: "{{ protobot_user }}:{{ protobot_subid_start }}:65536"
+  loop:
+    - /etc/subuid
+    - /etc/subgid
+
+# Starts the user's systemd instance at boot, without anyone logged in.
+- name: Enable lingering
+  tags: [install]
+  ansible.builtin.command:
+    cmd: "loginctl enable-linger {{ protobot_user }}"
+    creates: "/var/lib/systemd/linger/{{ protobot_user }}"
+
+# Lingering starts the user's systemd instance in the background.
+- name: Wait for the user's systemd instance
+  tags: [install]
+  ansible.builtin.wait_for:
+    path: "{{ _protobot_runtime }}/bus"
+    timeout: 60
+
+- name: Create the user's directories
+  tags: [config]
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ protobot_user }}"
+    group: "{{ protobot_user }}"
+    mode: "0700"
+  loop:
+    - "{{ protobot_home }}/.ssh"
+    - "{{ protobot_home }}/.config"
+    - "{{ protobot_home }}/.config/containers"
+    - "{{ protobot_quadlet_dir }}"
+    - "{{ protobot_config_dir }}"
+    - "{{ protobot_data_dir }}"
+
+- name: Create data directories
+  tags: [config]
+  ansible.builtin.file:
+    path: "{{ protobot_data_dir }}/{{ item }}"
+    state: directory
+    owner: "{{ protobot_user }}"
+    group: "{{ protobot_user }}"
+    mode: "0700"
+  loop: "{{ protobot_environments }}"
+
+- name: Write the environment files
+  tags: [config]
+  ansible.builtin.template:
+    src: protobot.env.j2
+    dest: "{{ protobot_config_dir }}/{{ item }}.env"
+    owner: "{{ protobot_user }}"
+    group: "{{ protobot_user }}"
+    mode: "0600"
+  loop: "{{ protobot_environments }}"
+  no_log: true
+  notify: Restart protobot
+
+# Quadlets run localhost/protobot:<env>, which only the deploy script and this
+# task ever retag.
+# This seeds a fresh VM so the services can start before CI's first deploy.
+- name: Seed images
+  tags: [install]
+  become: true
+  become_user: "{{ protobot_user }}"
+  environment:
+    XDG_RUNTIME_DIR: "{{ _protobot_runtime }}"
+  ansible.builtin.shell:
+    cmd: >-
+      podman image exists localhost/protobot:{{ item }} && echo present ||
+      (podman pull --quiet {{ protobot_registry_image }}:{{ protobot_seed_tags[item] }} &&
+      podman tag {{ protobot_registry_image }}:{{ protobot_seed_tags[item] }} localhost/protobot:{{ item }})
+  loop: "{{ protobot_environments }}"
+  register: _protobot_seed
+  changed_when: "'present' not in _protobot_seed.stdout"
+
+- name: Install quadlets
+  tags: [config]
+  ansible.builtin.template:
+    src: protobot.container.j2
+    dest: "{{ protobot_quadlet_dir }}/protobot-{{ item }}.container"
+    owner: "{{ protobot_user }}"
+    group: "{{ protobot_user }}"
+    mode: "0644"
+  loop: "{{ protobot_environments }}"
+  notify: Restart protobot
+
+# Root-owned so the user it runs as can't change what it does.
+- name: Install the deploy script
+  tags: [deploy]
+  ansible.builtin.template:
+    src: protobot-deploy.sh.j2
+    dest: /usr/local/bin/protobot-deploy
+    owner: root
+    group: root
+    mode: "0755"
+
+# Each key may only run the deploy script for its own environment.
+- name: Lock the deploy keys to the deploy script
+  tags: [deploy]
+  ansible.builtin.template:
+    src: authorized_keys.j2
+    dest: "{{ protobot_home }}/.ssh/authorized_keys"
+    owner: "{{ protobot_user }}"
+    group: "{{ protobot_user }}"
+    mode: "0600"
+
+# Quadlet units are generated, so they can't be enabled.
+# WantedBy in the .container file handles boot.
+# This only starts them the first time.
+- name: Start services
+  tags: [service]
+  become: true
+  become_user: "{{ protobot_user }}"
+  environment:
+    XDG_RUNTIME_DIR: "{{ _protobot_runtime }}"
+  ansible.builtin.systemd_service:
+    name: "protobot-{{ item }}"
+    state: started
+    daemon_reload: true
+    scope: user
+  loop: "{{ protobot_environments }}"

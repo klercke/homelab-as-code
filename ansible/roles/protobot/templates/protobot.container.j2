@@ -1,0 +1,23 @@
+# Managed by Ansible. Local changes will be overwritten.
+[Unit]
+Description=ProtoBot ({{ item }})
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+# Retagged by protobot-deploy, never pulled by the unit itself.
+Image=localhost/protobot:{{ item }}
+Pull=never
+ContainerName=protobot-{{ item }}
+EnvironmentFile={{ protobot_config_dir }}/{{ item }}.env
+# The image runs as 65534 (nobody).
+# Mapping that to the protobot user keeps files in the data volume owned by
+# protobot on the host.
+UserNS=keep-id:uid=65534,gid=65534
+Volume={{ protobot_data_dir }}/{{ item }}:/app/data:Z
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target
