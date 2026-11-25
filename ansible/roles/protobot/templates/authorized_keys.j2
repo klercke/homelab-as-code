@@ -1,0 +1,7 @@
+# Managed by Ansible.
+# Restrict drops forwarding, PTY, agent and X11.
+# Each forced command deploys only its own environment.
+# The client's command is used as the tag, and the script validates it.
+{% for env, key in protobot_deploy_keys | dictsort %}
+restrict,command="/usr/local/bin/protobot-deploy {{ env }} \"$SSH_ORIGINAL_COMMAND\"" {{ lookup('ansible.builtin.file', protobot_keys_dir + '/' + key) }}
+{% endfor %}

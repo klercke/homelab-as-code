@@ -275,6 +275,19 @@ hosts:
         ports: ["27200-27299"]
         description: "UDP port allocations for game services."
 
+  protobot01:
+    vlan: "home-servers"
+    host_octet: 24
+    layer: "l1"  # Really l2 (a workload); moves when a workloads module exists
+    role: "protobot"
+    crit: 3
+    node: "pve02"
+    cores: 2
+    memory: 2048
+    disk: 16
+    description: ""
+    ipv6: true
+
   edge01:
     vlan: "home-dmz"
     host_octet: 10
